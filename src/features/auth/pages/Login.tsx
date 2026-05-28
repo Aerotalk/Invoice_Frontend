@@ -37,12 +37,18 @@ export const Login: React.FC = () => {
     setLoading(true);
     setErrorMsg("");
     try {
-      // Login with default role 'admin' for demo mode
-      const success = await login(values.email, "admin");
-      if (success) {
-        navigate("/dashboard");
+      const allowedEmails = ["alex@invoiceiq.app", "admin@invoiceiq.app", "accountant@invoiceiq.app"];
+      const isValidEmail = allowedEmails.includes(values.email.toLowerCase());
+      const isValidPassword = values.password === "password123";
+
+      if (isValidEmail && isValidPassword) {
+        const role = values.email.toLowerCase() === "accountant@invoiceiq.app" ? "accountant" : "admin";
+        const success = await login(values.email, role as any);
+        if (success) {
+          navigate("/dashboard");
+        }
       } else {
-        setErrorMsg("Invalid credentials. Try using alex@invoiceiq.app / password123");
+        setErrorMsg("Invalid email or password. Use email 'alex@invoiceiq.app' and password 'password123'");
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An authentication error occurred. Please try again.");
