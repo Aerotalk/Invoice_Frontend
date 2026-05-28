@@ -11,6 +11,14 @@ interface AuthState {
 
 const getInitialUser = (): UserProfile | null => {
   if (typeof window === 'undefined') return null;
+  
+  // Clear any existing session cached in the browser when accessing the root home URL
+  // to guarantee the Login page always comes first on first link entry.
+  if (window.location.pathname === '/') {
+    localStorage.removeItem('invoiceiq_user');
+    return null;
+  }
+  
   const saved = localStorage.getItem('invoiceiq_user');
   if (saved) {
     try {
@@ -19,8 +27,6 @@ const getInitialUser = (): UserProfile | null => {
       return null;
     }
   }
-  
-  // Do not auto-login on first load, return null to present the login screen
   return null;
 };
 
