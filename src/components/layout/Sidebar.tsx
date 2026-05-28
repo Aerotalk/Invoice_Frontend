@@ -104,23 +104,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         })}
       </nav>
 
-      {/* Sidebar Footer Accents */}
-      {!isCollapsed && (
-        <div className="p-4 border-t bg-slate-50/50 dark:bg-[#0b101c]/10 m-3 rounded-xl border flex flex-col gap-2.5 shrink-0 select-none">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-              Pro Account Active
-            </span>
-          </div>
-          <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-            <div className="h-full bg-indigo-500 rounded-full w-4/5" />
-          </div>
-          <span className="text-[10px] text-muted-foreground font-medium">
-            80% of limit used ($80K/$100K)
-          </span>
-        </div>
-      )}
     </aside>
   );
 };

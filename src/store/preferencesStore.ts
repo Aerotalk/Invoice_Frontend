@@ -13,6 +13,7 @@ interface PreferencesState {
 }
 
 const currencySymbols: Record<string, string> = {
+  INR: "₹",
   USD: "$",
   EUR: "€",
   GBP: "£",
@@ -20,8 +21,8 @@ const currencySymbols: Record<string, string> = {
 };
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
-  currency: "USD",
-  currencySymbol: "$",
+  currency: "INR",
+  currencySymbol: "₹",
   defaultTaxRate: 10,
   language: "en",
   dashboardWidgets: ["metrics", "earnings", "status-pie", "recent-invoices", "expenses-chart"],

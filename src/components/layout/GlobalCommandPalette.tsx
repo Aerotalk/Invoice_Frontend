@@ -117,13 +117,6 @@ export const GlobalCommandPalette: React.FC = () => {
       category: "Settings",
       icon: DollarSign,
       action: () => { setCurrency("EUR"); setOpen(false); }
-    },
-    {
-      id: "set-billing",
-      title: "View Subscription & SaaS Billing",
-      category: "Settings",
-      icon: CreditCard,
-      action: () => { navigate("/dashboard/subscription"); setOpen(false); }
     }
   ];
 

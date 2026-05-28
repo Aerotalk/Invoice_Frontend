@@ -16,16 +16,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          50: "#f5f7ff",
-          100: "#ebedff",
-          200: "#dde0ff",
-          300: "#c4c8ff",
-          400: "#a2a7ff",
-          500: "#7a7fff",
-          600: "#6366f1", // Sleek modern indigo primary
-          700: "#4f46e5",
-          800: "#3730a3",
-          900: "#312e81",
+          50: "#f0f6ff",
+          100: "#e0ebff",
+          200: "#c0d7ff",
+          300: "#90baff",
+          400: "#5894ff",
+          500: "#3b82f6",
+          600: "#2563eb", // Sleek modern royal sapphire blue primary
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",

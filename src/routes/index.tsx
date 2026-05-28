@@ -1,6 +1,13 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { DashboardLayout } from '../layouts/DashboardLayout';
+import { useAuthStore } from '../store/authStore';
+
+// Root level smart redirect component
+const RootRouteRedirect = () => {
+  const { isAuthenticated } = useAuthStore();
+  return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
+};
 
 // Loading Fallback spinner
 const LoadingScreen = () => (
@@ -46,12 +53,13 @@ const TeamDashboard = lazy(() => import('../features/team/pages/TeamDashboard').
 
 const SettingsOverview = lazy(() => import('../features/settings/pages/SettingsOverview').then(m => ({ default: m.SettingsOverview })));
 const UserProfilePage = lazy(() => import('../features/settings/pages/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
-const SubscriptionBilling = lazy(() => import('../features/settings/pages/SubscriptionBilling').then(m => ({ default: m.SubscriptionBilling })));
 
 export const AppRoutes: React.FC = () => {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
+        {/* Root Redirect */}
+        <Route path="/" element={<RootRouteRedirect />} />
         {/* Public Authentication routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -91,7 +99,6 @@ export const AppRoutes: React.FC = () => {
           {/* Configurations preferences */}
           <Route path="settings" element={<SettingsOverview />} />
           <Route path="profile" element={<UserProfilePage />} />
-          <Route path="subscription" element={<SubscriptionBilling />} />
         </Route>
 
         {/* Default Redirect */}

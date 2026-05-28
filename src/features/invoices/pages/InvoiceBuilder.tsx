@@ -273,6 +273,7 @@ export const InvoiceBuilder: React.FC = () => {
                 onChange={(e) => setCurrency(e.target.value)}
                 className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold"
               >
+                <option value="INR">INR (₹)</option>
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
                 <option value="GBP">GBP (£)</option>

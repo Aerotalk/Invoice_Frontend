@@ -6,16 +6,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Utility to format values as currency
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
+export function formatCurrency(amount: number, currency: string = 'INR'): string {
   const symbols: Record<string, string> = {
+    INR: '₹',
     USD: '$',
     EUR: '€',
     GBP: '£',
     JPY: '¥'
   };
-  const symbol = symbols[currency] || '$';
+  const symbol = symbols[currency] || '₹';
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
   
-  return `${symbol}${amount.toLocaleString('en-US', {
+  return `${symbol}${amount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })}`;

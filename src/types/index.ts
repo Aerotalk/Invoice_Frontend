@@ -48,6 +48,10 @@ export interface Client {
   status: ClientStatus;
   notes: string;
   createdAt: string;
+  clientType?: 'individual' | 'business';
+  country?: string;
+  state?: string;
+  city?: string;
 }
 
 export type PaymentMethod = 'credit_card' | 'bank_transfer' | 'stripe' | 'paypal';

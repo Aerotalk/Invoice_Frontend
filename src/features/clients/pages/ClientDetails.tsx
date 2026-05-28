@@ -12,6 +12,7 @@ import {
   Save, 
   FilePlus,
   Activity,
+  User,
   Briefcase
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
@@ -167,8 +168,17 @@ export const ClientDetails: React.FC = () => {
           <div>
             <h2 className="text-xl font-extrabold text-foreground leading-tight">{client.name}</h2>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground font-semibold uppercase">
-              <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              {client.company}
+              {client.clientType === 'individual' ? (
+                <>
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Individual Client
+                </>
+              ) : (
+                <>
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  {client.company}
+                </>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-4 mt-2 select-none text-[11px] font-semibold text-muted-foreground">
               <span className="flex items-center gap-1">

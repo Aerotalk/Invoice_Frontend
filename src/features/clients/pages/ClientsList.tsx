@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Users, Eye, MoreHorizontal, FilePlus, UserCheck, Briefcase } from 'lucide-react';
+import { 
+  Plus, 
+  Users, 
+  Eye, 
+  MoreHorizontal, 
+  FilePlus, 
+  UserCheck, 
+  Briefcase, 
+  User, 
+  Building2, 
+  Phone, 
+  MapPin, 
+  Globe 
+} from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -13,12 +26,48 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
 
+// Geographical datasets
+const locationData: Record<string, Record<string, string[]>> = {
+  India: {
+    "West Bengal": ["Kolkata", "Howrah", "Siliguri", "Durgapur"],
+    "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane"],
+    "Karnataka": ["Bengaluru", "Mysore", "Hubli", "Mangalore"],
+    "Delhi": ["New Delhi", "Dwarka", "Rohini"]
+  },
+  "United States": {
+    "California": ["San Francisco", "Los Angeles", "San Jose", "San Diego"],
+    "New York": ["New York City", "Buffalo", "Rochester", "Albany"],
+    "Texas": ["Houston", "Austin", "Dallas", "San Antonio"]
+  },
+  "United Kingdom": {
+    "England": ["London", "Manchester", "Birmingham", "Leeds"],
+    "Scotland": ["Edinburgh", "Glasgow", "Aberdeen"]
+  },
+  "United Arab Emirates": {
+    "Dubai": ["Dubai City"],
+    "Abu Dhabi": ["Abu Dhabi City"]
+  }
+};
+
+const countryPhoneCodes = [
+  { code: "+91", label: "🇮🇳 +91" },
+  { code: "+1", label: "🇺🇸 +1" },
+  { code: "+44", label: "🇬🇧 +44" },
+  { code: "+971", label: "🇦🇪 +971" },
+  { code: "+65", label: "🇸🇬 +65" }
+];
+
 // Client Form Schema
 const clientSchema = zod.object({
+  clientType: zod.enum(['individual', 'business']),
   name: zod.string().min(2, { message: "Name must be at least 2 characters" }),
   company: zod.string().min(2, { message: "Company name must be at least 2 characters" }),
   email: zod.string().email({ message: "Invalid email format" }),
+  phoneCode: zod.string().min(1),
   phone: zod.string().min(6, { message: "Invalid phone number format" }),
+  country: zod.string().min(1),
+  state: zod.string().min(1),
+  city: zod.string().min(1),
   avatar: zod.string().url({ message: "Avatar must be a valid Unsplash or image URL" }).optional().or(zod.literal("")),
   status: zod.enum(['active', 'inactive']),
   notes: zod.string().optional()
@@ -34,14 +83,49 @@ export const ClientsList: React.FC = () => {
   const { currency } = usePreferencesStore();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ClientFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
+      clientType: 'business',
+      phoneCode: '+91',
+      country: 'India',
+      state: 'West Bengal',
+      city: 'Kolkata',
       status: 'active',
       avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
       notes: ""
     }
   });
+
+  const clientType = watch("clientType");
+  const selectedCountry = watch("country");
+  const selectedState = watch("state");
+
+  // Dependent location controls
+  useEffect(() => {
+    if (selectedCountry && locationData[selectedCountry]) {
+      const statesList = Object.keys(locationData[selectedCountry]);
+      const defaultState = statesList.includes("West Bengal") ? "West Bengal" : statesList[0];
+      setValue("state", defaultState);
+    }
+  }, [selectedCountry, setValue]);
+
+  useEffect(() => {
+    if (selectedCountry && selectedState && locationData[selectedCountry]?.[selectedState]) {
+      const citiesList = locationData[selectedCountry][selectedState];
+      const defaultCity = citiesList.includes("Kolkata") ? "Kolkata" : citiesList[0];
+      setValue("city", defaultCity);
+    }
+  }, [selectedState, selectedCountry, setValue]);
+
+  // If ClientType switches to individual, auto-fill company name to bypass validation cleanly
+  useEffect(() => {
+    if (clientType === 'individual') {
+      setValue("company", "Individual Client");
+    } else {
+      setValue("company", "");
+    }
+  }, [clientType, setValue]);
 
   const loadClients = async () => {
     setLoading(true);
@@ -62,14 +146,31 @@ export const ClientsList: React.FC = () => {
   const onSubmitClient = async (values: ClientFormValues) => {
     try {
       const payload = {
-        ...values,
+        clientType: values.clientType,
+        name: values.name,
+        company: values.clientType === 'individual' ? "Individual" : values.company,
+        email: values.email,
+        phone: `${values.phoneCode} ${values.phone}`,
+        country: values.country,
+        state: values.state,
+        city: values.city,
         avatar: values.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+        status: values.status,
         notes: values.notes || ""
       };
       await apiService.createClient(payload);
       alert("Client added successfully!");
       setDrawerOpen(false);
-      reset();
+      reset({
+        clientType: 'business',
+        phoneCode: '+91',
+        country: 'India',
+        state: 'West Bengal',
+        city: 'Kolkata',
+        status: 'active',
+        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        notes: ""
+      });
       loadClients();
     } catch (e) {
       console.error(e);
@@ -97,8 +198,17 @@ export const ClientsList: React.FC = () => {
               {row.name}
             </Link>
             <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 font-semibold">
-              <Briefcase className="w-3 h-3 shrink-0" />
-              {row.company}
+              {row.clientType === 'individual' ? (
+                <>
+                  <User className="w-3 h-3 text-slate-400 shrink-0" />
+                  Individual Client
+                </>
+              ) : (
+                <>
+                  <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
+                  {row.company}
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -160,7 +270,7 @@ export const ClientsList: React.FC = () => {
                 onClick={() => setActiveClientMenu(null)}
                 className="fixed inset-0 z-40 select-none" 
               />
-              <div className="absolute right-0 mt-1 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
+              <div className="absolute right-0 mt-1.5 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <Link
                   to={`/dashboard/clients/${row.id}`}
                   onClick={() => setActiveClientMenu(null)}
@@ -185,6 +295,10 @@ export const ClientsList: React.FC = () => {
       )
     }
   ];
+
+  const countries = Object.keys(locationData);
+  const states = selectedCountry ? Object.keys(locationData[selectedCountry] || {}) : [];
+  const cities = (selectedCountry && selectedState) ? (locationData[selectedCountry][selectedState] || []) : [];
 
   return (
     <div className="space-y-6 select-none animate-fade-in">
@@ -222,51 +336,70 @@ export const ClientsList: React.FC = () => {
         title="Create Client Profile"
         size="md"
       >
-        <form onSubmit={handleSubmit(onSubmitClient)} className="flex flex-col gap-4 text-xs font-semibold select-none pb-6">
+        <form onSubmit={handleSubmit(onSubmitClient)} className="flex flex-col gap-4 text-xs font-semibold select-none pb-6 pr-1 max-h-[80vh] overflow-y-auto scrollbar-thin">
           
-          {/* Avatar Graphic indicator */}
-          <div className="flex items-center gap-4 shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/15 p-4 rounded-xl border select-none mb-2">
-            <img 
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" 
-              alt="Default Avatar"
-              className="w-12 h-12 rounded-xl object-cover border shadow-sm shrink-0" 
-            />
-            <div>
-              <span className="block font-bold text-foreground">Standard Unsplash Image Seeded</span>
-              <span className="block text-[9px] text-muted-foreground mt-0.5">Customize via URL below if preferred</span>
-            </div>
+          {/* Client Type switch controller */}
+          <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border select-none">
+            <button
+              type="button"
+              onClick={() => setValue("clientType", "individual")}
+              className={cn(
+                "py-1.5 text-xs font-bold rounded-lg transition-all active:scale-[0.98]",
+                clientType === 'individual'
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Individual
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue("clientType", "business")}
+              className={cn(
+                "py-1.5 text-xs font-bold rounded-lg transition-all active:scale-[0.98]",
+                clientType === 'business'
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Business
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Client Name */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase">Client Full Name</label>
+            <div className={cn("flex flex-col gap-1.5 col-span-2", clientType === 'business' ? "sm:col-span-1" : "col-span-2")}>
+              <label className="text-muted-foreground font-bold tracking-wide uppercase">
+                {clientType === 'business' ? "Contact Full Name" : "Client Full Name"}
+              </label>
               <input
                 type="text"
                 placeholder="Sarah Jenkins"
                 {...register("name")}
                 className={cn(
-                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium",
+                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium",
                   errors.name ? "border-rose-500/70 focus:border-rose-500" : ""
                 )}
               />
               {errors.name && <span className="text-[9px] text-rose-500 font-bold">{errors.name.message}</span>}
             </div>
 
-            {/* Company Name */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase">Company Name</label>
-              <input
-                type="text"
-                placeholder="Acme Corporation"
-                {...register("company")}
-                className={cn(
-                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium",
-                  errors.company ? "border-rose-500/70 focus:border-rose-500" : ""
-                )}
-              />
-              {errors.company && <span className="text-[9px] text-rose-500 font-bold">{errors.company.message}</span>}
-            </div>
+            {/* Company Name (only for business) */}
+            {clientType === 'business' && (
+              <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
+                <label className="text-muted-foreground font-bold tracking-wide uppercase">Company Name</label>
+                <input
+                  type="text"
+                  placeholder="Acme Corporation"
+                  {...register("company")}
+                  className={cn(
+                    "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium",
+                    errors.company ? "border-rose-500/70 focus:border-rose-500" : ""
+                  )}
+                />
+                {errors.company && <span className="text-[9px] text-rose-500 font-bold">{errors.company.message}</span>}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -278,26 +411,75 @@ export const ClientsList: React.FC = () => {
                 placeholder="sarah@acme.com"
                 {...register("email")}
                 className={cn(
-                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium",
+                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium",
                   errors.email ? "border-rose-500/70 focus:border-rose-500" : ""
                 )}
               />
               {errors.email && <span className="text-[9px] text-rose-500 font-bold">{errors.email.message}</span>}
             </div>
 
-            {/* Phone Number */}
+            {/* Phone Number with country codes */}
             <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
               <label className="text-muted-foreground font-bold tracking-wide uppercase">Phone Number</label>
-              <input
-                type="text"
-                placeholder="+1 (555) 234-5678"
-                {...register("phone")}
-                className={cn(
-                  "px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium",
-                  errors.phone ? "border-rose-500/70 focus:border-rose-500" : ""
-                )}
-              />
+              <div className="flex gap-2">
+                <select
+                  {...register("phoneCode")}
+                  className="px-2 py-2 border rounded-lg bg-card/60 outline-none text-xs font-semibold focus:border-primary w-20 text-center"
+                >
+                  {countryPhoneCodes.map(c => (
+                    <option key={c.code} value={c.code}>{c.code}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  placeholder="555-0123"
+                  {...register("phone")}
+                  className={cn(
+                    "flex-1 px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium",
+                    errors.phone ? "border-rose-500/70 focus:border-rose-500" : ""
+                  )}
+                />
+              </div>
               {errors.phone && <span className="text-[9px] text-rose-500 font-bold">{errors.phone.message}</span>}
+            </div>
+          </div>
+
+          {/* 3-Tier Dependent Geographical Dropdowns */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Country</label>
+              <select
+                {...register("country")}
+                className="w-full px-2 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary"
+              >
+                {countries.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex flex-col gap-1.5">
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">State</label>
+              <select
+                {...register("state")}
+                className="w-full px-2 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary"
+              >
+                {states.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">City</label>
+              <select
+                {...register("city")}
+                className="w-full px-2 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary"
+              >
+                {cities.map(ct => (
+                  <option key={ct} value={ct}>{ct}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -308,7 +490,7 @@ export const ClientsList: React.FC = () => {
               type="text"
               placeholder="https://images.unsplash.com/photo-..."
               {...register("avatar")}
-              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium"
+              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium"
             />
             {errors.avatar && <span className="text-[9px] text-rose-500 font-bold">{errors.avatar.message}</span>}
           </div>
@@ -318,7 +500,7 @@ export const ClientsList: React.FC = () => {
             <label className="text-muted-foreground font-bold tracking-wide uppercase">Active Account Status</label>
             <select
               {...register("status")}
-              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium"
+              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium"
             >
               <option value="active">Active Business Partner</option>
               <option value="inactive">Inactive / On-Hold Partner</option>
@@ -332,7 +514,7 @@ export const ClientsList: React.FC = () => {
               placeholder="Add payment terms, preferences, or project retainer notes..."
               rows={3}
               {...register("notes")}
-              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 text-xs font-medium resize-none"
+              className="px-3 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-primary text-xs font-medium resize-none"
             />
           </div>
 
