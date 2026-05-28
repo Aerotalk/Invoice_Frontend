@@ -10,9 +10,12 @@ const getInitialTheme = (): 'light' | 'dark' => {
   if (typeof window === 'undefined') return 'light';
   
   const saved = localStorage.getItem('invoiceiq_theme');
-  if (saved === 'light' || saved === 'dark') return saved;
-  
-  // Default to light mode as requested by user
+  if (saved !== 'light') {
+    localStorage.setItem('invoiceiq_theme', 'light');
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+    }
+  }
   return 'light';
 };
 

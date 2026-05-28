@@ -20,16 +20,8 @@ const getInitialUser = (): UserProfile | null => {
     }
   }
   
-  // Return a high-fidelity preloaded Admin profile for instant access in portfolio mode
-  return {
-    id: "u-1",
-    name: "Alex Sterling",
-    email: "alex@invoiceiq.app",
-    role: "admin",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-    companyName: "InvoiceIQ Inc.",
-    currency: "USD"
-  };
+  // Do not auto-login on first load, return null to present the login screen
+  return null;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({

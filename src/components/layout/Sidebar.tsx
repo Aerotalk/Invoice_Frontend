@@ -14,6 +14,7 @@ import {
   Settings, 
   Menu, 
   ChevronLeft, 
+  ChevronRight,
   Sparkles,
   Zap
 } from 'lucide-react';
@@ -36,7 +37,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
     { name: "Expenses", path: "/dashboard/expenses", icon: Receipt },
     { name: "Projects", path: "/dashboard/projects", icon: FolderGit },
-    { name: "Time Tracking", path: "/dashboard/time-tracking", icon: Clock },
     { name: "Reports", path: "/dashboard/reports", icon: BarChart3 },
     { name: "Team", path: "/dashboard/team", icon: UserSquare2 },
     { name: "Settings", path: "/dashboard/settings", icon: Settings },
@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       className
     )}>
       {/* Sidebar Header Brand */}
-      <div className="h-16 flex items-center justify-between px-5 border-b shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/10">
+      <div className="h-16 flex items-center px-5 border-b shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/10 relative">
         <Link to="/dashboard" className="flex items-center gap-2.5 overflow-hidden shrink-0 group">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
             <Zap className="w-4 h-4 text-white fill-white/10" />
@@ -60,14 +60,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             </span>
           )}
         </Link>
-        {!isCollapsed && (
-          <button 
-            onClick={toggleCollapse}
-            className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border select-none hidden md:inline-flex active:scale-95"
-          >
+        
+        {/* Floating circular toggle badge half-on/half-off the right border */}
+        <button 
+          onClick={toggleCollapse}
+          className="absolute -right-3.5 top-4.5 z-50 w-7 h-7 bg-card border rounded-full text-muted-foreground hover:text-foreground shadow-md transition-all active:scale-90 hidden md:flex items-center justify-center cursor-pointer select-none"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+          ) : (
             <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
-          </button>
-        )}
+          )}
+        </button>
       </div>
 
       {/* Navigation List */}

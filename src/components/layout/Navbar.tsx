@@ -17,7 +17,6 @@ import {
 import { useSidebarStore } from '../../store/sidebarStore';
 import { useThemeStore } from '../../store/themeStore';
 import { usePreferencesStore } from '../../store/preferencesStore';
-import { useTimerStore } from '../../store/timerStore';
 import { useCommandStore } from '../../store/commandStore';
 import { useAIStore } from '../../store/aiStore';
 import { useAuthStore } from '../../store/authStore';
@@ -29,7 +28,6 @@ export const Navbar: React.FC = () => {
   const { toggleMobileOpen } = useSidebarStore();
   const { toggleTheme, theme } = useThemeStore();
   const { currency, setCurrency } = usePreferencesStore();
-  const { isRunning, seconds, stopAndLogTimer, taskName, projectName } = useTimerStore();
   const { setOpen: setCommandOpen } = useCommandStore();
   const { toggleOpen: toggleAIOpen } = useAIStore();
   const { user, logout } = useAuthStore();
@@ -54,7 +52,6 @@ export const Navbar: React.FC = () => {
       let label = p.charAt(0).toUpperCase() + p.slice(1);
       
       // Formatting specific routes nicely
-      if (label === 'Time-tracking') label = 'Time Tracking';
       if (label === 'Settings') label = 'Settings';
       if (label === 'Subscription') label = 'SaaS Subscription';
       
@@ -102,26 +99,7 @@ export const Navbar: React.FC = () => {
       {/* Navbar Right: Analytics / Controls Toolbar */}
       <div className="flex items-center gap-2.5">
         
-        {/* ACTIVE TIMER METRIC (Extra Premium Feature) */}
-        {isRunning && (
-          <div className="flex items-center gap-2 px-3 py-1.5 border border-red-500/20 bg-rose-500/5 dark:bg-rose-500/10 rounded-lg text-xs font-bold text-rose-500 select-none shadow-glow animate-fade-in shrink-0">
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-            </span>
-            <Clock className="w-3.5 h-3.5 animate-spin-slow shrink-0 hidden sm:inline" />
-            <span className="font-mono text-[11px] font-extrabold tracking-wider">{formatTime(seconds)}</span>
-            <span className="text-slate-400 font-normal hidden lg:inline max-w-[100px] truncate">
-              ({projectName})
-            </span>
-            <button
-              onClick={() => stopAndLogTimer().then(success => success && alert("Timer Entry logged successfully!"))}
-              className="px-2 py-0.5 ml-1 bg-rose-500 text-white rounded text-[10px] font-extrabold hover:bg-rose-600 active:scale-95 transition-all select-none shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
-            >
-              Stop & Log
-            </button>
-          </div>
-        )}
+
 
         {/* Global smart command search trigger */}
         <button

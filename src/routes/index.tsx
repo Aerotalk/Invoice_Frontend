@@ -47,7 +47,6 @@ const ExpensesDashboard = lazy(() => import('../features/expenses/pages/Expenses
 const ProjectsList = lazy(() => import('../features/projects/pages/ProjectsList').then(m => ({ default: m.ProjectsList })));
 const ProjectDetails = lazy(() => import('../features/projects/pages/ProjectDetails').then(m => ({ default: m.ProjectDetails })));
 
-const TimeTrackingDashboard = lazy(() => import('../features/time-tracking/pages/TimeTrackingDashboard').then(m => ({ default: m.TimeTrackingDashboard })));
 const ReportsOverview = lazy(() => import('../features/reports/pages/ReportsOverview').then(m => ({ default: m.ReportsOverview })));
 const TeamDashboard = lazy(() => import('../features/team/pages/TeamDashboard').then(m => ({ default: m.TeamDashboard })));
 
@@ -87,9 +86,6 @@ export const AppRoutes: React.FC = () => {
           <Route path="projects" element={<ProjectsList />} />
           <Route path="projects/:id" element={<ProjectDetails />} />
 
-          {/* Background Timelines */}
-          <Route path="time-tracking" element={<TimeTrackingDashboard />} />
-          
           {/* Core Analytics & Reports */}
           <Route path="reports" element={<ReportsOverview />} />
           

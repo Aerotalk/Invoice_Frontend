@@ -18,13 +18,12 @@ export const DashboardLayout: React.FC = () => {
 
   // Apply default theme class to document body on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('invoiceiq_theme') || 'light';
-    if (savedTheme === 'dark') {
+    if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [theme]);
 
   // Protect path: Redirect to login if unauthenticated
   if (!isAuthenticated) {
