@@ -12,8 +12,8 @@ const getInitialTheme = (): 'light' | 'dark' => {
   const saved = localStorage.getItem('invoiceiq_theme');
   if (saved === 'light' || saved === 'dark') return saved;
   
-  // Default to dark mode for that premium developer feel
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'dark';
+  // Default to light mode as requested by user
+  return 'light';
 };
 
 export const useThemeStore = create<ThemeState>((set) => ({

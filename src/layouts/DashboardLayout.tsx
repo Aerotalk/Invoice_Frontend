@@ -18,7 +18,7 @@ export const DashboardLayout: React.FC = () => {
 
   // Apply default theme class to document body on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem('invoiceiq_theme') || 'dark';
+    const savedTheme = localStorage.getItem('invoiceiq_theme') || 'light';
     if (savedTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
