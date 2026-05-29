@@ -253,6 +253,34 @@ const initialInvoices: Invoice[] = [
     notes: "Thanks!",
     terms: "Due on completion.",
     isRecurring: false,
+  },
+  {
+    id: "INV-2026-007",
+    invoiceNumber: "INV-2026-007",
+    clientId: "c-1",
+    clientName: "Sarah Jenkins",
+    clientCompany: "Acme Corporation",
+    clientEmail: "sarah@acme.com",
+    issueDate: daysAgo(0),
+    dueDate: daysFromNow(30),
+    items: [
+      { id: "i-9", description: "UI/UX Strategic Consultation", quantity: 1, rate: 2891, total: 2891 }
+    ],
+    currency: "INR",
+    taxRate: 0,
+    taxAmount: 0,
+    discountRate: 0,
+    discountAmount: 0,
+    subtotal: 2891,
+    total: 2891,
+    amountPaid: 0,
+    amountDue: 2891,
+    status: "scheduled",
+    notes: "Automated cron schedule dispatch enabled.",
+    terms: "Due on delivery dispatch.",
+    isRecurring: false,
+    isScheduled: true,
+    scheduledSendDate: daysFromNow(5)
   }
 ];
 
@@ -519,7 +547,7 @@ const initialAuditLogs: AuditLog[] = [
   }
 ];
 
-const LOCAL_STORAGE_KEY = "invoiceiq_db_state";
+const LOCAL_STORAGE_KEY = "invoiceiq_db_state_v2";
 
 export const getMockDB = (): MockDatabase => {
   if (typeof window === "undefined") {

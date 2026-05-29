@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useAuthStore } from '../../../store/authStore';
 import { usePreferencesStore } from '../../../store/preferencesStore';
-import { 
-  Building, 
-  Key, 
-  Mail, 
-  Sliders, 
-  Eye, 
-  EyeOff, 
-  Copy, 
+import {
+  Building,
+  Key,
+  Mail,
+  Sliders,
+  Eye,
+  EyeOff,
+  Copy,
   Save,
   Shield,
   Palette
@@ -24,7 +24,7 @@ export const SettingsOverview: React.FC = () => {
   const [compName, setCompName] = useState(user?.companyName || "InvoiceIQ Inc.");
   const [adminName, setAdminName] = useState(user?.name || "Alex Sterling");
   const [email, setEmail] = useState(user?.email || "alex@invoiceiq.app");
-  
+
   // API key hide/show toggles
   const [showPubKey, setShowPubKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
@@ -54,17 +54,17 @@ export const SettingsOverview: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start select-none">
-        
+
         {/* Left: General Settings Form */}
         <div className="lg:col-span-2 space-y-6 select-none">
-          
+
           {/* Section 1: Company Profile Branding */}
           <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
             <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 select-none border-b pb-3 shrink-0">
               <Building className="w-4 h-4 text-indigo-500 shrink-0" />
               Company Branding Settings
             </h3>
-            
+
             <div className="grid grid-cols-2 gap-4 text-xs font-semibold select-none">
               <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1">
                 <label className="text-muted-foreground font-bold tracking-wide uppercase">Workspace Brand Name</label>
@@ -102,7 +102,7 @@ export const SettingsOverview: React.FC = () => {
               <Sliders className="w-4 h-4 text-indigo-500 shrink-0" />
               Invoices Default Preferences
             </h3>
-            
+
             <div className="grid grid-cols-2 gap-4 text-xs font-semibold select-none">
               <div className="flex flex-col gap-1.5 select-none col-span-2 sm:col-span-1">
                 <label className="text-muted-foreground font-bold tracking-wide uppercase">Standard Tax VAT (%)</label>
@@ -113,7 +113,7 @@ export const SettingsOverview: React.FC = () => {
                   className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70 text-center font-mono"
                 />
               </div>
-              
+
               <div className="flex flex-col gap-1.5 select-none col-span-2 sm:col-span-1">
                 <label className="text-muted-foreground font-bold tracking-wide uppercase">Standard Base Currency</label>
                 <select
@@ -155,7 +155,7 @@ export const SettingsOverview: React.FC = () => {
           </div>
 
           <div className="space-y-4 select-none text-xs font-semibold my-4">
-            
+
             {/* Public Key */}
             <div className="flex flex-col gap-1.5 select-none">
               <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Publishable Sandbox key</label>

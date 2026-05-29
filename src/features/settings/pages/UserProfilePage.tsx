@@ -56,6 +56,24 @@ export const UserProfilePage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1024 * 1024) {
+      alert("File size too large! Please choose a profile picture smaller than 1MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setAvatar(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddUrl = () => {
     if (!urlInput.trim()) return;
     if (logos.length >= 5) {
@@ -100,14 +118,26 @@ export const UserProfilePage: React.FC = () => {
 
             {/* Avatar uploader */}
             <div className="flex items-center gap-4 shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/15 p-4 rounded-xl border select-none mb-2">
-              <img 
-                src={avatar} 
-                alt="User Avatar"
-                className="w-12 h-12 rounded-xl object-cover border shadow-sm shrink-0" 
-              />
-              <div>
-                <span className="block font-bold text-foreground">Interactive Avatar</span>
-                <span className="block text-[9px] text-muted-foreground mt-0.5">Supply any public Unsplash URL below to update</span>
+              <div className="relative group shrink-0 select-none">
+                <img 
+                  src={avatar} 
+                  alt="User Avatar"
+                  className="w-16 h-16 rounded-xl object-cover border shadow-md shrink-0 transition-transform duration-300 group-hover:scale-105" 
+                />
+              </div>
+              <div className="space-y-1.5 select-none">
+                <span className="block font-bold text-foreground text-xs uppercase tracking-wider">Account Identity Avatar</span>
+                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-card hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-bold cursor-pointer select-none transition-colors active:scale-95 duration-150 shadow-sm border-dashed">
+                  <Upload className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                  Upload Profile Photo
+                  <input 
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden" 
+                  />
+                </label>
+                <span className="block text-[8px] text-muted-foreground font-semibold">Supports PNG, JPG or SVG (Max 1MB)</span>
               </div>
             </div>
 
@@ -131,23 +161,13 @@ export const UserProfilePage: React.FC = () => {
                 />
               </div>
               
-              <div className="flex flex-col gap-1.5 select-none col-span-2 sm:col-span-1">
+              <div className="flex flex-col gap-1.5 select-none col-span-2">
                 <label className="text-muted-foreground font-bold tracking-wide uppercase">Role Level</label>
                 <input
                   type="text"
                   disabled
                   value={role.toUpperCase()}
                   className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-slate-800/10 font-mono outline-none text-xs font-bold"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5 select-none col-span-2 sm:col-span-1">
-                <label className="text-muted-foreground font-bold tracking-wide uppercase">Avatar Image URL</label>
-                <input
-                  type="text"
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70"
                 />
               </div>
             </div>

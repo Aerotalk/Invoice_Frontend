@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Menu, 
-  Search, 
-  DollarSign, 
-  LogOut, 
-  User, 
-  Moon, 
-  Sun, 
-  Clock, 
-  Bot, 
-  ChevronDown, 
+import {
+  Menu,
+  Search,
+  DollarSign,
+  LogOut,
+  User,
+  Moon,
+  Sun,
+  Clock,
+  Bot,
+  ChevronDown,
   Globe,
   Settings,
   CreditCard
@@ -50,11 +50,11 @@ export const Navbar: React.FC = () => {
     return paths.map((p, idx) => {
       const isLast = idx === paths.length - 1;
       let label = p.charAt(0).toUpperCase() + p.slice(1);
-      
+
       // Formatting specific routes nicely
       if (label === 'Settings') label = 'Settings';
       if (label === 'Subscription') label = 'SaaS Subscription';
-      
+
       return {
         label,
         active: isLast,
@@ -98,7 +98,7 @@ export const Navbar: React.FC = () => {
 
       {/* Navbar Right: Analytics / Controls Toolbar */}
       <div className="flex items-center gap-2.5">
-        
+
 
 
         {/* Global smart command search trigger */}
@@ -152,14 +152,14 @@ export const Navbar: React.FC = () => {
               />
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
             </button>
-            
+
             {profileDropdownOpen && (
               <>
-                <div 
+                <div
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="fixed inset-0 z-40 select-none" 
+                  className="fixed inset-0 z-40 select-none"
                 />
-                
+
                 <div className="absolute right-0 mt-2.5 w-52 bg-card border rounded-xl shadow-2xl z-50 overflow-hidden select-none divide-y text-xs">
                   {/* Bio */}
                   <div className="p-4 bg-slate-50/50 dark:bg-[#0b101c]/15">

@@ -15,11 +15,11 @@ const getInitialUser = (): UserProfile | null => {
   // Clear any existing session cached in the browser when accessing the root home URL
   // to guarantee the Login page always comes first on first link entry.
   if (window.location.pathname === '/') {
-    localStorage.removeItem('invoiceiq_user');
+    localStorage.removeItem('invoiceiq_user_v2');
     return null;
   }
   
-  const saved = localStorage.getItem('invoiceiq_user');
+  const saved = localStorage.getItem('invoiceiq_user_v2');
   if (saved) {
     try {
       return JSON.parse(saved);
@@ -48,23 +48,27 @@ export const useAuthStore = create<AuthState>((set) => ({
         : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
       companyName: "InvoiceIQ Labs",
       currency: "USD",
-      logos: []
+      logos: [
+        `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%23064e3b"/><circle cx="20" cy="20" r="12" fill="%2310b981"/><polygon points="20,13 22,18 27,18 23,21 25,26 20,23 15,26 17,21 13,18 18,18" fill="%23ffffff"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">STARLIGHT</text></svg>`,
+        `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%231e3a8a"/><path d="M12,20 C12,12 28,12 28,20 C28,28 12,28 12,20 Z" stroke="%233b82f6" stroke-width="3" fill="none"/><path d="M16,20 C16,15 24,15 24,20 C24,25 16,25 16,20 Z" stroke="%2360a5fa" stroke-width="2" fill="none"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">VORTEX</text></svg>`,
+        `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%237c2d12"/><polygon points="12,28 20,12 28,28 20,22" fill="%23f97316"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">APEX LABS</text></svg>`
+      ]
     };
 
-    localStorage.setItem('invoiceiq_user', JSON.stringify(mockUser));
+    localStorage.setItem('invoiceiq_user_v2', JSON.stringify(mockUser));
     set({ user: mockUser, isAuthenticated: true });
     return true;
   },
 
   logout: () => {
-    localStorage.removeItem('invoiceiq_user');
+    localStorage.removeItem('invoiceiq_user_v2');
     set({ user: null, isAuthenticated: false });
   },
 
   updateProfile: (profile) => set((state) => {
     if (!state.user) return {};
     const updated = { ...state.user, ...profile };
-    localStorage.setItem('invoiceiq_user', JSON.stringify(updated));
+    localStorage.setItem('invoiceiq_user_v2', JSON.stringify(updated));
     return { user: updated };
   })
 }));
