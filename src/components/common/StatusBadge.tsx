@@ -37,6 +37,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     styles = "bg-rose-50 text-rose-700 border-rose-200/50 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20";
     dotColor = "bg-rose-500";
     label = norm === 'overdue' ? 'Overdue' : norm === 'failed' ? 'Failed' : norm === 'inactive' ? 'Inactive' : 'On Hold';
+  } else if (norm === 'scheduled') {
+    styles = "bg-purple-50 text-purple-700 border-purple-200/50 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20";
+    dotColor = "bg-purple-500";
+    label = 'Scheduled';
   } else if (norm === 'draft' || norm === 'todo') {
     styles = "bg-slate-100 text-slate-600 border-slate-200/60 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700/60";
     dotColor = "bg-slate-400 dark:bg-slate-500";

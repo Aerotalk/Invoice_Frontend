@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileText, Eye, MoreHorizontal, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, FileText, Eye, MoreHorizontal, Copy, CheckCircle2, AlertCircle, Pencil } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -161,6 +161,16 @@ export const InvoicesList: React.FC = () => {
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   View Details
                 </Link>
+                {row.status === 'draft' && (
+                  <Link
+                    to={`/dashboard/invoices/${row.id}/edit`}
+                    onClick={() => setActiveMenuId(null)}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted text-indigo-500/80 hover:text-indigo-500 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    Edit Draft
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     handleDuplicate(row.id);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useParams } from 'react-router-dom';
 import { 
   Plus, 
   Trash2, 
@@ -12,13 +12,16 @@ import {
   Percent, 
   DollarSign, 
   Zap,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Pencil
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { cn } from '../../../lib/utils';
+import { useAuthStore } from '../../../store/authStore';
 
 interface LineItemInput {
   description: string;
@@ -29,9 +32,13 @@ interface LineItemInput {
 export const InvoiceBuilder: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams<{ id: string }>();
+  const isEditMode = !!id;
   const { currency: globalCurrency, defaultTaxRate } = usePreferencesStore();
 
   // Seeding list
+  const { user } = useAuthStore();
+  const [selectedLogo, setSelectedLogo] = useState<string>("");
   const [clients, setClients] = useState<any[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -52,6 +59,9 @@ export const InvoiceBuilder: React.FC = () => {
   const [terms, setTerms] = useState("Due within 30 days of invoice generation date.");
   const [loading, setLoading] = useState(false);
 
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledSendDate, setScheduledSendDate] = useState("");
+
   // Load clients & preload state
   useEffect(() => {
     const init = async () => {
@@ -59,29 +69,53 @@ export const InvoiceBuilder: React.FC = () => {
         const clientList = await apiService.getClients();
         setClients(clientList);
         
-        // Auto-increment invoice number seed
-        const invs = await apiService.getInvoices();
-        const nextId = `INV-2026-${(invs.length + 1).toString().padStart(3, '0')}`;
-        setInvoiceNumber(nextId);
+        if (isEditMode && id) {
+          // Fetch existing invoice to pre-populate form
+          const inv = await apiService.getInvoiceById(id);
+          setSelectedClientId(inv.clientId);
+          setInvoiceNumber(inv.invoiceNumber);
+          setIssueDate(inv.issueDate);
+          setDueDate(inv.dueDate);
+          setItems(inv.items.map(item => ({
+            description: item.description,
+            quantity: item.quantity,
+            rate: item.rate
+          })));
+          setTaxRate(inv.taxRate);
+          setDiscountRate(inv.discountRate);
+          setCurrency(inv.currency);
+          setNotes(inv.notes);
+          setTerms(inv.terms);
+          setSelectedLogo(inv.logo || "");
+          setIsScheduled(inv.isScheduled || false);
+          setScheduledSendDate(inv.scheduledSendDate || "");
+        } else {
+          // Auto-increment invoice number seed for new invoice
+          const invs = await apiService.getInvoices();
+          const nextId = `INV-2026-${(invs.length + 1).toString().padStart(3, '0')}`;
+          setInvoiceNumber(nextId);
 
-        // Preload state check
-        const preselectedId = location.state?.preselectedClientId;
-        if (preselectedId && clientList.some((c: any) => c.id === preselectedId)) {
-          setSelectedClientId(preselectedId);
-        } else if (clientList.length > 0) {
-          setSelectedClientId(clientList[0].id);
+          // Preload state check
+          const preselectedId = location.state?.preselectedClientId;
+          if (preselectedId && clientList.some((c: any) => c.id === preselectedId)) {
+            setSelectedClientId(preselectedId);
+          } else if (clientList.length > 0) {
+            setSelectedClientId(clientList[0].id);
+          }
         }
       } catch (e) {
         console.error(e);
       }
     };
     init();
-  }, [location]);
+  }, [location, id, isEditMode]);
 
   // Update currency when global change occurs
   useEffect(() => {
-    setCurrency(globalCurrency);
-  }, [globalCurrency]);
+    if (!isEditMode) {
+      setCurrency(globalCurrency);
+    }
+  }, [globalCurrency, isEditMode]);
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -141,27 +175,69 @@ export const InvoiceBuilder: React.FC = () => {
 
     setLoading(true);
     try {
-      await apiService.createInvoice({
-        invoiceNumber,
-        clientId: selectedClientId,
-        clientName: selectedClient?.name || "",
-        clientCompany: selectedClient?.company || "",
-        clientEmail: selectedClient?.email || "",
-        issueDate,
-        dueDate,
-        items: items.map(item => ({
+      const nextStatus = isScheduled && status === 'sent' ? 'scheduled' : status;
+
+      if (isEditMode && id) {
+        // Items recalculations
+        const itemsWithIds = items.map((item, index) => ({
           ...item,
+          id: `i-${Date.now()}-${index}`,
           total: item.quantity * item.rate
-        })),
-        currency,
-        taxRate,
-        discountRate,
-        notes,
-        terms,
-        isRecurring: false,
-        status
-      });
-      alert(status === 'sent' ? "Invoice issued and email sent successfully!" : "Invoice saved as Draft!");
+        }));
+
+        await apiService.updateInvoice(id, {
+          invoiceNumber,
+          clientId: selectedClientId,
+          clientName: selectedClient?.name || "",
+          clientCompany: selectedClient?.company || "",
+          clientEmail: selectedClient?.email || "",
+          issueDate,
+          dueDate,
+          items: itemsWithIds,
+          currency,
+          taxRate,
+          discountRate,
+          notes,
+          terms,
+          isRecurring: false,
+          status: nextStatus,
+          logo: selectedLogo || undefined,
+          isScheduled,
+          scheduledSendDate: isScheduled ? scheduledSendDate : "",
+          subtotal,
+          discountAmount,
+          taxAmount,
+          total: finalTotal,
+          amountPaid: 0,
+          amountDue: finalTotal,
+        });
+        alert(nextStatus === 'scheduled' ? "Invoice scheduled successfully!" : nextStatus === 'sent' ? "Invoice issued and email sent successfully!" : "Invoice changes saved!");
+      } else {
+        await apiService.createInvoice({
+          invoiceNumber,
+          clientId: selectedClientId,
+          clientName: selectedClient?.name || "",
+          clientCompany: selectedClient?.company || "",
+          clientEmail: selectedClient?.email || "",
+          issueDate,
+          dueDate,
+          items: items.map(item => ({
+            ...item,
+            total: item.quantity * item.rate
+          })),
+          currency,
+          taxRate,
+          discountRate,
+          notes,
+          terms,
+          isRecurring: false,
+          status: nextStatus,
+          logo: selectedLogo || undefined,
+          isScheduled,
+          scheduledSendDate: isScheduled ? scheduledSendDate : ""
+        } as any);
+        alert(nextStatus === 'scheduled' ? "Invoice scheduled successfully!" : nextStatus === 'sent' ? "Invoice issued and email sent successfully!" : "Invoice saved as Draft!");
+      }
       navigate("/dashboard/invoices");
     } catch (e) {
       console.error(e);
@@ -191,15 +267,15 @@ export const InvoiceBuilder: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-extrabold active:scale-95 transition-all select-none disabled:opacity-40"
           >
             <Save className="w-3.5 h-3.5" />
-            Save Draft
+            {isEditMode ? "Save Changes" : "Save Draft"}
           </button>
           <button
             onClick={() => handleSaveInvoice('sent')}
             disabled={loading}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 select-none disabled:opacity-40"
           >
-            <Send className="w-3.5 h-3.5 shrink-0" />
-            Send Invoice
+            {isScheduled ? <Calendar className="w-3.5 h-3.5 shrink-0" /> : <Send className="w-3.5 h-3.5 shrink-0" />}
+            {isScheduled ? "Schedule Send" : "Send Invoice"}
           </button>
         </div>
       </div>
@@ -235,10 +311,33 @@ export const InvoiceBuilder: React.FC = () => {
               <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Invoice ID Code</label>
               <input
                 type="text"
+                disabled={isEditMode}
                 value={invoiceNumber}
                 onChange={(e) => setInvoiceNumber(e.target.value)}
-                className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70"
+                className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70 disabled:opacity-60 disabled:cursor-not-allowed"
               />
+            </div>
+
+            {/* Logo Picker */}
+            <div className="flex flex-col gap-1.5 col-span-2 select-none mt-2">
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Branding Invoice Logo</label>
+              <div className="flex items-center gap-4">
+                <select
+                  value={selectedLogo}
+                  onChange={(e) => setSelectedLogo(e.target.value)}
+                  className="flex-1 px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70 cursor-pointer"
+                >
+                  <option value="">Default Brand (InvoiceIQ Logo)</option>
+                  {(user?.logos || []).map((logoUrl, index) => (
+                    <option key={index} value={logoUrl}>Custom Logo #{index + 1}</option>
+                  ))}
+                </select>
+                {selectedLogo && (
+                  <div className="h-10 w-16 border rounded bg-white flex items-center justify-center p-1 shrink-0 shadow-sm transition-all duration-200">
+                    <img src={selectedLogo} alt="Logo preview" className="max-h-full max-w-full object-contain" />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -280,6 +379,37 @@ export const InvoiceBuilder: React.FC = () => {
                 <option value="JPY">JPY (¥)</option>
               </select>
             </div>
+          </div>
+
+          {/* Delivery Scheduling Panel */}
+          <div className="flex flex-col gap-1.5 select-none border-b pb-6 mt-4">
+            <label className="flex items-center gap-2.5 cursor-pointer font-bold text-foreground select-none text-[10px] uppercase tracking-wider">
+              <input
+                type="checkbox"
+                checked={isScheduled}
+                onChange={(e) => setIsScheduled(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border accent-indigo-500 cursor-pointer"
+              />
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                Schedule Automatic Dispatched Delivery
+              </span>
+            </label>
+            {isScheduled && (
+              <div className="grid grid-cols-1 gap-2.5 mt-2.5 pl-6 border-l-2 border-indigo-500/30 animate-fade-in">
+                <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Select Scheduled Dispatched Date</label>
+                <input
+                  type="date"
+                  min={new Date().toISOString().split('T')[0]}
+                  value={scheduledSendDate}
+                  onChange={(e) => setScheduledSendDate(e.target.value)}
+                  className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70"
+                />
+                <p className="text-[10px] text-muted-foreground font-semibold">
+                  This invoice will automatically transition to <strong className="text-indigo-400">Scheduled</strong> status and deliver via cron on the selected date.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* DYNAMIC LINE ITEMS EDITOR */}
@@ -392,11 +522,17 @@ export const InvoiceBuilder: React.FC = () => {
             {/* Paper Header */}
             <div className="flex justify-between border-b pb-6 select-none shrink-0 items-start">
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-                    <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
-                  </div>
-                  <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">InvoiceIQ</span>
+                <div className="flex items-center gap-2 h-8">
+                  {selectedLogo ? (
+                    <img src={selectedLogo} alt="Company Logo" className="max-h-full max-w-[140px] object-contain shrink-0" />
+                  ) : (
+                    <>
+                      <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
+                        <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
+                      </div>
+                      <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">InvoiceIQ</span>
+                    </>
+                  )}
                 </div>
                 <span className="text-[9px] text-slate-400 font-semibold block mt-1.5">100 Pine Street, San Francisco, CA 94111</span>
               </div>

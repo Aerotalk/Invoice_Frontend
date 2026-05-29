@@ -76,6 +76,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="invoices" element={<InvoicesList />} />
           <Route path="invoices/create" element={<InvoiceBuilder />} />
           <Route path="invoices/:id" element={<InvoiceDetails />} />
+          <Route path="invoices/:id/edit" element={<InvoiceBuilder />} />
           <Route path="estimates" element={<EstimatesList />} />
 
           {/* Payments & Expenditures */}

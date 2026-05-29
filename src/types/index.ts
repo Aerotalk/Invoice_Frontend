@@ -1,4 +1,4 @@
-export type InvoiceStatus = 'draft' | 'sent' | 'viewd' | 'paid' | 'partial' | 'overdue' | 'viewed';
+export type InvoiceStatus = 'draft' | 'sent' | 'viewd' | 'paid' | 'partial' | 'overdue' | 'viewed' | 'scheduled';
 
 export interface InvoiceItem {
   id: string;
@@ -32,6 +32,9 @@ export interface Invoice {
   terms: string;
   isRecurring: boolean;
   recurringInterval?: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  logo?: string;
+  isScheduled?: boolean;
+  scheduledSendDate?: string;
 }
 
 export type ClientStatus = 'active' | 'inactive';
@@ -154,4 +157,5 @@ export interface UserProfile {
   avatar: string;
   companyName: string;
   currency: string;
+  logos?: string[];
 }

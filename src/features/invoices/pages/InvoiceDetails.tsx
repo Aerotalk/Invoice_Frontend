@@ -11,7 +11,8 @@ import {
   Printer, 
   Zap, 
   Mail,
-  Info
+  Info,
+  Pencil
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -102,6 +103,15 @@ export const InvoiceDetails: React.FC = () => {
         
         {/* DUPLICATE ACCENTS TOOLBAR */}
         <div className="flex items-center gap-2 select-none shrink-0">
+          {invoice.status === 'draft' && (
+            <Link
+              to={`/dashboard/invoices/${invoice.id}/edit`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-extrabold transition-all active:scale-95 select-none"
+            >
+              <Pencil className="w-3.5 h-3.5 shrink-0" />
+              Edit Draft
+            </Link>
+          )}
           <button
             onClick={handleDuplicate}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-extrabold active:scale-95 transition-all select-none"
@@ -142,11 +152,17 @@ export const InvoiceDetails: React.FC = () => {
             {/* Paper Brand Header */}
             <div className="flex justify-between border-b pb-6 select-none shrink-0 items-start">
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
-                    <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
-                  </div>
-                  <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">InvoiceIQ</span>
+                <div className="flex items-center gap-2 h-8">
+                  {invoice.logo ? (
+                    <img src={invoice.logo} alt="Company Logo" className="max-h-full max-w-[140px] object-contain shrink-0" />
+                  ) : (
+                    <>
+                      <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
+                        <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
+                      </div>
+                      <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">InvoiceIQ</span>
+                    </>
+                  )}
                 </div>
                 <span className="text-[9px] text-slate-400 font-semibold block mt-1.5">100 Pine Street, San Francisco, CA 94111</span>
               </div>
