@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { Drawer } from '../../../components/common/Drawer';
 import { apiService } from '../../../services/api';
-import { 
-  UserPlus, 
-  Mail, 
-  Shield, 
-  Users, 
-  Check, 
+import {
+  UserPlus,
+  Mail,
+  Shield,
+  Users,
+  Check,
   Activity,
   UserCheck,
   Calendar
@@ -104,15 +104,15 @@ export const TeamDashboard: React.FC = () => {
 
       {/* Member List Grid & System Log Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start select-none">
-        
+
         {/* Left: Member Cards */}
         <div className="lg:col-span-2 space-y-4 select-none">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block px-1">Workspace Members ({members.length})</span>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 select-none">
             {members.map((member) => (
-              <div 
-                key={member.id} 
+              <div
+                key={member.id}
                 className="p-5 border rounded-xl bg-card text-card-foreground shadow-premium flex items-center justify-between gap-4 select-none"
               >
                 <div className="flex items-center gap-3 select-none">
@@ -133,8 +133,8 @@ export const TeamDashboard: React.FC = () => {
                 <div className="text-right shrink-0 select-none">
                   <span className={cn(
                     "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-extrabold border select-none uppercase tracking-wide",
-                    member.status === 'active' 
-                      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/15" 
+                    member.status === 'active'
+                      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/15"
                       : "text-amber-500 bg-amber-500/10 border-amber-500/15"
                   )}>
                     {member.status}
@@ -143,36 +143,6 @@ export const TeamDashboard: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Right: Chronological System logs */}
-        <div className="border rounded-xl bg-card p-5 shadow-premium space-y-4 select-none h-[420px] flex flex-col justify-between">
-          <div className="border-b pb-3 shrink-0">
-            <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 select-none">
-              <Activity className="w-4 h-4 text-indigo-500" />
-              Workspace Audit Trails
-            </h3>
-          </div>
-
-          <div className="flex-1 mt-4 overflow-y-auto space-y-4 pr-1 scrollbar-thin select-none text-xs">
-            {logs.map((log: any) => (
-              <div key={log.id} className="flex gap-2.5 relative select-none">
-                <div className="relative shrink-0 flex flex-col items-center">
-                  <span className="w-1.5 h-1.5 rounded-full mt-1.5 z-10 shrink-0 bg-indigo-500" />
-                  <div className="w-px h-full bg-border absolute top-3.5 z-0" />
-                </div>
-                <div>
-                  <span className="block font-bold text-foreground leading-snug">{log.action}</span>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{log.details}</p>
-                  <span className="text-[9px] text-slate-400 font-semibold block mt-1 uppercase tracking-wider">{formatDate(log.timestamp)}</span>
-                </div>
-              </div>
-            ))}
-            
-            {logs.length === 0 && (
-              <div className="py-12 text-center text-muted-foreground select-none">No records registered.</div>
-            )}
           </div>
         </div>
 
