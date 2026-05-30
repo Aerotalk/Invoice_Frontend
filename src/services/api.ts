@@ -1,5 +1,5 @@
 import { getMockDB, saveMockDB, MockDatabase } from '../mock/database';
-import { Invoice, Client, Payment, Expense, Project, TimeEntry, AuditLog } from '../types';
+import { Invoice, Client, Payment, Expense, Project, TimeEntry, AuditLog, Product, Quote, DeliveryChallan } from '../types';
 
 // Network latency simulator
 const delay = (ms: number = 400) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -118,6 +118,302 @@ export const apiService = {
     );
     saveMockDB(db);
     return db.clients.find(c => c.id === id);
+  },
+
+  deleteClient: async (id: string) => {
+    await delay(350);
+    const db = getMockDB();
+    db.clients = db.clients.filter(c => c.id !== id);
+    db.invoices = db.invoices.filter(i => i.clientId !== id);
+    db.projects = db.projects.filter(p => p.clientId !== id);
+    
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Client Deleted",
+      details: `Deleted client and related data for ID ${id}`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return true;
+  },
+
+  // --- VENDORS MODULE ---
+  getVendors: async () => {
+    await delay(400);
+    return getMockDB().vendors || [];
+  },
+
+  getVendorById: async (id: string) => {
+    await delay(200);
+    const db = getMockDB();
+    const vendor = (db.vendors || []).find(v => v.id === id);
+    if (!vendor) throw new Error("Vendor not found");
+
+    const expenses = db.expenses.filter(e => 
+      e.description.toLowerCase().includes(vendor.name.toLowerCase()) || 
+      e.description.toLowerCase().includes(vendor.company.toLowerCase())
+    );
+
+    return {
+      vendor,
+      expenses
+    };
+  },
+
+  createVendor: async (vendorData: any) => {
+    await delay(500);
+    const db = getMockDB();
+    const newVendor = {
+      ...vendorData,
+      id: `v-${Date.now()}`,
+      totalBilled: vendorData.totalBilled || 0,
+      outstandingAmount: vendorData.outstandingAmount || 0,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    db.vendors = [newVendor, ...(db.vendors || [])];
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Vendor Added",
+      details: `Added new vendor ${newVendor.name} (${newVendor.company})`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return newVendor;
+  },
+
+  updateVendor: async (id: string, vendorData: any) => {
+    await delay(400);
+    const db = getMockDB();
+    db.vendors = (db.vendors || []).map(v => 
+      v.id === id ? { ...v, ...vendorData } : v
+    );
+    saveMockDB(db);
+    return (db.vendors || []).find(v => v.id === id);
+  },
+
+  deleteVendor: async (id: string) => {
+    await delay(350);
+    const db = getMockDB();
+    db.vendors = (db.vendors || []).filter(v => v.id !== id);
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Vendor Deleted",
+      details: `Deleted vendor ID ${id}`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return true;
+  },
+
+  // --- PRODUCTS MODULE ---
+  getProducts: async () => {
+    await delay(300);
+    return getMockDB().products || [];
+  },
+
+  createProduct: async (productData: any) => {
+    await delay(400);
+    const db = getMockDB();
+    const newProduct = {
+      ...productData,
+      id: `p-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    db.products = [newProduct, ...(db.products || [])];
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Product Added",
+      details: `Added new item: ${newProduct.name} (${newProduct.type})`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return newProduct;
+  },
+
+  updateProduct: async (id: string, productData: any) => {
+    await delay(300);
+    const db = getMockDB();
+    db.products = (db.products || []).map(p => 
+      p.id === id ? { ...p, ...productData } : p
+    );
+    saveMockDB(db);
+    return (db.products || []).find(p => p.id === id);
+  },
+
+  deleteProduct: async (id: string) => {
+    await delay(300);
+    const db = getMockDB();
+    db.products = (db.products || []).filter(p => p.id !== id);
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Product Deleted",
+      details: `Deleted product ID ${id}`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return true;
+  },
+
+  getProductUnits: async () => {
+    await delay(100);
+    return getMockDB().productUnits || [];
+  },
+
+  saveProductUnits: async (units: string[]) => {
+    await delay(200);
+    const db = getMockDB();
+    db.productUnits = units;
+    saveMockDB(db);
+    return units;
+  },
+
+  // --- QUOTATIONS MODULE ---
+  getQuotes: async () => {
+    await delay(300);
+    return getMockDB().quotes || [];
+  },
+
+  createQuote: async (quoteData: any) => {
+    await delay(500);
+    const db = getMockDB();
+    const newQuote: Quote = {
+      ...quoteData,
+      id: `q-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    db.quotes = [newQuote, ...(db.quotes || [])];
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Quote Created",
+      details: `Created quotation ${newQuote.quoteNumber} for client ${newQuote.clientName} (Total: ${newQuote.total})`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return newQuote;
+  },
+
+  updateQuote: async (id: string, quoteData: any) => {
+    await delay(400);
+    const db = getMockDB();
+    db.quotes = (db.quotes || []).map(q => 
+      q.id === id ? { ...q, ...quoteData } as Quote : q
+    );
+    saveMockDB(db);
+    return (db.quotes || []).find(q => q.id === id);
+  },
+
+  deleteQuote: async (id: string) => {
+    await delay(350);
+    const db = getMockDB();
+    db.quotes = (db.quotes || []).filter(q => q.id !== id);
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Quote Deleted",
+      details: `Deleted quotation ID ${id}`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return true;
+  },
+
+  getSalespersons: async () => {
+    await delay(100);
+    return getMockDB().salespersons || [];
+  },
+
+  createSalesperson: async (name: string) => {
+    await delay(200);
+    const db = getMockDB();
+    if (!db.salespersons) db.salespersons = [];
+    if (!db.salespersons.includes(name)) {
+      db.salespersons = [...db.salespersons, name];
+    }
+    saveMockDB(db);
+    return db.salespersons;
+  },
+
+  // --- DELIVERY CHALLANS MODULE ---
+  getChallans: async () => {
+    await delay(300);
+    return getMockDB().deliveryChallans || [];
+  },
+
+  createChallan: async (challanData: any) => {
+    await delay(500);
+    const db = getMockDB();
+    const newChallan: DeliveryChallan = {
+      ...challanData,
+      id: `dc-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    db.deliveryChallans = [newChallan, ...(db.deliveryChallans || [])];
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Challan Created",
+      details: `Created delivery challan ${newChallan.challanNumber} for client ${newChallan.clientName} (Reason: ${newChallan.challanType})`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return newChallan;
+  },
+
+  updateChallan: async (id: string, challanData: any) => {
+    await delay(400);
+    const db = getMockDB();
+    db.deliveryChallans = (db.deliveryChallans || []).map(dc => 
+      dc.id === id ? { ...dc, ...challanData } as DeliveryChallan : dc
+    );
+    saveMockDB(db);
+    return (db.deliveryChallans || []).find(dc => dc.id === id);
+  },
+
+  deleteChallan: async (id: string) => {
+    await delay(350);
+    const db = getMockDB();
+    db.deliveryChallans = (db.deliveryChallans || []).filter(dc => dc.id !== id);
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Challan Deleted",
+      details: `Deleted delivery challan ID ${id}`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return true;
   },
 
   // --- INVOICES MODULE ---
@@ -348,6 +644,28 @@ export const apiService = {
     db.expenses = [newExpense, ...db.expenses];
     saveMockDB(db);
     return newExpense;
+  },
+
+  createExpensesBulk: async (expensesList: any[]) => {
+    await delay(600);
+    const db = getMockDB();
+    const newExpenses: Expense[] = expensesList.map((e, idx) => ({
+      ...e,
+      id: `e-${Date.now()}-${idx}`
+    }));
+    db.expenses = [...newExpenses, ...db.expenses];
+
+    const log: AuditLog = {
+      id: `al-${Date.now()}`,
+      user: "Admin",
+      action: "Bulk Expenses Added",
+      details: `Added ${newExpenses.length} expenses in a bulk transaction`,
+      timestamp: new Date().toISOString()
+    };
+    db.auditLogs = [log, ...db.auditLogs];
+
+    saveMockDB(db);
+    return newExpenses;
   },
 
   deleteExpense: async (id: string) => {

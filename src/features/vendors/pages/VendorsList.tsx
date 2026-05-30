@@ -67,8 +67,8 @@ const countryPhoneCodes = [
 ];
 
 // Expanded Zod validation schema matching Zoho-like advanced capabilities
-const clientSchema = zod.object({
-  clientType: zod.enum(['individual', 'business']),
+const vendorSchema = zod.object({
+  vendorType: zod.enum(['individual', 'business']),
   salutation: zod.string(),
   firstName: zod.string().min(2, { message: "First name must be at least 2 characters" }),
   lastName: zod.string().min(1, { message: "Last name must be at least 1 character" }),
@@ -119,7 +119,7 @@ const clientSchema = zod.object({
   remarks: zod.string()
 });
 
-type ClientFormValues = zod.infer<typeof clientSchema>;
+type VendorFormValues = zod.infer<typeof vendorSchema>;
 
 interface ContactPerson {
   id: string;
@@ -136,11 +136,11 @@ interface CustomField {
   value: string;
 }
 
-export const ClientsList: React.FC = () => {
-  const [clients, setClients] = useState<any[]>([]);
+export const VendorsList: React.FC = () => {
+  const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [activeClientMenu, setActiveClientMenu] = useState<string | null>(null);
+  const [activeVendorMenu, setActiveVendorMenu] = useState<string | null>(null);
   
   // Interactive form tab control
   const [activeFormTab, setActiveFormTab] = useState<'other' | 'address' | 'contacts' | 'custom' | 'remarks'>('other');
@@ -149,10 +149,10 @@ export const ClientsList: React.FC = () => {
   const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([
     { id: 'cf-1', label: 'GSTIN', value: '' },
-    { id: 'cf-2', label: 'Industry', value: 'Technology' }
+    { id: 'cf-2', label: 'Category', value: 'Cloud / Tech' }
   ]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([
-    { name: 'tax_exemption_cert.pdf', size: '1.2 MB' }
+    { name: 'service_agreement.pdf', size: '2.4 MB' }
   ]);
   
   // Secondary Contact Form row state
@@ -170,10 +170,10 @@ export const ClientsList: React.FC = () => {
   const { currency } = usePreferencesStore();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientFormValues>({
-    resolver: zodResolver(clientSchema),
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<VendorFormValues>({
+    resolver: zodResolver(vendorSchema),
     defaultValues: {
-      clientType: 'business',
+      vendorType: 'business',
       salutation: 'Mr.',
       firstName: '',
       lastName: '',
@@ -205,7 +205,7 @@ export const ClientsList: React.FC = () => {
     }
   });
 
-  const clientType = watch("clientType");
+  const vendorType = watch("vendorType");
   const watchFirstName = watch("firstName");
   const watchLastName = watch("lastName");
   const watchCompany = watch("company");
@@ -214,12 +214,12 @@ export const ClientsList: React.FC = () => {
   const shippingCountry = watch("shippingCountry");
   const shippingState = watch("shippingState");
 
-  // Load clients
-  const loadClients = async () => {
+  // Load vendors
+  const loadVendors = async () => {
     setLoading(true);
     try {
-      const res = await apiService.getClients();
-      setClients(res);
+      const res = await apiService.getVendors();
+      setVendors(res);
     } catch (e) {
       console.error(e);
     } finally {
@@ -228,18 +228,18 @@ export const ClientsList: React.FC = () => {
   };
 
   useEffect(() => {
-    loadClients();
+    loadVendors();
   }, []);
 
-  // Auto derivation of client display name
+  // Auto derivation of vendor display name
   useEffect(() => {
-    if (clientType === 'individual') {
+    if (vendorType === 'individual') {
       const derived = `${watchFirstName || ''} ${watchLastName || ''}`.trim();
       setValue("displayName", derived);
     } else {
       setValue("displayName", watchCompany || '');
     }
-  }, [clientType, watchFirstName, watchLastName, watchCompany, setValue]);
+  }, [vendorType, watchFirstName, watchLastName, watchCompany, setValue]);
 
   // Billing address dependents
   useEffect(() => {
@@ -343,7 +343,7 @@ export const ClientsList: React.FC = () => {
       alert("Maximum of 3 files allowed.");
       return;
     }
-    const files = ['nda_agreement_signed.pdf', 'invoice_guide.docx', 'client_onboarding.pdf', 'business_licence.png'];
+    const files = ['vendor_licence.pdf', 'security_audit.pdf', 'terms_of_service.docx'];
     const selected = files[Math.floor(Math.random() * files.length)];
     const size = `${(Math.random() * 4 + 1).toFixed(1)} MB`;
     
@@ -355,17 +355,17 @@ export const ClientsList: React.FC = () => {
   };
 
   // Form submission
-  const onSubmitClient = async (values: ClientFormValues) => {
+  const onSubmitVendor = async (values: VendorFormValues) => {
     try {
       const fullName = `${values.salutation ? values.salutation + ' ' : ''}${values.firstName} ${values.lastName}`.trim();
       
       const payload = {
-        clientType: values.clientType,
+        vendorType: values.vendorType,
         name: fullName,
-        company: values.clientType === 'individual' ? "Individual Client" : (values.company || "Individual Client"),
+        company: values.vendorType === 'individual' ? "Individual Vendor" : (values.company || "Individual Vendor"),
         email: values.email,
         phone: values.mobile ? `${values.mobileCode} ${values.mobile}` : `${values.workPhoneCode} ${values.workPhone}`,
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+        avatar: "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150",
         status: "active" as const,
         notes: values.remarks || "",
         
@@ -411,44 +411,44 @@ export const ClientsList: React.FC = () => {
         documentsCount: uploadedDocuments.length
       };
 
-      await apiService.createClient(payload);
-      alert("Client profile added successfully!");
+      await apiService.createVendor(payload);
+      alert("Vendor profile added successfully!");
       setDrawerOpen(false);
       reset();
       setContactPersons([]);
-      setUploadedDocuments([{ name: 'tax_exemption_cert.pdf', size: '1.2 MB' }]);
-      loadClients();
+      setUploadedDocuments([{ name: 'service_agreement.pdf', size: '2.4 MB' }]);
+      loadVendors();
     } catch (e) {
       console.error(e);
-      alert("Failed to save client details.");
+      alert("Failed to save vendor details.");
     }
   };
 
-  // Modern clean columns inheriting Inter sans-serif (removes AI-looking font-mono)
+  // Modern clean columns inheriting Inter sans-serif
   const columns: ColumnDef<any>[] = [
     {
-      header: "Client & Company",
+      header: "Vendor & Company",
       accessorKey: "name",
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
           <img 
-            src={row.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} 
+            src={row.avatar || "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150"} 
             alt={row.name} 
             className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0" 
           />
           <div>
             <Link 
-              to={`/dashboard/clients/${row.id}`} 
+              to={`/dashboard/vendors/${row.id}`} 
               className="block text-xs font-bold text-foreground hover:text-primary hover:underline transition-colors"
             >
               {row.name}
             </Link>
             <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 font-semibold mt-0.5">
-              {row.clientType === 'individual' ? (
+              {row.vendorType === 'individual' ? (
                 <>
-                  <User className="w-3 h-3 text-slate-400 shrink-0" />
-                  Individual Client
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Individual Vendor
                 </>
               ) : (
                 <>
@@ -505,55 +505,46 @@ export const ClientsList: React.FC = () => {
       cell: (row) => (
         <div className="relative select-none">
           <button
-            onClick={() => setActiveClientMenu(activeClientMenu === row.id ? null : row.id)}
+            onClick={() => setActiveVendorMenu(activeVendorMenu === row.id ? null : row.id)}
             className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-all select-none cursor-pointer"
           >
             <MoreHorizontal className="w-4 h-4 shrink-0" />
           </button>
           
-          {activeClientMenu === row.id && (
+          {activeVendorMenu === row.id && (
             <>
               <div 
-                onClick={() => setActiveClientMenu(null)}
+                onClick={() => setActiveVendorMenu(null)}
                 className="fixed inset-0 z-40 select-none" 
               />
               <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <Link
-                  to={`/dashboard/clients/${row.id}`}
-                  onClick={() => setActiveClientMenu(null)}
+                  to={`/dashboard/vendors/${row.id}`}
+                  onClick={() => setActiveVendorMenu(null)}
                   className="flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   View Profile
                 </Link>
-                <Link
-                  to="/dashboard/invoices/create"
-                  state={{ preselectedClientId: row.id }}
-                  onClick={() => setActiveClientMenu(null)}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors"
-                >
-                  <FilePlus className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  Create Invoice
-                </Link>
                 <button
                   type="button"
                   onClick={async () => {
-                    if (confirm(`Are you sure you want to delete ${row.name}? This will also delete all associated invoices and projects.`)) {
-                      setActiveClientMenu(null);
+                    if (confirm(`Are you sure you want to delete ${row.name}?`)) {
+                      setActiveVendorMenu(null);
                       try {
-                        await apiService.deleteClient(row.id);
-                        alert("Client profile deleted successfully!");
-                        loadClients();
+                        await apiService.deleteVendor(row.id);
+                        alert("Vendor profile deleted successfully!");
+                        loadVendors();
                       } catch (err) {
                         console.error(err);
-                        alert("Failed to delete client.");
+                        alert("Failed to delete vendor.");
                       }
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 transition-colors text-left font-semibold cursor-pointer shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                  Delete Client
+                  Delete Vendor
                 </button>
               </div>
             </>
@@ -577,8 +568,8 @@ export const ClientsList: React.FC = () => {
       
       {/* Page Header */}
       <PageHeader
-        title="Clients"
-        description="Configure client details, review outstanding contracts, and check billed timeline values."
+        title="Vendors"
+        description="Configure vendor profiles, monitor outstanding bills, and view supply expenses."
         actions={
           <button
             onClick={() => {
@@ -588,59 +579,57 @@ export const ClientsList: React.FC = () => {
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md shadow-indigo-500/10 active:scale-95 select-none cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Add Client
+            Add Vendor
           </button>
         }
       />
 
-      {/* Main Clients Table */}
+      {/* Main Vendors Table */}
       <DataTable
         columns={columns}
-        data={clients}
+        data={vendors}
         searchKey="name"
-        searchPlaceholder="Filter clients by name..."
-        emptyTitle="No clients found"
-        emptyDescription="Get started by clicking Add Client on the top toolbar."
+        searchPlaceholder="Filter vendors by name..."
+        emptyTitle="No vendors found"
+        emptyDescription="Get started by clicking Add Vendor on the top toolbar."
         loading={loading}
       />
 
-      {/* Advanced High-Fidelity Add Client Drawer */}
+      {/* Advanced High-Fidelity Add Vendor Drawer */}
       <Drawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="Create Customer Profile"
-        size="xl" // Larger modal size to fit all premium details elegantly
+        title="Create Vendor Profile"
+        size="xl" // Spacious layout to fit all details beautifully
       >
-        <form onSubmit={handleSubmit(onSubmitClient)} className="flex flex-col h-[82vh] text-xs font-semibold select-none">
+        <form onSubmit={handleSubmit(onSubmitVendor)} className="flex flex-col h-[82vh] text-xs font-semibold select-none">
           
-          {/* Scrollable Form Body */}
           <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6 scrollbar-thin">
             
-            {/* --- SECTION 1: CORE CLIENT CLASSIFICATION --- */}
+            {/* Classification */}
             <div className="bg-slate-50/50 dark:bg-slate-900/35 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
                 <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5 shrink-0" />
-                  1. Classification & Relationship
+                  1. Classification & Vendor Type
                 </span>
                 <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
-                  New Partner Setup
+                  New Supplier Setup
                 </span>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Client Type Toggle */}
                 <div className="flex flex-col gap-2">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
-                    Customer Type
+                    Vendor Type
                   </label>
                   <div className="grid grid-cols-2 p-0.5 bg-slate-100 dark:bg-slate-900 rounded-lg border text-center">
                     <button
                       type="button"
-                      onClick={() => setValue("clientType", "business")}
+                      onClick={() => setValue("vendorType", "business")}
                       className={cn(
                         "py-1.5 text-xs font-bold rounded-md transition-all active:scale-[0.98]",
-                        clientType === 'business'
+                        vendorType === 'business'
                           ? "bg-card text-foreground shadow-sm border border-slate-200/50 dark:border-slate-800/60"
                           : "text-muted-foreground hover:text-foreground"
                       )}
@@ -649,10 +638,10 @@ export const ClientsList: React.FC = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setValue("clientType", "individual")}
+                      onClick={() => setValue("vendorType", "individual")}
                       className={cn(
                         "py-1.5 text-xs font-bold rounded-md transition-all active:scale-[0.98]",
-                        clientType === 'individual'
+                        vendorType === 'individual'
                           ? "bg-card text-foreground shadow-sm border border-slate-200/50 dark:border-slate-800/60"
                           : "text-muted-foreground hover:text-foreground"
                       )}
@@ -662,13 +651,12 @@ export const ClientsList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Display Name Helper */}
                 <div className="flex flex-col gap-1.5 justify-end">
                   <div className="flex items-center justify-between">
                     <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
                       Display Name <span className="text-rose-500">*</span>
                     </label>
-                    <span className="text-[9px] text-slate-400 font-normal">Auto-derived based on name</span>
+                    <span className="text-[9px] text-slate-400 font-normal">Auto-derived name</span>
                   </div>
                   <div className="relative">
                     <input
@@ -687,16 +675,14 @@ export const ClientsList: React.FC = () => {
               </div>
             </div>
 
-            {/* --- SECTION 2: PRIMARY CONTACT & COMPANY --- */}
+            {/* Contact Details */}
             <div className="bg-card p-4 rounded-xl border space-y-4">
               <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1 border-b pb-2">
                 <User className="w-3.5 h-3.5 shrink-0" />
-                2. Contact Identification
+                2. Contact & Company Profile
               </span>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Salutation + First Name + Last Name Group */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
                     Primary Contact Name <span className="text-rose-500">*</span>
@@ -744,16 +730,15 @@ export const ClientsList: React.FC = () => {
                   )}
                 </div>
 
-                {/* Company Name (Disabled or adapted if individual) */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
-                    Company Name {clientType === 'business' && <span className="text-rose-500">*</span>}
+                    Company Name {vendorType === 'business' && <span className="text-rose-500">*</span>}
                   </label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder={clientType === 'individual' ? "N/A (Individual Client)" : "Acme Corp"}
-                      disabled={clientType === 'individual'}
+                      placeholder={vendorType === 'individual' ? "N/A (Individual Vendor)" : "Acme Corp"}
+                      disabled={vendorType === 'individual'}
                       {...register("company")}
                       className={cn(
                         "w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium disabled:bg-slate-100 dark:disabled:bg-slate-900/60 disabled:text-slate-400",
@@ -765,7 +750,6 @@ export const ClientsList: React.FC = () => {
                   {errors.company && <span className="text-[9px] text-rose-500 font-bold">{errors.company.message}</span>}
                 </div>
 
-                {/* Contact Email */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
                     Email Address <span className="text-rose-500">*</span>
@@ -773,7 +757,7 @@ export const ClientsList: React.FC = () => {
                   <div className="relative">
                     <input
                       type="email"
-                      placeholder="billing@company.com"
+                      placeholder="billing@vendor.com"
                       {...register("email")}
                       className={cn(
                         "w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium",
@@ -785,10 +769,9 @@ export const ClientsList: React.FC = () => {
                   {errors.email && <span className="text-[9px] text-rose-500 font-bold">{errors.email.message}</span>}
                 </div>
 
-                {/* Customer Language */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
-                    Customer Language <span className="text-rose-500">*</span>
+                    Vendor Language <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -804,10 +787,8 @@ export const ClientsList: React.FC = () => {
                     </select>
                     <Globe className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                   </div>
-                  {errors.language && <span className="text-[9px] text-rose-500 font-bold">{errors.language.message}</span>}
                 </div>
 
-                {/* Work Phone */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Work Phone</label>
                   <div className="flex gap-1.5">
@@ -828,7 +809,6 @@ export const ClientsList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Mobile Phone */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Mobile Number</label>
                   <div className="flex gap-1.5">
@@ -849,7 +829,6 @@ export const ClientsList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Currency selection */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
                     Currency <span className="text-rose-500">*</span>
@@ -869,14 +848,11 @@ export const ClientsList: React.FC = () => {
                     <Landmark className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                   </div>
                 </div>
-
               </div>
             </div>
 
-            {/* --- SECTION 3: TABBED CONTAINER FOR ADDITIONAL METADATA --- */}
+            {/* Sub-form Tabs Container */}
             <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
-              
-              {/* Tabs Navigation */}
               <div className="flex border-b bg-slate-50/50 dark:bg-slate-900/10 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground overflow-x-auto whitespace-nowrap scrollbar-none">
                 <button
                   type="button"
@@ -935,15 +911,12 @@ export const ClientsList: React.FC = () => {
                 </button>
               </div>
 
-              {/* Tabs Content */}
               <div className="p-4 bg-card">
                 
                 {/* TAB 1: OTHER DETAILS */}
                 {activeFormTab === 'other' && (
                   <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
-                      {/* PAN */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">PAN (Tax Identification Number)</label>
                         <input
@@ -954,7 +927,6 @@ export const ClientsList: React.FC = () => {
                         />
                       </div>
 
-                      {/* Payment Terms */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Payment Terms</label>
                         <div className="relative">
@@ -972,13 +944,12 @@ export const ClientsList: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Website */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Website URL</label>
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="www.clientwebsite.com"
+                            placeholder="www.vendorwebsite.com"
                             {...register("website")}
                             className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                           />
@@ -986,46 +957,42 @@ export const ClientsList: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Department */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Department</label>
                         <input
                           type="text"
-                          placeholder="Finance / Billing"
+                          placeholder="Sales / Support"
                           {...register("department")}
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
                       </div>
 
-                      {/* Designation */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Designation</label>
                         <input
                           type="text"
-                          placeholder="VP Finance"
+                          placeholder="Account Manager"
                           {...register("designation")}
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
                       </div>
 
-                      {/* Skype Name */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Skype Address/Number</label>
                         <input
                           type="text"
-                          placeholder="live:skype_client"
+                          placeholder="live:skype_vendor"
                           {...register("skype")}
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
                       </div>
 
-                      {/* Social X */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">X Profile Link</label>
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="https://x.com/client_handle"
+                            placeholder="https://x.com/vendor_handle"
                             {...register("socialX")}
                             className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                           />
@@ -1036,13 +1003,12 @@ export const ClientsList: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Facebook */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Facebook Page</label>
                         <div className="relative">
                           <input
                             type="text"
-                            placeholder="http://www.facebook.com/clientpage"
+                            placeholder="http://www.facebook.com/vendorpage"
                             {...register("socialFacebook")}
                             className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                           />
@@ -1051,10 +1017,8 @@ export const ClientsList: React.FC = () => {
                           </svg>
                         </div>
                       </div>
-
                     </div>
 
-                    {/* Enable Portal Checkbox */}
                     <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border mt-2">
                       <input
                         type="checkbox"
@@ -1063,12 +1027,11 @@ export const ClientsList: React.FC = () => {
                         className="w-4.5 h-4.5 text-primary border-slate-300 rounded focus:ring-primary cursor-pointer shrink-0"
                       />
                       <label htmlFor="enablePortal" className="text-foreground font-bold tracking-wide uppercase text-[10px] cursor-pointer select-none">
-                        Allow Portal Access for this Customer
+                        Allow Portal Access for this Vendor
                       </label>
-                      <span className="text-[9px] text-slate-400 ml-auto font-normal">Customer can view/pay invoices online</span>
+                      <span className="text-[9px] text-slate-400 ml-auto font-normal">Vendor can upload bills directly</span>
                     </div>
 
-                    {/* Document Uploads section (Interactive Mock Simulator) */}
                     <div className="space-y-2 mt-4">
                       <div className="flex items-center justify-between border-t pt-3">
                         <span className="text-[10px] font-extrabold uppercase text-muted-foreground">Documents Attachment</span>
@@ -1100,20 +1063,17 @@ export const ClientsList: React.FC = () => {
                         ))}
                         {uploadedDocuments.length === 0 && (
                           <div className="col-span-3 py-6 border border-dashed rounded-lg text-center text-slate-400 text-[10px]">
-                            No documents attached. You can attach up to 3 files (Max 10MB each).
+                            No documents attached. You can attach up to 3 files.
                           </div>
                         )}
                       </div>
                     </div>
-
                   </div>
                 )}
 
                 {/* TAB 2: ADDRESS MAPPING */}
                 {activeFormTab === 'address' && (
                   <div className="space-y-6 animate-fade-in">
-                    
-                    {/* Copy Button Toolbar */}
                     <div className="flex items-center justify-between bg-indigo-50/40 dark:bg-indigo-950/10 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
                       <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
                         <AlertCircle className="w-3.5 h-3.5 text-indigo-500" />
@@ -1142,15 +1102,13 @@ export const ClientsList: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
-                      
-                      {/* Left: Billing Address */}
                       <div className="space-y-3">
                         <span className="text-[10px] font-extrabold uppercase text-primary tracking-wider flex items-center gap-1">
                           Billing Address
                         </span>
                         
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] text-slate-400 uppercase font-bold">Attention / Point of contact</label>
+                          <label className="text-[9px] text-slate-400 uppercase font-bold">Attention</label>
                           <input
                             type="text"
                             placeholder="Accounts Payable"
@@ -1248,20 +1206,18 @@ export const ClientsList: React.FC = () => {
                             />
                           </div>
                         </div>
-
                       </div>
 
-                      {/* Right: Shipping Address */}
                       <div className="space-y-3 md:pl-6 pt-6 md:pt-0">
                         <span className="text-[10px] font-extrabold uppercase text-indigo-500 tracking-wider flex items-center gap-1">
                           Shipping Address
                         </span>
                         
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[9px] text-slate-400 uppercase font-bold">Attention / Point of contact</label>
+                          <label className="text-[9px] text-slate-400 uppercase font-bold">Attention</label>
                           <input
                             type="text"
-                            placeholder="Warehouse / Operations"
+                            placeholder="Warehouse / Receiving"
                             {...register("shippingAttention")}
                             className="w-full px-2.5 py-1.5 border rounded-md bg-card outline-none focus:border-primary text-xs"
                           />
@@ -1356,9 +1312,7 @@ export const ClientsList: React.FC = () => {
                             />
                           </div>
                         </div>
-
                       </div>
-
                     </div>
                   </div>
                 )}
@@ -1366,15 +1320,12 @@ export const ClientsList: React.FC = () => {
                 {/* TAB 3: CONTACT PERSONS */}
                 {activeFormTab === 'contacts' && (
                   <div className="space-y-4 animate-fade-in">
-                    
-                    {/* Add secondary contact row form */}
                     <div className="bg-slate-50/60 dark:bg-slate-900/30 p-3 rounded-lg border border-slate-100 dark:border-slate-800/60">
                       <span className="block text-[10px] font-extrabold uppercase text-slate-500 mb-2">
                         Add New Secondary Contact Person
                       </span>
                       
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
-                        
                         <div className="flex flex-col gap-1">
                           <label className="text-[8px] text-slate-400 uppercase font-bold">Salutation</label>
                           <select
@@ -1433,11 +1384,9 @@ export const ClientsList: React.FC = () => {
                             Add Row
                           </button>
                         </div>
-
                       </div>
                     </div>
 
-                    {/* Secondary Contacts List */}
                     <div className="border rounded-lg overflow-hidden bg-card">
                       <table className="w-full text-left border-collapse text-[11px]">
                         <thead className="bg-slate-50 dark:bg-slate-900/50 border-b">
@@ -1475,14 +1424,12 @@ export const ClientsList: React.FC = () => {
                         </tbody>
                       </table>
                     </div>
-
                   </div>
                 )}
 
                 {/* TAB 4: CUSTOM FIELDS */}
                 {activeFormTab === 'custom' && (
                   <div className="space-y-4 animate-fade-in">
-                    
                     <div className="flex items-center justify-between border-b pb-2">
                       <span className="text-[10px] font-extrabold uppercase text-slate-500">Dynamic Key-Value Attributes</span>
                       <button
@@ -1498,12 +1445,11 @@ export const ClientsList: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {customFields.map((cf) => (
                         <div key={cf.id} className="flex gap-2 items-center bg-slate-50/30 dark:bg-slate-900/10 p-2 border rounded-lg relative group">
-                          
                           <div className="flex-1">
                             <input
                               type="text"
                               value={cf.label}
-                              placeholder="Label (e.g. GSTIN)"
+                              placeholder="Label"
                               onChange={(e) => handleUpdateCustomField(cf.id, { label: e.target.value })}
                               className="w-full px-2 py-1 border rounded bg-card outline-none text-[10px] font-bold text-indigo-500 uppercase tracking-wider"
                             />
@@ -1526,7 +1472,6 @@ export const ClientsList: React.FC = () => {
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-
                         </div>
                       ))}
                       {customFields.length === 0 && (
@@ -1535,7 +1480,6 @@ export const ClientsList: React.FC = () => {
                         </div>
                       )}
                     </div>
-
                   </div>
                 )}
 
@@ -1543,26 +1487,22 @@ export const ClientsList: React.FC = () => {
                 {activeFormTab === 'remarks' && (
                   <div className="space-y-3 animate-fade-in">
                     <span className="block text-[10px] font-extrabold uppercase text-slate-500">
-                      Internal Remarks & Relationship Notes
+                      Internal Remarks & Supply Notes
                     </span>
-                    <p className="text-[10px] text-slate-400 font-normal">Add private notes regarding client preferences, onboarding timeline, or contract guidelines. These are never shown on customer invoices.</p>
+                    <p className="text-[10px] text-slate-400 font-normal">Add private notes regarding vendor support agreements, delivery SLA, or contract terms. These are strictly internal.</p>
                     
                     <textarea
-                      placeholder="Write specific business details here..."
+                      placeholder="Write vendor notes..."
                       rows={5}
                       {...register("remarks")}
                       className="w-full p-3 border rounded-lg bg-slate-50/30 dark:bg-slate-900/10 outline-none focus:bg-card focus:border-primary text-xs font-medium resize-none leading-relaxed"
                     />
                   </div>
                 )}
-
               </div>
-
             </div>
-
           </div>
 
-          {/* Drawer Actions Footer (Fixed position) */}
           <div className="flex items-center gap-3 justify-end pt-4 border-t mt-auto shrink-0 select-none bg-card">
             <button
               type="button"
@@ -1575,7 +1515,7 @@ export const ClientsList: React.FC = () => {
               type="submit"
               className="px-5 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer text-xs"
             >
-              Create Client
+              Create Vendor
             </button>
           </div>
 

@@ -39,6 +39,8 @@ export const InvoiceBuilder: React.FC = () => {
   // Seeding list
   const { user } = useAuthStore();
   const [selectedLogo, setSelectedLogo] = useState<string>("");
+  const [selectedAddress, setSelectedAddress] = useState<string>("");
+  const [customAddress, setCustomAddress] = useState<string>("");
   const [clients, setClients] = useState<any[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
@@ -87,6 +89,8 @@ export const InvoiceBuilder: React.FC = () => {
           setNotes(inv.notes);
           setTerms(inv.terms);
           setSelectedLogo(inv.logo || "");
+          setCustomAddress(inv.senderAddress || "");
+          setSelectedAddress(user?.addresses?.includes(inv.senderAddress || "") ? (inv.senderAddress || "") : "");
           setIsScheduled(inv.isScheduled || false);
           setScheduledSendDate(inv.scheduledSendDate || "");
         } else {
@@ -94,6 +98,13 @@ export const InvoiceBuilder: React.FC = () => {
           const invs = await apiService.getInvoices();
           const nextId = `INV-2026-${(invs.length + 1).toString().padStart(3, '0')}`;
           setInvoiceNumber(nextId);
+
+          if (user?.addresses && user.addresses.length > 0) {
+            setSelectedAddress(user.addresses[0]);
+            setCustomAddress(user.addresses[0]);
+          } else {
+            setCustomAddress("100 Pine Street, San Francisco, CA 94111");
+          }
 
           // Preload state check
           const preselectedId = location.state?.preselectedClientId;
@@ -108,7 +119,7 @@ export const InvoiceBuilder: React.FC = () => {
       }
     };
     init();
-  }, [location, id, isEditMode]);
+  }, [location, id, isEditMode, user]);
 
   // Update currency when global change occurs
   useEffect(() => {
@@ -116,6 +127,11 @@ export const InvoiceBuilder: React.FC = () => {
       setCurrency(globalCurrency);
     }
   }, [globalCurrency, isEditMode]);
+
+  const handleAddressSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedAddress(e.target.value);
+    setCustomAddress(e.target.value);
+  };
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
@@ -204,6 +220,7 @@ export const InvoiceBuilder: React.FC = () => {
           logo: selectedLogo || undefined,
           isScheduled,
           scheduledSendDate: isScheduled ? scheduledSendDate : "",
+          senderAddress: customAddress,
           subtotal,
           discountAmount,
           taxAmount,
@@ -234,7 +251,8 @@ export const InvoiceBuilder: React.FC = () => {
           status: nextStatus,
           logo: selectedLogo || undefined,
           isScheduled,
-          scheduledSendDate: isScheduled ? scheduledSendDate : ""
+          scheduledSendDate: isScheduled ? scheduledSendDate : "",
+          senderAddress: customAddress
         } as any);
         alert(nextStatus === 'scheduled' ? "Invoice scheduled successfully!" : nextStatus === 'sent' ? "Invoice issued and email sent successfully!" : "Invoice saved as Draft!");
       }
@@ -319,7 +337,7 @@ export const InvoiceBuilder: React.FC = () => {
             </div>
 
             {/* Logo Picker */}
-            <div className="flex flex-col gap-1.5 col-span-2 select-none mt-2">
+            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none mt-2">
               <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Branding Invoice Logo</label>
               <div className="flex items-center gap-4">
                 <select
@@ -327,7 +345,7 @@ export const InvoiceBuilder: React.FC = () => {
                   onChange={(e) => setSelectedLogo(e.target.value)}
                   className="flex-1 px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70 cursor-pointer"
                 >
-                  <option value="">Default Brand (InvoiceIQ Logo)</option>
+                  <option value="">Default Brand</option>
                   {(user?.logos || []).map((logoUrl, index) => (
                     <option key={index} value={logoUrl}>Custom Logo #{index + 1}</option>
                   ))}
@@ -338,6 +356,23 @@ export const InvoiceBuilder: React.FC = () => {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Sender Address Picker */}
+            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none mt-2">
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Sender Address</label>
+              <select
+                value={selectedAddress}
+                onChange={handleAddressSelect}
+                className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-[#0b101c]/40 outline-none text-xs font-semibold focus:border-indigo-500/70 cursor-pointer"
+              >
+                <option value="">Custom Address</option>
+                {(user?.addresses || []).map((addr, index) => (
+                  <option key={index} value={addr}>
+                    {addr.split('\n')[0].substring(0, 30)}{addr.length > 30 ? '...' : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -534,7 +569,18 @@ export const InvoiceBuilder: React.FC = () => {
                     </>
                   )}
                 </div>
-                <span className="text-[9px] text-slate-400 font-semibold block mt-1.5">100 Pine Street, San Francisco, CA 94111</span>
+                <textarea
+                  value={customAddress}
+                  onChange={(e) => {
+                    setCustomAddress(e.target.value);
+                    if (selectedAddress !== e.target.value) {
+                      setSelectedAddress("");
+                    }
+                  }}
+                  rows={customAddress.split('\n').length || 1}
+                  className="text-[9px] text-slate-400 font-semibold block mt-1.5 bg-transparent border border-dashed border-transparent hover:border-slate-300 focus:border-indigo-500 outline-none resize-none overflow-hidden w-full max-w-[250px] p-0.5 -ml-0.5 rounded transition-colors"
+                  placeholder="Enter sender address..."
+                />
               </div>
               <div className="text-right">
                 <h2 className="text-xl font-bold tracking-tight text-slate-950 uppercase select-none">INVOICE</h2>

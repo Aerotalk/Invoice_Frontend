@@ -36,10 +36,18 @@ const DashboardOverview = lazy(() => import('../features/dashboard/pages/Dashboa
 const ClientsList = lazy(() => import('../features/clients/pages/ClientsList').then(m => ({ default: m.ClientsList })));
 const ClientDetails = lazy(() => import('../features/clients/pages/ClientDetails').then(m => ({ default: m.ClientDetails })));
 
+const VendorsList = lazy(() => import('../features/vendors/pages/VendorsList').then(m => ({ default: m.VendorsList })));
+const VendorDetails = lazy(() => import('../features/vendors/pages/VendorDetails').then(m => ({ default: m.VendorDetails })));
+
+const ProductsList = lazy(() => import('../features/products/pages/ProductsList').then(m => ({ default: m.ProductsList })));
+
+const QuotationsList = lazy(() => import('../features/quotes/pages/QuotationsList').then(m => ({ default: m.QuotationsList })));
+
+const DeliveryChallansList = lazy(() => import('../features/challans/pages/DeliveryChallansList').then(m => ({ default: m.DeliveryChallansList })));
+
 const InvoicesList = lazy(() => import('../features/invoices/pages/InvoicesList').then(m => ({ default: m.InvoicesList })));
 const InvoiceBuilder = lazy(() => import('../features/invoices/pages/InvoiceBuilder').then(m => ({ default: m.InvoiceBuilder })));
 const InvoiceDetails = lazy(() => import('../features/invoices/pages/InvoiceDetails').then(m => ({ default: m.InvoiceDetails })));
-const EstimatesList = lazy(() => import('../features/invoices/pages/EstimatesList').then(m => ({ default: m.EstimatesList })));
 
 const PaymentsDashboard = lazy(() => import('../features/payments/pages/PaymentsDashboard').then(m => ({ default: m.PaymentsDashboard })));
 const ExpensesDashboard = lazy(() => import('../features/expenses/pages/ExpensesDashboard').then(m => ({ default: m.ExpensesDashboard })));
@@ -72,12 +80,24 @@ export const AppRoutes: React.FC = () => {
           <Route path="clients" element={<ClientsList />} />
           <Route path="clients/:id" element={<ClientDetails />} />
 
+          {/* Vendors */}
+          <Route path="vendors" element={<VendorsList />} />
+          <Route path="vendors/:id" element={<VendorDetails />} />
+
+          {/* Products */}
+          <Route path="products" element={<ProductsList />} />
+
+          {/* Quotes / Quotations */}
+          <Route path="quotes" element={<QuotationsList />} />
+
+          {/* Delivery Challans */}
+          <Route path="challans" element={<DeliveryChallansList />} />
+
           {/* Invoices & proposals */}
           <Route path="invoices" element={<InvoicesList />} />
           <Route path="invoices/create" element={<InvoiceBuilder />} />
           <Route path="invoices/:id" element={<InvoiceDetails />} />
           <Route path="invoices/:id/edit" element={<InvoiceBuilder />} />
-          <Route path="estimates" element={<EstimatesList />} />
 
           {/* Payments & Expenditures */}
           <Route path="payments" element={<PaymentsDashboard />} />

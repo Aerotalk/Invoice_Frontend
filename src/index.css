@@ -14,8 +14,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 213 27% 84%;
     --secondary-foreground: 224 71% 4%;
@@ -46,8 +46,8 @@
     --popover: 240 10% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 24.6 95% 60%;
+    --primary-foreground: 224 71% 4%;
 
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
@@ -99,15 +99,15 @@
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-indigo-500 to-emerald-500 dark:from-primary-400 dark:via-indigo-400 dark:to-emerald-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-amber-500 to-rose-500 dark:from-primary-400 dark:via-amber-400 dark:to-rose-400;
   }
 
   .ambient-gradient {
-    background: radial-gradient(circle 800px at 50% -100px, rgba(99, 102, 241, 0.08), transparent);
+    background: radial-gradient(circle 800px at 50% -100px, rgba(249, 115, 22, 0.05), transparent);
   }
 
   .ambient-gradient-dark {
-    background: radial-gradient(circle 800px at 50% -100px, rgba(99, 102, 241, 0.15), transparent);
+    background: radial-gradient(circle 800px at 50% -100px, rgba(249, 115, 22, 0.12), transparent);
   }
 }
 

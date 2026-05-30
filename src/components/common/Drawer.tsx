@@ -8,7 +8,7 @@ interface DrawerProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
   className?: string;
 }
 
@@ -36,7 +36,9 @@ export const Drawer: React.FC<DrawerProps> = ({
     sm: "max-w-md",
     md: "max-w-lg",
     lg: "max-w-2xl",
-    xl: "max-w-4xl"
+    xl: "max-w-4xl",
+    '2xl': "max-w-7xl",
+    'full': "max-w-full"
   };
 
   return (

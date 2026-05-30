@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
-import { StatusBadge } from '../../../components/common/StatusBadge';
 import { Drawer } from '../../../components/common/Drawer';
 import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
@@ -17,8 +16,10 @@ import {
   Trash2, 
   TrendingDown, 
   Info,
-  DollarSign,
-  PieChart as PieIcon
+  Building,
+  Briefcase,
+  FileCheck2,
+  ListPlus
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
@@ -29,33 +30,70 @@ const expenseSchema = zod.object({
   category: zod.enum(['Software', 'Marketing', 'Rent', 'Office Supplies', 'Travel', 'Consulting', 'Other']),
   date: zod.string(),
   isTaxDeductible: zod.boolean(),
+  invoiceNumber: zod.string(),
+  notes: zod.string(),
+  clientId: zod.string()
 });
 
 type ExpenseFormValues = zod.infer<typeof expenseSchema>;
 
+interface BulkExpenseRow {
+  date: string;
+  category: 'Software' | 'Marketing' | 'Rent' | 'Office Supplies' | 'Travel' | 'Consulting' | 'Other';
+  amount: number;
+  clientId: string;
+  projectId: string;
+  isBillable: boolean;
+  currency: string;
+}
+
 export const ExpensesDashboard: React.FC = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [allProjects, setAllProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeFormTab, setActiveFormTab] = useState<'single' | 'bulk'>('single');
+
+  // Receipt uploader states
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedReceipt, setUploadedReceipt] = useState<string | null>(null);
+
+  // Bulk addition rows
+  const [bulkRows, setBulkRows] = useState<BulkExpenseRow[]>([
+    { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+    { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+    { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }
+  ]);
+
   const { currency } = usePreferencesStore();
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ExpenseFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       category: 'Software',
       date: new Date().toISOString().split('T')[0],
-      isTaxDeductible: true
+      isTaxDeductible: true,
+      invoiceNumber: '',
+      notes: '',
+      clientId: ''
     }
   });
 
-  const loadExpenses = async () => {
+  const selectedClientId = watch("clientId");
+
+  // Load database metadata and assets
+  const loadData = async () => {
     setLoading(true);
     try {
-      const res = await apiService.getExpenses();
-      setExpenses(res);
+      const expenseRes = await apiService.getExpenses();
+      const clientRes = await apiService.getClients();
+      const projectsRes = await apiService.getProjects();
+
+      setExpenses(expenseRes);
+      setClients(clientRes);
+      setAllProjects(projectsRes);
     } catch (e) {
       console.error(e);
     } finally {
@@ -64,7 +102,7 @@ export const ExpensesDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    loadExpenses();
+    loadData();
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -72,30 +110,112 @@ export const ExpensesDashboard: React.FC = () => {
     try {
       await apiService.deleteExpense(id);
       alert("Expense deleted successfully!");
-      loadExpenses();
+      loadData();
     } catch (e) {
       console.error(e);
     }
   };
 
+  // Single Record submit
   const onSubmitExpense = async (values: ExpenseFormValues) => {
+    const activeClient = clients.find(c => c.id === values.clientId);
     try {
       await apiService.createExpense({
-        ...values,
-        receiptUrl: uploadedReceipt
+        category: values.category,
+        amount: values.amount,
+        description: values.description,
+        date: values.date,
+        receiptUrl: uploadedReceipt,
+        isTaxDeductible: values.isTaxDeductible,
+        invoiceNumber: values.invoiceNumber || undefined,
+        notes: values.notes || undefined,
+        clientId: values.clientId || undefined,
+        clientName: activeClient?.name || undefined,
+        currency: currency
       });
       alert("Expense logged successfully!");
       setDrawerOpen(false);
       setUploadedReceipt(null);
       setUploadProgress(0);
       reset();
-      loadExpenses();
+      loadData();
     } catch (e) {
       console.error(e);
     }
   };
 
-  // Mock Receipt upload simulation
+  // Bulk addition actions
+  const handleAddBulkRow = () => {
+    setBulkRows([
+      ...bulkRows,
+      { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }
+    ]);
+  };
+
+  const handleRemoveBulkRow = (index: number) => {
+    if (bulkRows.length <= 1) {
+      setBulkRows([{ date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }]);
+      return;
+    }
+    setBulkRows(bulkRows.filter((_, idx) => idx !== index));
+  };
+
+  const handleBulkRowChange = (index: number, field: keyof BulkExpenseRow, val: any) => {
+    const nextRows = [...bulkRows];
+    nextRows[index] = {
+      ...nextRows[index],
+      [field]: field === 'amount' ? Math.max(0, Number(val)) : val
+    };
+    if (field === 'clientId') {
+      nextRows[index].projectId = ''; // Reset associated project if customer shifts
+    }
+    setBulkRows(nextRows);
+  };
+
+  // Submit bulk list
+  const handleSaveBulkExpenses = async () => {
+    const activeRows = bulkRows.filter(r => r.amount > 0);
+    if (activeRows.length === 0) {
+      alert("Please configure at least one bulk expense row with an amount greater than 0.");
+      return;
+    }
+
+    try {
+      const payload = activeRows.map(r => {
+        const client = clients.find(c => c.id === r.clientId);
+        const proj = allProjects.find(p => p.id === r.projectId);
+        return {
+          date: r.date,
+          category: r.category,
+          amount: r.amount,
+          description: `Bulk: ${r.category}${client ? ` for ${client.name}` : ''}`,
+          receiptUrl: null,
+          isTaxDeductible: true,
+          clientId: r.clientId || undefined,
+          clientName: client?.name || undefined,
+          projectId: r.projectId || undefined,
+          projectName: proj?.name || undefined,
+          isBillable: r.isBillable,
+          currency: r.currency
+        };
+      });
+
+      await apiService.createExpensesBulk(payload);
+      alert(`${payload.length} expenses batch-saved successfully!`);
+      setDrawerOpen(false);
+      setBulkRows([
+        { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+        { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+        { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }
+      ]);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to batch-save bulk expenses.");
+    }
+  };
+
+  // Simulated Receipt capture
   const handleReceiptUploadClick = () => {
     setIsUploading(true);
     setUploadProgress(0);
@@ -104,7 +224,7 @@ export const ExpensesDashboard: React.FC = () => {
         if (prev >= 100) {
           clearInterval(interval);
           setIsUploading(false);
-          setUploadedReceipt("https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=300"); // seed mockup thumbnail
+          setUploadedReceipt("https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=300"); // mockup image
           return 100;
         }
         return prev + 25;
@@ -112,7 +232,7 @@ export const ExpensesDashboard: React.FC = () => {
     }, 150);
   };
 
-  // Aggregated Expenses Chart Data
+  // Recharts outflows distribution math
   const chartData = React.useMemo(() => {
     const categories: Record<string, number> = {
       Software: 0, Marketing: 0, Rent: 0, 'Office Supplies': 0, Travel: 0, Consulting: 0, Other: 0
@@ -139,19 +259,48 @@ export const ExpensesDashboard: React.FC = () => {
     return { total, deductible };
   }, [expenses]);
 
+  // Expanded Datatable Columns
   const columns: ColumnDef<any>[] = [
     {
-      header: "Expense Details",
+      header: "Expense details & category",
       accessorKey: "description",
       cell: (row) => (
-        <div className="flex items-center gap-2.5 select-none">
+        <div className="flex items-center gap-2.5 select-none text-xs">
           <div className="p-2 rounded bg-indigo-500/10 text-indigo-500 shrink-0">
             <Receipt className="w-3.5 h-3.5 shrink-0" />
           </div>
           <div>
-            <span className="block text-xs font-bold text-foreground">{row.description}</span>
-            <span className="block text-[9px] text-muted-foreground uppercase font-bold tracking-wider">{row.category}</span>
+            <span className="block font-bold text-foreground">{row.description}</span>
+            <div className="flex items-center gap-2.5 mt-0.5 select-none">
+              <span className="text-[9px] text-indigo-500 uppercase font-bold tracking-wider">{row.category}</span>
+              {row.invoiceNumber && (
+                <span className="text-[9px] text-muted-foreground font-mono font-bold select-none border-l pl-2"># {row.invoiceNumber}</span>
+              )}
+            </div>
           </div>
+        </div>
+      )
+    },
+    {
+      header: "Customer & Project Mappings",
+      cell: (row) => (
+        <div className="text-xs select-none">
+          {row.clientName ? (
+            <div className="space-y-0.5">
+              <span className="font-bold text-foreground flex items-center gap-1">
+                <Building className="w-3 h-3 text-slate-400" />
+                {row.clientName}
+              </span>
+              {row.projectName && (
+                <span className="text-[9px] font-semibold text-muted-foreground flex items-center gap-1">
+                  <Briefcase className="w-3 h-3 text-indigo-400" />
+                  {row.projectName}
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-slate-400 text-[10px]">Independent Expense</span>
+          )}
         </div>
       )
     },
@@ -170,17 +319,30 @@ export const ExpensesDashboard: React.FC = () => {
             ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/15" 
             : "text-slate-400 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700/60"
         )}>
-          {row.isTaxDeductible ? "Yes - Write off" : "No"}
+          {row.isTaxDeductible ? "Yes - Written off" : "No"}
         </span>
       )
     },
     {
-      header: "Billing Total",
+      header: "Billable",
+      cell: (row) => (
+        <span className={cn(
+          "inline-flex items-center gap-1 text-[10px] font-bold select-none px-2 py-0.5 border rounded-full",
+          row.isBillable 
+            ? "text-primary bg-primary/10 border-primary/15" 
+            : "text-slate-400 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700/60"
+        )}>
+          {row.isBillable ? "Billable" : "Non-Billable"}
+        </span>
+      )
+    },
+    {
+      header: "Outflow Cost",
       accessorKey: "amount",
       sortable: true,
       cell: (row) => (
-        <span className="font-bold font-mono text-foreground">
-          {formatCurrency(row.amount, currency)}
+        <span className="font-bold font-mono text-foreground text-xs">
+          {formatCurrency(row.amount, row.currency || currency)}
         </span>
       )
     },
@@ -192,9 +354,9 @@ export const ExpensesDashboard: React.FC = () => {
           href={row.receiptUrl} 
           target="_blank" 
           rel="noreferrer"
-          className="text-[10px] font-bold text-primary hover:underline"
+          className="text-[10px] font-bold text-primary hover:underline font-mono"
         >
-          View Attachment
+          View Receipt
         </a>
       ) : (
         <span className="text-[10px] text-slate-400">No Attachment</span>
@@ -205,7 +367,7 @@ export const ExpensesDashboard: React.FC = () => {
       cell: (row) => (
         <button
           onClick={() => handleDelete(row.id)}
-          className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all select-none"
+          className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all select-none cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5 shrink-0" />
         </button>
@@ -217,11 +379,17 @@ export const ExpensesDashboard: React.FC = () => {
     <div className="space-y-6 select-none animate-fade-in">
       <PageHeader
         title="Expenses"
-        description="Audit company operating outflows, check tax-deductible writes offs, and upload PDF receipts."
+        description="Audit operating outflows, log batch calculations, upload receipts, and check client billings."
         actions={
           <button
-            onClick={() => setDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5"
+            onClick={() => {
+              reset();
+              setUploadedReceipt(null);
+              setUploadProgress(0);
+              setActiveFormTab('single');
+              setDrawerOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Log Expense
@@ -229,10 +397,8 @@ export const ExpensesDashboard: React.FC = () => {
         }
       />
 
-      {/* Recharts Bar summary chart + KPI card */}
+      {/* KPI Cards and Categorized Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 select-none">
-        
-        {/* Analytics Card */}
         <div className="flex flex-col gap-4 select-none">
           <div className="p-5 border rounded-xl bg-card shadow-premium relative">
             <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Expenses Outflow</span>
@@ -246,7 +412,6 @@ export const ExpensesDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Categories Distribution Bar Chart */}
         <div className="border rounded-xl bg-card p-5 shadow-premium lg:col-span-2 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-foreground">Outflow Categories</h3>
@@ -282,10 +447,9 @@ export const ExpensesDashboard: React.FC = () => {
             )}
           </div>
         </div>
-
       </div>
 
-      {/* Expenses Ledger Data Table */}
+      {/* Main Ledger Table */}
       <DataTable
         columns={columns}
         data={expenses}
@@ -296,147 +460,396 @@ export const ExpensesDashboard: React.FC = () => {
         loading={loading}
       />
 
-      {/* LOG EXPENSE SLIDE-OUT DRAWER */}
       <Drawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="Log Expense Entry"
-        size="md"
+        title="Log Expense Outflow"
+        size="2xl"
       >
-        <form onSubmit={handleSubmit(onSubmitExpense)} className="flex flex-col gap-4 text-xs font-semibold select-none pb-6">
+        <div className="flex flex-col h-[82vh] text-xs font-semibold select-none relative">
           
-          {/* Description */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-muted-foreground font-bold tracking-wide uppercase">Expense Description</label>
-            <input
-              type="text"
-              placeholder="Vercel Team Enterprise Retainer Subscription"
-              {...register("description")}
-              className={cn(
-                "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70",
-                errors.description ? "border-rose-500/70" : ""
-              )}
-            />
-            {errors.description && <span className="text-[9px] text-rose-500 font-bold">{errors.description.message}</span>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Amount */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase">Outflow Amount ({currency})</label>
-              <input
-                type="number"
-                placeholder="299"
-                {...register("amount", { valueAsNumber: true })}
-                className={cn(
-                  "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70",
-                  errors.amount ? "border-rose-500/70" : ""
-                )}
-              />
-              {errors.amount && <span className="text-[9px] text-rose-500 font-bold">{errors.amount.message}</span>}
-            </div>
-
-            {/* Category selection */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase">Outflow Category</label>
-              <select
-                {...register("category")}
-                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70"
-              >
-                <option value="Software">Software & SaaS</option>
-                <option value="Marketing">Marketing / ADS</option>
-                <option value="Rent">Workspace Studio Rent</option>
-                <option value="Office Supplies">Office Stationery</option>
-                <option value="Travel">Flights & Lodgings</option>
-                <option value="Consulting">Consulting Advisory</option>
-                <option value="Other">Miscellaneous Outflow</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Date */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase">Purchasing Date</label>
-              <input
-                type="date"
-                {...register("date")}
-                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70"
-              />
-            </div>
-
-            {/* Tax Deductible checkbox */}
-            <div className="flex flex-col gap-1.5 col-span-2 sm:col-span-1 select-none justify-center">
-              <label className="flex items-center gap-2 cursor-pointer font-medium text-foreground select-none mt-4">
-                <input
-                  type="checkbox"
-                  {...register("isTaxDeductible")}
-                  className="w-3.5 h-3.5 rounded border accent-indigo-500"
-                />
-                Tax Deductible Write-Off
-              </label>
-            </div>
-          </div>
-
-          {/* MOCK RECEIPT UPLOADER COMPONENT (Extra Premium Feature) */}
-          <div className="flex flex-col gap-1.5 select-none">
-            <label className="text-muted-foreground font-bold tracking-wide uppercase">Attach Receipt PDF/Image</label>
-            
-            <div 
-              onClick={handleReceiptUploadClick}
-              className={cn(
-                "p-6 border border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative select-none",
-                uploadedReceipt 
-                  ? "bg-emerald-500/5 border-emerald-500/20" 
-                  : "bg-slate-50/50 hover:bg-muted dark:bg-[#0b101c]/40 hover:border-indigo-500/30"
-              )}
-            >
-              {isUploading ? (
-                // Uploading progress
-                <div className="w-full max-w-[200px] space-y-2 select-none">
-                  <span className="block text-[10px] font-bold text-indigo-500">Processing receipt attachments...</span>
-                  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
-                  </div>
-                </div>
-              ) : uploadedReceipt ? (
-                // Success attachment preview
-                <div className="flex flex-col items-center gap-2 animate-fade-in select-none">
-                  <div className="p-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 rounded-full shrink-0">
-                    <Check className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold text-emerald-500">Receipt Attachment Captured!</span>
-                  <span className="text-[9px] text-muted-foreground font-mono select-none">receipt_invoice_seed.jpg</span>
-                </div>
-              ) : (
-                // Default drag slot
-                <div className="flex flex-col items-center select-none shrink-0 text-muted-foreground">
-                  <UploadCloud className="w-6 h-6 mb-2 text-slate-400 group-hover:text-indigo-500" />
-                  <span className="text-[11px] font-bold text-foreground">Click to upload mock attachments</span>
-                  <span className="text-[9px] text-slate-400 block mt-0.5">Supports PDF, JPG, PNG formats up to 4MB</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3 justify-end pt-4 border-t mt-4 shrink-0 select-none">
+          {/* Navigation Tabs headers */}
+          <div className="flex border-b border-slate-200 dark:border-slate-800 pb-3 mb-4 select-none shrink-0 gap-1.5">
             <button
-              type="button"
-              onClick={() => setDrawerOpen(false)}
-              className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95"
+              onClick={() => setActiveFormTab('single')}
+              className={cn(
+                "px-4 py-2 text-xs font-extrabold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer select-none",
+                activeFormTab === 'single'
+                  ? "bg-primary text-primary-foreground shadow shadow-indigo-500/10 font-black"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
             >
-              Cancel
+              <FileCheck2 className="w-3.5 h-3.5 shrink-0" />
+              Record Expense
             </button>
             <button
-              type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95"
+              onClick={() => {
+                setActiveFormTab('bulk');
+                // Refresh seed rows
+                setBulkRows([
+                  { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+                  { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
+                  { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }
+                ]);
+              }}
+              className={cn(
+                "px-4 py-2 text-xs font-extrabold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer select-none",
+                activeFormTab === 'bulk'
+                  ? "bg-primary text-primary-foreground shadow shadow-indigo-500/10 font-black"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
             >
-              Log Expense
+              <ListPlus className="w-3.5 h-3.5 shrink-0" />
+              Bulk Add Expenses
             </button>
           </div>
 
-        </form>
+          {/* Tab 1 Content: Single Record Expense */}
+          {activeFormTab === 'single' && (
+            <form onSubmit={handleSubmit(onSubmitExpense)} className="flex-1 flex flex-col justify-between select-none h-full">
+              <div className="flex-1 overflow-y-auto pr-1 pb-6 space-y-5 scrollbar-thin">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                  
+                  {/* Left input parameters column */}
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Expense Description *</label>
+                      <input
+                        type="text"
+                        placeholder="Vercel cloud hosting subscription"
+                        {...register("description")}
+                        className={cn(
+                          "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary",
+                          errors.description ? "border-rose-500/70" : ""
+                        )}
+                      />
+                      {errors.description && <span className="text-[9px] text-rose-500 font-bold">{errors.description.message}</span>}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Date */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Purchasing Date *</label>
+                        <input
+                          type="date"
+                          {...register("date")}
+                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary"
+                        />
+                      </div>
+                      
+                      {/* Category */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Category *</label>
+                        <select
+                          {...register("category")}
+                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold cursor-pointer focus:border-primary"
+                        >
+                          <option value="Software">Software & SaaS</option>
+                          <option value="Marketing">Marketing / ADS</option>
+                          <option value="Rent">Workspace Rent</option>
+                          <option value="Office Supplies">Office Stationery</option>
+                          <option value="Travel">Flights & Lodgings</option>
+                          <option value="Consulting">Consulting Advisory</option>
+                          <option value="Other">Miscellaneous Outflow</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Amount */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Outflow Amount *</label>
+                        <input
+                          type="number"
+                          placeholder="299"
+                          {...register("amount", { valueAsNumber: true })}
+                          className={cn(
+                            "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary",
+                            errors.amount ? "border-rose-500/70" : ""
+                          )}
+                        />
+                        {errors.amount && <span className="text-[9px] text-rose-500 font-bold">{errors.amount.message}</span>}
+                      </div>
+
+                      {/* Invoice# */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Invoice#</label>
+                        <input
+                          type="text"
+                          placeholder="E.g., INV-9988"
+                          {...register("invoiceNumber")}
+                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Customer Name</label>
+                      <select
+                        {...register("clientId")}
+                        className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold cursor-pointer focus:border-primary"
+                      >
+                        <option value="">Independent (No Client)</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Notes (Max 500 characters)</label>
+                      <textarea
+                        rows={3}
+                        maxLength={500}
+                        placeholder="Configure any specific details..."
+                        {...register("notes")}
+                        className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary resize-none"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2 cursor-pointer font-bold text-foreground select-none mt-2">
+                      <input
+                        type="checkbox"
+                        {...register("isTaxDeductible")}
+                        className="w-3.5 h-3.5 rounded border accent-indigo-500 cursor-pointer"
+                      />
+                      <label className="cursor-pointer text-[10px] uppercase tracking-wider">Tax Deductible Write-Off</label>
+                    </div>
+
+                  </div>
+
+                  {/* Right dropzone attachment column */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Attach Outflow Receipt Image</label>
+                    
+                    <div 
+                      onClick={handleReceiptUploadClick}
+                      className={cn(
+                        "p-12 border border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative select-none bg-slate-50/50 hover:bg-muted dark:bg-[#0b101c]/40 hover:border-indigo-500/30",
+                        uploadedReceipt ? "bg-emerald-500/5 border-emerald-500/25" : ""
+                      )}
+                    >
+                      {isUploading ? (
+                        <div className="w-full max-w-[180px] space-y-2 select-none">
+                          <span className="block text-[10px] font-bold text-indigo-500">Uploading invoice attachment...</span>
+                          <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
+                          </div>
+                        </div>
+                      ) : uploadedReceipt ? (
+                        <div className="flex flex-col items-center gap-2 animate-fade-in select-none">
+                          <div className="p-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 rounded-full shrink-0">
+                            <Check className="w-4 h-4" />
+                          </div>
+                          <span className="text-[11px] font-bold text-emerald-500">Capture Completed!</span>
+                          <span className="text-[9px] text-muted-foreground font-mono">receipt_invoice_seed.jpg</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center select-none shrink-0 text-muted-foreground">
+                          <UploadCloud className="w-8 h-8 mb-2 text-slate-400" />
+                          <span className="text-[11px] font-bold text-foreground">Drag & Drop your receipts here</span>
+                          <span className="text-[9px] text-slate-400 block mt-0.5">PDF, PNG, JPG accepted (max 4MB)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Drawer footer actions */}
+              <div className="flex items-center gap-3 justify-end pt-4 border-t shrink-0 select-none bg-card relative z-50 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer"
+                >
+                  Record Expense
+                </button>
+              </div>
+
+            </form>
+          )}
+
+          {/* Tab 2 Content: Bulk Add Expenses */}
+          {activeFormTab === 'bulk' && (
+            <div className="flex-1 flex flex-col justify-between select-none h-full">
+              <div className="flex-1 overflow-y-auto pr-1 pb-6 space-y-4 scrollbar-thin select-none">
+                
+                <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
+                  
+                  {/* Grid Table */}
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-900 border-b text-[10px] text-muted-foreground uppercase font-bold tracking-wider select-none">
+                        <th className="py-2.5 px-3 w-40">Date *</th>
+                        <th className="py-2.5 px-3">Category *</th>
+                        <th className="py-2.5 px-3 w-44">Amount *</th>
+                        <th className="py-2.5 px-3">Customer Name</th>
+                        <th className="py-2.5 px-3">Projects</th>
+                        <th className="py-2.5 px-3 text-center w-20">Billable</th>
+                        <th className="py-2.5 px-3 text-center w-12">Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {bulkRows.map((row, index) => {
+                        const rowProjects = row.clientId 
+                          ? allProjects.filter(p => p.clientId === row.clientId) 
+                          : [];
+                        
+                        return (
+                          <tr key={index} className="hover:bg-slate-50/20 transition-colors animate-fade-in select-none">
+                            
+                            {/* Date Picker */}
+                            <td className="py-2 px-2.5">
+                              <input
+                                type="date"
+                                value={row.date}
+                                onChange={(e) => handleBulkRowChange(index, 'date', e.target.value)}
+                                className="w-full px-2 py-1.5 border rounded bg-card outline-none focus:border-primary text-xs font-semibold"
+                              />
+                            </td>
+
+                            {/* Category selector */}
+                            <td className="py-2 px-2.5">
+                              <select
+                                value={row.category}
+                                onChange={(e) => handleBulkRowChange(index, 'category', e.target.value)}
+                                className="w-full px-2 py-1.5 border rounded bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer"
+                              >
+                                <option value="Software">Software & SaaS</option>
+                                <option value="Marketing">Marketing / ADS</option>
+                                <option value="Rent">Studio Rent</option>
+                                <option value="Office Supplies">Office Stationery</option>
+                                <option value="Travel">Flights / Lodgings</option>
+                                <option value="Consulting">Consulting Advisory</option>
+                                <option value="Other">Miscellaneous Outflow</option>
+                              </select>
+                            </td>
+
+                            {/* Amount and local currency */}
+                            <td className="py-2 px-2.5">
+                              <div className="flex rounded border bg-card overflow-hidden">
+                                <select
+                                  value={row.currency}
+                                  onChange={(e) => handleBulkRowChange(index, 'currency', e.target.value)}
+                                  className="px-1 py-1 bg-slate-50 dark:bg-slate-900 border-r text-[10px] outline-none font-bold cursor-pointer shrink-0"
+                                >
+                                  <option value="INR">INR (₹)</option>
+                                  <option value="USD">USD ($)</option>
+                                  <option value="EUR">EUR (€)</option>
+                                  <option value="GBP">GBP (£)</option>
+                                </select>
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={row.amount || ""}
+                                  onChange={(e) => handleBulkRowChange(index, 'amount', e.target.value)}
+                                  className="w-full px-2 py-1 bg-card outline-none text-right font-semibold font-mono"
+                                />
+                              </div>
+                            </td>
+
+                            {/* Customer Client Selector */}
+                            <td className="py-2 px-2.5">
+                              <select
+                                value={row.clientId}
+                                onChange={(e) => handleBulkRowChange(index, 'clientId', e.target.value)}
+                                className="w-full px-2 py-1.5 border rounded bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer"
+                              >
+                                <option value="">Independent</option>
+                                {clients.map(c => (
+                                  <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                              </select>
+                            </td>
+
+                            {/* Projects dynamically filtered by Client */}
+                            <td className="py-2 px-2.5">
+                              <select
+                                disabled={!row.clientId}
+                                value={row.projectId}
+                                onChange={(e) => handleBulkRowChange(index, 'projectId', e.target.value)}
+                                className="w-full px-2 py-1.5 border rounded bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                <option value="">Select project</option>
+                                {rowProjects.map(p => (
+                                  <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                              </select>
+                            </td>
+
+                            {/* Billable checkbox */}
+                            <td className="py-2 px-2.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={row.isBillable}
+                                onChange={(e) => handleBulkRowChange(index, 'isBillable', e.target.checked)}
+                                className="w-3.5 h-3.5 rounded border accent-indigo-500 cursor-pointer"
+                              />
+                            </td>
+
+                            {/* Row deletion actions */}
+                            <td className="py-2 px-2.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBulkRow(index)}
+                                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 transition-colors select-none active:scale-90"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                              </button>
+                            </td>
+
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                </div>
+
+                {/* Add row */}
+                <button
+                  type="button"
+                  onClick={handleAddBulkRow}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 border border-dashed rounded-lg bg-card text-[11px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-primary active:scale-95 transition-all cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add More Expenses
+                </button>
+
+              </div>
+
+              {/* Bulk Drawer footers */}
+              <div className="flex items-center gap-3 justify-end pt-4 border-t shrink-0 select-none bg-card relative z-50 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveBulkExpenses}
+                  className="px-4 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/10 cursor-pointer"
+                >
+                  Save Bulk Expenses
+                </button>
+              </div>
+
+            </div>
+          )}
+
+        </div>
       </Drawer>
 
     </div>

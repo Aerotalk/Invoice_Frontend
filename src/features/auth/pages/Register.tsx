@@ -113,7 +113,7 @@ export const Register: React.FC = () => {
       // Simulate real register and immediately auto-authenticate
       const success = await login(values.email, "admin");
       if (success) {
-        alert("Account created successfully! Welcome to your InvoiceIQ sandbox.");
+        alert("Account created successfully! Welcome to your InvoiceIQ workspace.");
         navigate("/dashboard");
       }
     } catch (err: any) {

@@ -1,14 +1,20 @@
-import { Invoice, Client, Payment, Expense, Project, TimeEntry, AppNotification, AuditLog } from '../types';
+import { Invoice, Client, Vendor, Payment, Expense, Project, TimeEntry, AppNotification, AuditLog, Product, Quote, DeliveryChallan } from '../types';
 
 export interface MockDatabase {
   invoices: Invoice[];
   clients: Client[];
+  vendors: Vendor[];
   payments: Payment[];
   expenses: Expense[];
   projects: Project[];
   timeEntries: TimeEntry[];
   notifications: AppNotification[];
   auditLogs: AuditLog[];
+  products?: Product[];
+  productUnits?: string[];
+  quotes?: Quote[];
+  salespersons?: string[];
+  deliveryChallans?: DeliveryChallan[];
 }
 
 // Helper to generate seed dates relative to today
@@ -90,6 +96,246 @@ const initialClients: Client[] = [
     status: "active",
     notes: "New client. Setup for automatic invoicing.",
     createdAt: daysAgo(20),
+  }
+];
+
+const initialVendors: Vendor[] = [
+  {
+    id: "v-1",
+    name: "Vercel Inc.",
+    company: "Vercel Inc.",
+    email: "billing@vercel.com",
+    phone: "+1 (800) 555-0199",
+    avatar: "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150",
+    totalBilled: 8500,
+    outstandingAmount: 299,
+    status: "active",
+    notes: "Hosting and cloud deployment systems platform.",
+    createdAt: daysAgo(110)
+  },
+  {
+    id: "v-2",
+    name: "Amazon Web Services",
+    company: "Amazon Web Services",
+    email: "billing@aws.amazon.com",
+    phone: "+1 (800) 555-0245",
+    avatar: "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150",
+    totalBilled: 14500,
+    outstandingAmount: 1200,
+    status: "active",
+    notes: "Cloud computing instances, database servers, and S3 file assets.",
+    createdAt: daysAgo(90)
+  },
+  {
+    id: "v-3",
+    name: "Slack Technologies",
+    company: "Slack Technologies",
+    email: "billing@slack.com",
+    phone: "+1 (800) 555-0312",
+    avatar: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=150",
+    totalBilled: 3200,
+    outstandingAmount: 0,
+    status: "active",
+    notes: "Team messaging and real-time collaboration operations.",
+    createdAt: daysAgo(60)
+  }
+];
+
+const initialProducts: Product[] = [
+  {
+    id: "p-1",
+    name: "Enterprise Software License",
+    type: "service",
+    unit: "PCS - pcs",
+    sellingPrice: 120000,
+    description: "Annual subscription for corporate cloud platform usage.",
+    imageUrl: "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150",
+    createdAt: daysAgo(30)
+  },
+  {
+    id: "p-2",
+    name: "Branding Design Package",
+    type: "service",
+    unit: "PCS - pcs",
+    sellingPrice: 45000,
+    description: "Complete visual identity design including logo, typography guidelines, and social media assets.",
+    imageUrl: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=150",
+    createdAt: daysAgo(20)
+  },
+  {
+    id: "p-3",
+    name: "Heavy Duty Shipping Crate",
+    type: "goods",
+    unit: "BOX - box",
+    sellingPrice: 1250,
+    description: "Industrial grade reinforced wooden shipping crate for domestic and international freight.",
+    imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=150",
+    createdAt: daysAgo(10)
+  }
+];
+
+const initialProductUnits: string[] = [
+  "BOX - box",
+  "CMS - cm",
+  "DOZ - dz",
+  "FTS - ft",
+  "GMS - g",
+  "INC - in",
+  "KGS - kg",
+  "KME - km",
+  "LBS - lb",
+  "MGS - mg",
+  "MLT - ml",
+  "MTR - m",
+  "PCS - pcs"
+];
+
+const initialSalespersons: string[] = [
+  "Alex Sterling",
+  "Sarah Jenkins",
+  "Marcus Vance",
+  "David Chen"
+];
+
+const initialQuotes: Quote[] = [
+  {
+    id: "q-1",
+    quoteNumber: "QT-000001",
+    referenceNumber: "REF-99882",
+    clientId: "c-1",
+    clientName: "Sarah Jenkins",
+    clientCompany: "Acme Corporation",
+    quoteDate: daysAgo(15),
+    expiryDate: daysFromNow(15),
+    salesperson: "Alex Sterling",
+    projectId: "proj-1",
+    projectName: "Web Portal & Branding Redesign",
+    subject: "Branding materials and cloud hosting initial setup quotes.",
+    items: [
+      {
+        id: "qi-1",
+        productId: "p-2",
+        name: "Branding Design Package",
+        quantity: 1,
+        rate: 45000,
+        total: 45000
+      },
+      {
+        id: "qi-2",
+        productId: "p-3",
+        name: "Heavy Duty Shipping Crate",
+        quantity: 2,
+        rate: 1250,
+        total: 2500
+      }
+    ],
+    subtotal: 47500,
+    discountRate: 5,
+    discountAmount: 2375,
+    taxType: "tds",
+    taxRate: 10,
+    taxAmount: 4512.5,
+    adjustment: -137.5,
+    total: 49500,
+    status: "accepted",
+    customerNotes: "Looking forward for your business.",
+    terms: "Payment terms standard net-30.",
+    createdAt: daysAgo(15)
+  },
+  {
+    id: "q-2",
+    quoteNumber: "QT-000002",
+    referenceNumber: "REF-77332",
+    clientId: "c-2",
+    clientName: "Alex Rivera",
+    clientCompany: "Vortex Labs",
+    quoteDate: daysAgo(2),
+    expiryDate: daysFromNow(28),
+    salesperson: "Sarah Jenkins",
+    subject: "Enterprise Software License subscription offering.",
+    items: [
+      {
+        id: "qi-3",
+        productId: "p-1",
+        name: "Enterprise Software License",
+        quantity: 1,
+        rate: 120000,
+        total: 120000
+      }
+    ],
+    subtotal: 120000,
+    discountRate: 0,
+    discountAmount: 0,
+    taxType: "tcs",
+    taxRate: 5,
+    taxAmount: 6000,
+    adjustment: 0,
+    total: 126000,
+    status: "sent",
+    customerNotes: "Looking forward for your business.",
+    terms: "TCS rates applicable at base level.",
+    createdAt: daysAgo(2)
+  }
+];
+
+const initialChallans: DeliveryChallan[] = [
+  {
+    id: "dc-1",
+    challanNumber: "DC-00001",
+    referenceNumber: "REF-CHAL-111",
+    clientId: "c-1",
+    clientName: "Sarah Jenkins",
+    clientCompany: "Acme Corporation",
+    challanDate: daysAgo(10),
+    challanType: "Supply for Job Work",
+    items: [
+      {
+        id: "dci-1",
+        productId: "p-3",
+        name: "Heavy Duty Shipping Crate",
+        quantity: 5,
+        rate: 1250,
+        total: 6250
+      }
+    ],
+    subtotal: 6250,
+    discountRate: 0,
+    discountAmount: 0,
+    adjustment: 0,
+    total: 6250,
+    status: "issued",
+    customerNotes: "Supply for standard job work operations. Non-taxable delivery challan.",
+    terms: "Goods should be returned in original condition.",
+    createdAt: daysAgo(10)
+  },
+  {
+    id: "dc-2",
+    challanNumber: "DC-00002",
+    referenceNumber: "REF-CHAL-222",
+    clientId: "c-2",
+    clientName: "Alex Rivera",
+    clientCompany: "Vortex Labs",
+    challanDate: daysAgo(1),
+    challanType: "Supply on Approval",
+    items: [
+      {
+        id: "dci-2",
+        productId: "p-1",
+        name: "Enterprise Software License",
+        quantity: 1,
+        rate: 120000,
+        total: 120000
+      }
+    ],
+    subtotal: 120000,
+    discountRate: 10,
+    discountAmount: 12000,
+    adjustment: 0,
+    total: 108000,
+    status: "draft",
+    customerNotes: "Delivery on approval basis.",
+    terms: "Approval timeframe 15 days.",
+    createdAt: daysAgo(1)
   }
 ];
 
@@ -554,19 +800,45 @@ export const getMockDB = (): MockDatabase => {
     return {
       invoices: initialInvoices,
       clients: initialClients,
+      vendors: initialVendors,
       payments: initialPayments,
       expenses: initialExpenses,
       projects: initialProjects,
       timeEntries: initialTimeEntries,
       notifications: initialNotifications,
       auditLogs: initialAuditLogs,
+      products: initialProducts,
+      productUnits: initialProductUnits,
+      quotes: initialQuotes,
+      salespersons: initialSalespersons,
+      deliveryChallans: initialChallans,
     };
   }
 
   const existing = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (existing) {
     try {
-      return JSON.parse(existing);
+      const parsed = JSON.parse(existing);
+      // Auto-fill vendors if upgrading existing database state
+      if (!parsed.vendors) {
+        parsed.vendors = initialVendors;
+      }
+      if (!parsed.products) {
+        parsed.products = initialProducts;
+      }
+      if (!parsed.productUnits) {
+        parsed.productUnits = initialProductUnits;
+      }
+      if (!parsed.quotes) {
+        parsed.quotes = initialQuotes;
+      }
+      if (!parsed.salespersons) {
+        parsed.salespersons = initialSalespersons;
+      }
+      if (!parsed.deliveryChallans) {
+        parsed.deliveryChallans = initialChallans;
+      }
+      return parsed;
     } catch (e) {
       console.error("Failed to parse mock database, resetting seeds", e);
     }
@@ -575,12 +847,18 @@ export const getMockDB = (): MockDatabase => {
   const db: MockDatabase = {
     invoices: initialInvoices,
     clients: initialClients,
+    vendors: initialVendors,
     payments: initialPayments,
     expenses: initialExpenses,
     projects: initialProjects,
     timeEntries: initialTimeEntries,
     notifications: initialNotifications,
     auditLogs: initialAuditLogs,
+    products: initialProducts,
+    productUnits: initialProductUnits,
+    quotes: initialQuotes,
+    salespersons: initialSalespersons,
+    deliveryChallans: initialChallans,
   };
   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(db));
   return db;

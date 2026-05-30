@@ -1,0 +1,907 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Plus, 
+  Search, 
+  Trash2, 
+  MoreHorizontal, 
+  Sparkles, 
+  Upload, 
+  X, 
+  ChevronDown, 
+  Check, 
+  Calculator, 
+  Layers, 
+  AlertCircle,
+  Eye,
+  Settings,
+  Calendar,
+  Truck,
+  FileCheck2,
+  UserSquare2,
+  FileText
+} from 'lucide-react';
+import { PageHeader } from '../../../components/common/PageHeader';
+import { DataTable, ColumnDef } from '../../../components/common/DataTable';
+import { StatusBadge } from '../../../components/common/StatusBadge';
+import { Drawer } from '../../../components/common/Drawer';
+import { apiService } from '../../../services/api';
+import { usePreferencesStore } from '../../../store/preferencesStore';
+import { formatCurrency, formatDate } from '../../../lib/utils';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as zod from 'zod';
+import { cn } from '../../../lib/utils';
+
+// Zod schema designed to prevent input/output type conflicts in form bindings
+const challanSchema = zod.object({
+  challanNumber: zod.string().min(2, { message: "Challan number must be at least 2 characters" }),
+  referenceNumber: zod.string(),
+  clientId: zod.string().min(1, { message: "Customer is required" }),
+  challanDate: zod.string().min(1, { message: "Challan date is required" }),
+  challanType: zod.string().min(1, { message: "Challan type is required" }),
+  customerNotes: zod.string(),
+  terms: zod.string(),
+  discountRate: zod.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, {
+    message: "Discount must be between 0% and 100%"
+  }),
+  adjustment: zod.string().refine((val) => !isNaN(Number(val)), {
+    message: "Adjustment must be a number"
+  })
+});
+
+type ChallanFormValues = zod.infer<typeof challanSchema>;
+
+interface ChallanItemInput {
+  productId: string;
+  name: string;
+  quantity: number;
+  rate: number;
+  total: number;
+}
+
+const challanReasons = [
+  "Supply on Approval",
+  "Supply for Job Work",
+  "Exhibition or Fair",
+  "Sale on Return",
+  "Supply of Liquid Goods",
+  "Others"
+];
+
+export const DeliveryChallansList: React.FC = () => {
+  const [challans, setChallans] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeChallanMenu, setActiveChallanMenu] = useState<string | null>(null);
+
+  // Dynamic input controls
+  const [isCustomChallanCode, setIsCustomChallanCode] = useState(false);
+
+  // File Upload states
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string }>>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  // Dynamic row builder states
+  const [itemRows, setItemRows] = useState<ChallanItemInput[]>([
+    { productId: "", name: "", quantity: 1, rate: 0, total: 0 }
+  ]);
+
+  // Quick search filter input state
+  const [globalSearch, setGlobalSearch] = useState("");
+
+  const { currency } = usePreferencesStore();
+
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ChallanFormValues>({
+    resolver: zodResolver(challanSchema),
+    defaultValues: {
+      challanNumber: '',
+      referenceNumber: '',
+      clientId: '',
+      challanDate: new Date().toISOString().split('T')[0],
+      challanType: 'Supply for Job Work',
+      customerNotes: 'Enter any notes to be displayed in your transaction',
+      terms: 'Enter the terms and conditions of your business to be displayed in your transaction',
+      discountRate: '0',
+      adjustment: '0'
+    }
+  });
+
+  const selectedClientId = watch("clientId");
+  const discountRateVal = watch("discountRate");
+  const adjustmentVal = watch("adjustment");
+
+  // Load backend dependencies
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const challanRes = await apiService.getChallans();
+      const clientsRes = await apiService.getClients();
+      const productsRes = await apiService.getProducts();
+
+      setChallans(challanRes);
+      setClients(clientsRes);
+      setProducts(productsRes);
+
+      // Pre-generate standard Challan Number
+      const nextNum = `DC-${String((challanRes.length || 0) + 1).padStart(5, '0')}`;
+      setValue("challanNumber", nextNum);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Recalculations hook for Grand Total summaries
+  const subtotal = itemRows.reduce((sum, item) => sum + item.total, 0);
+  const discountAmount = subtotal * (Number(discountRateVal || 0) / 100);
+  const total = subtotal - discountAmount + Number(adjustmentVal || 0);
+
+  // Dynamic row builder methods
+  const handleAddRow = () => {
+    setItemRows([...itemRows, { productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+  };
+
+  const handleRemoveRow = (index: number) => {
+    if (itemRows.length <= 1) {
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      return;
+    }
+    setItemRows(itemRows.filter((_, idx) => idx !== index));
+  };
+
+  const handleRowChange = (index: number, field: keyof ChallanItemInput, val: any) => {
+    const nextRows = [...itemRows];
+    const row = nextRows[index];
+
+    if (field === 'productId') {
+      const prod = products.find(p => p.id === val);
+      if (prod) {
+        row.productId = prod.id;
+        row.name = prod.name;
+        row.rate = prod.sellingPrice;
+        row.total = row.quantity * prod.sellingPrice;
+      } else {
+        row.productId = "";
+        row.name = "";
+        row.rate = 0;
+        row.total = 0;
+      }
+    } else if (field === 'quantity') {
+      const q = Math.max(0, Number(val));
+      row.quantity = q;
+      row.total = q * row.rate;
+    } else if (field === 'rate') {
+      const r = Math.max(0, Number(val));
+      row.rate = r;
+      row.total = row.quantity * r;
+    } else if (field === 'name') {
+      row.name = val;
+    }
+
+    setItemRows(nextRows);
+  };
+
+  // Mock Upload attachments helper
+  const handleMockUploadFile = () => {
+    if (uploadedFiles.length >= 3) {
+      alert("Maximum of 3 file attachments allowed.");
+      return;
+    }
+    setUploadingFile(true);
+    setTimeout(() => {
+      const files = ['delivery_gate_pass.pdf', 'packing_slip_v2.xlsx', 'waybill_declaration.pdf'];
+      const chosen = files[Math.floor(Math.random() * files.length)];
+      const size = `${(Math.random() * 3 + 1).toFixed(1)} MB`;
+      setUploadedFiles([...uploadedFiles, { name: chosen, size }]);
+      setUploadingFile(false);
+    }, 600);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, idx) => idx !== index));
+  };
+
+  // Submit challan as Issued
+  const onSubmitChallan = async (values: ChallanFormValues) => {
+    const activeClient = clients.find(c => c.id === values.clientId);
+    const filteredItems = itemRows.filter(r => r.name.trim() !== "");
+    if (filteredItems.length === 0) {
+      alert("Please configure at least one dynamic item with details.");
+      return;
+    }
+
+    try {
+      const payload = {
+        challanNumber: values.challanNumber,
+        referenceNumber: values.referenceNumber,
+        clientId: values.clientId,
+        clientName: activeClient?.name || "Unknown Client",
+        clientCompany: activeClient?.company || "Unknown Company",
+        challanDate: values.challanDate,
+        challanType: values.challanType,
+        items: filteredItems.map((r, index) => ({
+          id: `dci-${Date.now()}-${index}`,
+          productId: r.productId || "custom",
+          name: r.name,
+          quantity: r.quantity,
+          rate: r.rate,
+          total: r.total
+        })),
+        subtotal,
+        discountRate: Number(values.discountRate),
+        discountAmount,
+        adjustment: Number(values.adjustment),
+        total,
+        status: "issued" as const,
+        customerNotes: values.customerNotes,
+        terms: values.terms
+      };
+
+      await apiService.createChallan(payload);
+      alert("Delivery challan issued successfully!");
+      setDrawerOpen(false);
+      reset();
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      setUploadedFiles([]);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save challan details.");
+    }
+  };
+
+  // Save as Draft helper
+  const handleSaveAsDraft = async () => {
+    const clId = watch("clientId");
+    if (!clId) {
+      alert("Please select a customer to save this challan.");
+      return;
+    }
+
+    const activeClient = clients.find(c => c.id === clId);
+    const filteredItems = itemRows.filter(r => r.name.trim() !== "");
+
+    try {
+      const payload = {
+        challanNumber: watch("challanNumber"),
+        referenceNumber: watch("referenceNumber"),
+        clientId: clId,
+        clientName: activeClient?.name || "Unknown Client",
+        clientCompany: activeClient?.company || "Unknown Company",
+        challanDate: watch("challanDate"),
+        challanType: watch("challanType"),
+        items: filteredItems.map((r, index) => ({
+          id: `dci-${Date.now()}-${index}`,
+          productId: r.productId || "custom",
+          name: r.name,
+          quantity: r.quantity,
+          rate: r.rate,
+          total: r.total
+        })),
+        subtotal,
+        discountRate: Number(discountRateVal),
+        discountAmount,
+        adjustment: Number(adjustmentVal),
+        total,
+        status: "draft" as const,
+        customerNotes: watch("customerNotes"),
+        terms: watch("terms")
+      };
+
+      await apiService.createChallan(payload);
+      alert("Challan draft saved successfully!");
+      setDrawerOpen(false);
+      reset();
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      setUploadedFiles([]);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Filter challans dynamically by global search query
+  const filteredChallans = challans.filter(dc => 
+    dc.challanNumber.toLowerCase().includes(globalSearch.toLowerCase()) ||
+    dc.clientName.toLowerCase().includes(globalSearch.toLowerCase()) ||
+    dc.clientCompany.toLowerCase().includes(globalSearch.toLowerCase()) ||
+    dc.challanType.toLowerCase().includes(globalSearch.toLowerCase()) ||
+    (dc.referenceNumber && dc.referenceNumber.toLowerCase().includes(globalSearch.toLowerCase()))
+  );
+
+  // Table Columns Setup
+  const columns: ColumnDef<any>[] = [
+    {
+      header: "Challan Number",
+      accessorKey: "challanNumber",
+      sortable: true,
+      cell: (row) => (
+        <span className="font-bold text-primary select-none text-xs">
+          {row.challanNumber}
+        </span>
+      )
+    },
+    {
+      header: "Customer & Corporate",
+      accessorKey: "clientName",
+      sortable: true,
+      cell: (row) => (
+        <div className="select-none text-xs">
+          <span className="block font-bold text-foreground">{row.clientName}</span>
+          <span className="block text-[10px] text-muted-foreground uppercase font-semibold mt-0.5">{row.clientCompany}</span>
+        </div>
+      )
+    },
+    {
+      header: "Challan Date",
+      accessorKey: "challanDate",
+      sortable: true,
+      cell: (row) => <span>{formatDate(row.challanDate)}</span>
+    },
+    {
+      header: "Challan Type",
+      accessorKey: "challanType",
+      sortable: true,
+      cell: (row) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border select-none text-indigo-500 bg-indigo-50 dark:bg-indigo-950/20 border-indigo-100 dark:border-indigo-900/50">
+          {row.challanType}
+        </span>
+      )
+    },
+    {
+      header: "Quoted Total",
+      accessorKey: "total",
+      sortable: true,
+      cell: (row) => (
+        <span className="text-xs font-extrabold text-foreground select-none">
+          {formatCurrency(row.total, currency)}
+        </span>
+      )
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      sortable: true,
+      cell: (row) => <StatusBadge status={row.status} />
+    },
+    {
+      header: "Actions",
+      cell: (row) => (
+        <div className="relative select-none">
+          <button
+            onClick={() => setActiveChallanMenu(activeChallanMenu === row.id ? null : row.id)}
+            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-all select-none cursor-pointer"
+          >
+            <MoreHorizontal className="w-4 h-4 shrink-0" />
+          </button>
+          
+          {activeChallanMenu === row.id && (
+            <>
+              <div 
+                onClick={() => setActiveChallanMenu(null)}
+                className="fixed inset-0 z-40 select-none" 
+              />
+              <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChallanMenu(null);
+                    alert(`Challan details preview:\nChallan Type: ${row.challanType}\nSubtotal: ${formatCurrency(row.subtotal, currency)}\nDiscount: ${row.discountRate}%\nGrand Total: ${formatCurrency(row.total, currency)}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Quick Details
+                </button>
+
+                {row.status === 'draft' && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setActiveChallanMenu(null);
+                      try {
+                        await apiService.updateChallan(row.id, { status: "issued" });
+                        alert("Challan marked as issued!");
+                        loadData();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 transition-colors text-left"
+                  >
+                    <FileCheck2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    Issue Challan
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm(`Are you sure you want to delete ${row.challanNumber}?`)) {
+                      setActiveChallanMenu(null);
+                      try {
+                        await apiService.deleteChallan(row.id);
+                        alert("Challan deleted successfully!");
+                        loadData();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 transition-colors text-left font-semibold cursor-pointer shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  Delete Challan
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )
+    }
+  ];
+
+  return (
+    <div className="space-y-6 select-none animate-fade-in">
+      
+      {/* Search and Action Header Container */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-extrabold text-foreground tracking-tight">Delivery Challans</h2>
+          <p className="text-xs text-muted-foreground mt-1">Configure shipment records, dynamic inventory dispatch entries, and track supply operations.</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {/* Custom Search in Challans bar matching Zoho exact header specifications */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search in Challans ( / )"
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="w-64 pl-8 pr-3 py-1.5 border rounded-lg bg-card text-xs font-medium outline-none focus:border-primary shadow-sm hover:border-slate-300 dark:hover:border-slate-800 transition-colors"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+            {globalSearch && (
+              <button 
+                onClick={() => setGlobalSearch("")} 
+                className="absolute right-2.5 top-2.5 p-0.5 rounded hover:bg-muted text-muted-foreground"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <button
+            onClick={() => {
+              reset();
+              const nextNum = `DC-${String((challans.length || 0) + 1).padStart(5, '0')}`;
+              setValue("challanNumber", nextNum);
+              setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+              setUploadedFiles([]);
+              setIsCustomChallanCode(false);
+              setDrawerOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 select-none cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Add Delivery Challan
+          </button>
+        </div>
+      </div>
+
+      {/* Main Delivery Challans Datatable */}
+      <DataTable
+        columns={columns}
+        data={filteredChallans}
+        emptyTitle="No delivery challans recorded"
+        emptyDescription="Configure supply scopes, dynamic shipping dispatches, and inventory logs by mapping a new Delivery Challan."
+        loading={loading}
+      />
+
+      {/* Extra Large Sliding setup drawer form */}
+      <Drawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="New Delivery Challan"
+        size="xl"
+      >
+        <form onSubmit={handleSubmit(onSubmitChallan)} className="flex flex-col h-[82vh] text-xs font-semibold select-none relative">
+          
+          <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6 scrollbar-thin">
+            
+            {/* Customer select box */}
+            <div className="bg-slate-50/50 dark:bg-slate-900/35 p-4 rounded-xl border space-y-4">
+              <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1 border-b pb-2">
+                <UserSquare2 className="w-3.5 h-3.5 shrink-0" />
+                1. Customer & Company Specifications
+              </span>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Customer Name <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    {...register("clientId")}
+                    className={cn(
+                      "w-full px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary appearance-none cursor-pointer",
+                      errors.clientId ? "border-rose-500/70" : ""
+                    )}
+                  >
+                    <option value="">Select or add a customer</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                    ))}
+                  </select>
+                  {errors.clientId && <span className="text-[9px] text-rose-500 font-bold">{errors.clientId.message}</span>}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Challan Type <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    {...register("challanType")}
+                    className={cn(
+                      "w-full px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary appearance-none cursor-pointer",
+                      errors.challanType ? "border-rose-500/70" : ""
+                    )}
+                  >
+                    <option value="">Choose a proper challan type.</option>
+                    {challanReasons.map(r => (
+                      <option key={r} value={r}>{r}</option>
+                    ))}
+                  </select>
+                  {errors.challanType && <span className="text-[9px] text-rose-500 font-bold">{errors.challanType.message}</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Challan details, dates */}
+            <div className="bg-card p-4 rounded-xl border space-y-4">
+              <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1 border-b pb-2">
+                <Calendar className="w-3.5 h-3.5 shrink-0" />
+                2. Challan Codes & Timeframes
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Challan Number */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Delivery Challan# <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex rounded-lg overflow-hidden border">
+                    <input
+                      type="text"
+                      disabled={!isCustomChallanCode}
+                      {...register("challanNumber")}
+                      className="w-full px-3 py-2 bg-card outline-none focus:border-primary text-xs font-semibold disabled:bg-slate-100 dark:disabled:bg-slate-900/60 disabled:text-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomChallanCode(!isCustomChallanCode)}
+                      className={cn(
+                        "px-3 border-l flex items-center justify-center transition-colors hover:bg-muted text-slate-500 shrink-0 cursor-pointer",
+                        isCustomChallanCode ? "text-primary bg-primary/5" : ""
+                      )}
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {errors.challanNumber && <span className="text-[9px] text-rose-500 font-bold">{errors.challanNumber.message}</span>}
+                </div>
+
+                {/* Reference Number */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Reference#</label>
+                  <input
+                    type="text"
+                    placeholder="Enter reference number"
+                    {...register("referenceNumber")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
+                  />
+                </div>
+
+                {/* Challan Date */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Delivery Challan Date <span className="text-rose-500">*</span></label>
+                  <input
+                    type="date"
+                    {...register("challanDate")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-semibold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Line Item Table builder */}
+            <div className="bg-card rounded-xl border overflow-hidden shadow-sm">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-b">
+                <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calculator className="w-3.5 h-3.5 shrink-0" />
+                  3. Line Item Dispatch Table
+                </span>
+              </div>
+              
+              <div className="p-4 space-y-4">
+                {/* Headers */}
+                <div className="grid grid-cols-12 gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider border-b pb-2 select-none hidden sm:grid">
+                  <div className="col-span-5">Item Details</div>
+                  <div className="col-span-2 text-center">Quantity</div>
+                  <div className="col-span-2 text-right">Rate</div>
+                  <div className="col-span-2 text-right">Amount</div>
+                  <div className="col-span-1 text-center">Delete</div>
+                </div>
+
+                {/* Rows */}
+                <div className="space-y-3.5">
+                  {itemRows.map((row, index) => (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-center border-b pb-3 sm:pb-0 sm:border-b-0">
+                      
+                      {/* Product select + description */}
+                      <div className="col-span-12 sm:col-span-5 flex flex-col gap-1">
+                        <select
+                          value={row.productId}
+                          onChange={(e) => handleRowChange(index, "productId", e.target.value)}
+                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary cursor-pointer"
+                        >
+                          <option value="">Type or click to select an item.</option>
+                          {products.map(p => (
+                            <option key={p.id} value={p.id}>{p.name} ({p.unit})</option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          placeholder="Or type a custom dispatch item detail description..."
+                          value={row.name}
+                          onChange={(e) => handleRowChange(index, "name", e.target.value)}
+                          className="w-full px-2 py-1 border rounded bg-slate-50/50 dark:bg-slate-900/25 outline-none text-[11px] font-medium focus:border-primary mt-1"
+                        />
+                      </div>
+
+                      {/* Quantity */}
+                      <div className="col-span-6 sm:col-span-2">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Quantity</span>
+                        <input
+                          type="number"
+                          step="any"
+                          value={row.quantity}
+                          onChange={(e) => handleRowChange(index, "quantity", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-center focus:border-primary"
+                        />
+                      </div>
+
+                      {/* Rate */}
+                      <div className="col-span-6 sm:col-span-2">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden text-right">Rate</span>
+                        <input
+                          type="number"
+                          step="any"
+                          value={row.rate}
+                          onChange={(e) => handleRowChange(index, "rate", e.target.value)}
+                          className="w-full px-2.5 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-right focus:border-primary"
+                        />
+                      </div>
+
+                      {/* Amount */}
+                      <div className="col-span-10 sm:col-span-2 text-right">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Amount</span>
+                        <span className="text-xs font-bold text-foreground block pr-2 select-none mt-1 sm:mt-0">
+                          {formatCurrency(row.total, currency)}
+                        </span>
+                      </div>
+
+                      {/* Delete */}
+                      <div className="col-span-2 sm:col-span-1 text-center mt-1 sm:mt-0">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRow(index)}
+                          className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/20 text-slate-400 hover:text-rose-500 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                        </button>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+
+                {/* Item footer triggers */}
+                <div className="border-t pt-4 mt-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handleAddRow}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-bold active:scale-95 transition-all shadow-sm cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-primary shrink-0" />
+                    Add New Row
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (products.length > 0) {
+                        const bulk = products.slice(0, 3).map(p => ({
+                          productId: p.id,
+                          name: p.name,
+                          quantity: 1,
+                          rate: p.sellingPrice,
+                          total: p.sellingPrice
+                        }));
+                        setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
+                        alert("Added top products catalog in bulk!");
+                      }
+                    }}
+                    className="px-3 py-1.5 text-[10px] font-extrabold text-primary hover:underline hover:underline-offset-2 cursor-pointer"
+                  >
+                    Add Items in Bulk
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Calculations & Customer notes container */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              
+              {/* Customer notes & Terms */}
+              <div className="space-y-4 select-none">
+                {/* Notes */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Customer Notes</label>
+                  <textarea
+                    placeholder="Enter any notes to be displayed in your transaction"
+                    {...register("customerNotes")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-none h-16 leading-relaxed"
+                  />
+                </div>
+
+                {/* Terms */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Terms & Conditions</label>
+                  <textarea
+                    placeholder="Enter the terms and conditions of your business to be displayed in your transaction"
+                    {...register("terms")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-none h-16 leading-relaxed"
+                  />
+                </div>
+
+                {/* Mock File Attachment dropzone */}
+                <div className="flex flex-col justify-start border-t pt-3">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px] mb-1.5">Attach File(s) to Delivery Challan</label>
+                  
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <div className="col-span-1">
+                      <button
+                        type="button"
+                        onClick={handleMockUploadFile}
+                        disabled={uploadingFile}
+                        className="w-full border-2 border-dashed rounded-lg py-3 flex flex-col items-center justify-center cursor-pointer select-none bg-slate-50/20 dark:bg-slate-900/10 hover:bg-slate-50/50 hover:border-slate-300 transition-all border-slate-200 dark:border-slate-800 disabled:opacity-40"
+                      >
+                        <Upload className="w-4 h-4 text-primary shrink-0 mb-1" />
+                        <span className="text-[9px] font-bold text-foreground">{uploadingFile ? "Attaching..." : "Upload File"}</span>
+                      </button>
+                    </div>
+
+                    <div className="col-span-2 flex flex-col gap-1 text-[10px] font-semibold overflow-y-auto max-h-16 pr-1 scrollbar-thin">
+                      {uploadedFiles.map((f, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-1 rounded border bg-slate-50 dark:bg-slate-800/20 text-[10px]">
+                          <span className="truncate max-w-[120px] text-foreground/80">{f.name}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-slate-400 text-[8px]">{f.size}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveFile(idx)}
+                              className="text-slate-400 hover:text-rose-500"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {uploadedFiles.length === 0 && (
+                        <span className="text-slate-400 text-[9px] italic block pl-1">You can upload a maximum of 3 files, 10MB each.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Calculations Block summary */}
+              <div className="p-5 border rounded-xl bg-slate-50/30 dark:bg-slate-900/10 space-y-4 select-none">
+                
+                {/* Sub Total */}
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Sub Total</span>
+                  <span className="font-extrabold text-foreground">{formatCurrency(subtotal, currency)}</span>
+                </div>
+
+                {/* Discount Percentage Rate */}
+                <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Discount</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="0"
+                      {...register("discountRate")}
+                      className="w-16 px-2 py-1 border rounded bg-card outline-none text-right font-semibold focus:border-primary text-xs"
+                    />
+                    <span className="font-bold text-slate-400">%</span>
+                    <span className="font-bold text-foreground ml-2">-{formatCurrency(discountAmount, currency)}</span>
+                  </div>
+                </div>
+
+                {/* Adjustment Input */}
+                <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Adjustment</span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="any"
+                      placeholder="0.00"
+                      {...register("adjustment")}
+                      className="w-24 px-2.5 py-1 border rounded bg-card outline-none text-right font-semibold focus:border-primary text-xs"
+                    />
+                    <span className="font-bold text-slate-400">Adj</span>
+                    <span className="font-bold text-foreground ml-2">
+                      {Number(adjustmentVal) >= 0 ? "+" : ""}{formatCurrency(Number(adjustmentVal || 0), currency)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Grand Total */}
+                <div className="flex justify-between items-center text-sm border-t-2 border-dashed pt-4 select-none">
+                  <span className="text-foreground font-extrabold uppercase tracking-wider text-xs">Total ( {currency} )</span>
+                  <span className="font-extrabold text-foreground text-base tracking-tight">{formatCurrency(total, currency)}</span>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* Drawer Actions Footer */}
+          <div className="border-t pt-4 flex items-center justify-between bg-card z-10 shrink-0 select-none">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wide">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Saves to local workspace</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-bold transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAsDraft}
+                className="px-4 py-2 border rounded-lg bg-card hover:bg-muted text-foreground/90 text-xs font-extrabold transition-all active:scale-95 shadow-sm"
+              >
+                Save as Draft
+              </button>
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95"
+              >
+                Save and Issue
+              </button>
+            </div>
+          </div>
+
+        </form>
+      </Drawer>
+
+    </div>
+  );
+};

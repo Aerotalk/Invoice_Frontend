@@ -35,6 +35,7 @@ export interface Invoice {
   logo?: string;
   isScheduled?: boolean;
   scheduledSendDate?: string;
+  senderAddress?: string;
 }
 
 export type ClientStatus = 'active' | 'inactive';
@@ -55,6 +56,154 @@ export interface Client {
   country?: string;
   state?: string;
   city?: string;
+}
+
+export interface Vendor {
+  id: string;
+  name: string;
+  company: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  totalBilled: number;
+  outstandingAmount: number;
+  status: 'active' | 'inactive';
+  notes: string;
+  createdAt: string;
+  vendorType?: 'individual' | 'business';
+  country?: string;
+  state?: string;
+  city?: string;
+  displayName?: string;
+  currency?: string;
+  language?: string;
+  pan?: string;
+  paymentTerms?: string;
+  enablePortal?: boolean;
+  website?: string;
+  department?: string;
+  designation?: string;
+  socialX?: string;
+  skype?: string;
+  socialFacebook?: string;
+  billingAddress?: {
+    attention?: string;
+    street1?: string;
+    street2?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    zip?: string;
+    phone?: string;
+    fax?: string;
+  };
+  shippingAddress?: {
+    attention?: string;
+    street1?: string;
+    street2?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    zip?: string;
+    phone?: string;
+    fax?: string;
+  };
+  contactPersons?: Array<{
+    id: string;
+    salutation: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  }>;
+  customFields?: Array<{
+    id: string;
+    label: string;
+    value: string;
+  }>;
+  documentsCount?: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  type: 'goods' | 'service';
+  unit: string;
+  imageUrl?: string;
+  sellingPrice: number;
+  description: string;
+  createdAt: string;
+}
+
+export interface QuoteItem {
+  id: string;
+  productId: string;
+  name: string;
+  quantity: number;
+  rate: number;
+  total: number;
+}
+
+export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'expired';
+
+export interface Quote {
+  id: string;
+  quoteNumber: string;
+  referenceNumber?: string;
+  clientId: string;
+  clientName: string;
+  clientCompany: string;
+  quoteDate: string;
+  expiryDate?: string;
+  salesperson?: string;
+  projectId?: string;
+  projectName?: string;
+  subject?: string;
+  items: QuoteItem[];
+  subtotal: number;
+  discountRate: number;
+  discountAmount: number;
+  taxType: 'tds' | 'tcs';
+  taxRate: number;
+  taxAmount: number;
+  adjustment: number;
+  total: number;
+  status: QuoteStatus;
+  customerNotes: string;
+  terms: string;
+  createdAt: string;
+}
+
+export interface ChallanItem {
+  id: string;
+  productId: string;
+  name: string;
+  quantity: number;
+  rate: number;
+  total: number;
+}
+
+export type ChallanStatus = 'draft' | 'issued' | 'returned' | 'cancelled';
+
+export interface DeliveryChallan {
+  id: string;
+  challanNumber: string;
+  referenceNumber?: string;
+  clientId: string;
+  clientName: string;
+  clientCompany: string;
+  challanDate: string;
+  challanType: string;
+  items: ChallanItem[];
+  subtotal: number;
+  discountRate: number;
+  discountAmount: number;
+  adjustment: number;
+  total: number;
+  status: ChallanStatus;
+  customerNotes: string;
+  terms: string;
+  createdAt: string;
 }
 
 export type PaymentMethod = 'credit_card' | 'bank_transfer' | 'stripe' | 'paypal';
@@ -83,6 +232,14 @@ export interface Expense {
   date: string;
   receiptUrl: string | null;
   isTaxDeductible: boolean;
+  invoiceNumber?: string;
+  notes?: string;
+  clientId?: string;
+  clientName?: string;
+  projectId?: string;
+  projectName?: string;
+  isBillable?: boolean;
+  currency?: string;
 }
 
 export type TaskStatus = 'todo' | 'in-progress' | 'completed';
@@ -158,4 +315,6 @@ export interface UserProfile {
   companyName: string;
   currency: string;
   logos?: string[];
+  addresses?: string[];
 }
+

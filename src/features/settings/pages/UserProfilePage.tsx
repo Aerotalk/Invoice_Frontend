@@ -11,6 +11,14 @@ const presetVortex = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000
 
 const presetApex = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%237c2d12"/><polygon points="12,28 20,12 28,28 20,22" fill="%23f97316"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">APEX LABS</text></svg>`;
 
+const presetAvatars = [
+  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150"
+];
+
 export const UserProfilePage: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
   const { language, setLanguage } = usePreferencesStore();
@@ -117,27 +125,64 @@ export const UserProfilePage: React.FC = () => {
             </h3>
 
             {/* Avatar uploader */}
-            <div className="flex items-center gap-4 shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/15 p-4 rounded-xl border select-none mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/15 p-4 rounded-xl border select-none mb-2">
               <div className="relative group shrink-0 select-none">
-                <img 
-                  src={avatar} 
-                  alt="User Avatar"
-                  className="w-16 h-16 rounded-xl object-cover border shadow-md shrink-0 transition-transform duration-300 group-hover:scale-105" 
-                />
-              </div>
-              <div className="space-y-1.5 select-none">
-                <span className="block font-bold text-foreground text-xs uppercase tracking-wider">Account Identity Avatar</span>
-                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-card hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-bold cursor-pointer select-none transition-colors active:scale-95 duration-150 shadow-sm border-dashed">
-                  <Upload className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                  Upload Profile Photo
-                  <input 
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden" 
+                {avatar ? (
+                  <img 
+                    src={avatar} 
+                    alt="User Avatar"
+                    className="w-16 h-16 rounded-xl object-cover border shadow-md shrink-0 transition-transform duration-300 group-hover:scale-105" 
                   />
-                </label>
-                <span className="block text-[8px] text-muted-foreground font-semibold">Supports PNG, JPG or SVG (Max 1MB)</span>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl border bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold shrink-0">
+                    No Photo
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2 select-none flex-1">
+                <span className="block font-bold text-foreground text-xs uppercase tracking-wider">Account Identity Avatar</span>
+                
+                {/* Horizontal preset picker */}
+                <div className="flex items-center gap-2 select-none">
+                  {presetAvatars.map((url, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setAvatar(url)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg overflow-hidden border-2 transition-all active:scale-90 select-none cursor-pointer",
+                        avatar === url ? "border-primary scale-105 ring-2 ring-primary/20" : "border-transparent hover:border-slate-300"
+                      )}
+                    >
+                      <img src={url} alt={`Preset ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 select-none flex-wrap">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg bg-card hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-bold cursor-pointer select-none transition-colors active:scale-95 duration-150 shadow-sm border-dashed">
+                    <Upload className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                    Upload Custom Photo
+                    <input 
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {avatar && (
+                    <button
+                      type="button"
+                      onClick={() => setAvatar("")}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded hover:bg-rose-500/10 text-rose-500 text-[10px] font-bold active:scale-95 transition-all select-none cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <span className="block text-[8px] text-muted-foreground font-semibold">Supports PNG, JPG or SVG presets or custom uploads (Max 1MB)</span>
               </div>
             </div>
 
@@ -287,7 +332,7 @@ export const UserProfilePage: React.FC = () => {
 
                 {/* Preset SVGs for Instant Mock */}
                 <div className="flex flex-col gap-1.5 select-none border-t pt-3">
-                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Quick Sandbox Presets</label>
+                  <label className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Quick Logo Presets</label>
                   <div className="flex flex-wrap gap-3">
                     <button
                       type="button"

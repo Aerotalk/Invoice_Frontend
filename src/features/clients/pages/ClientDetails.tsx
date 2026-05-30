@@ -98,12 +98,12 @@ export const ClientDetails: React.FC = () => {
     {
       header: "Total",
       accessorKey: "total",
-      cell: (row) => <span className="font-bold text-foreground font-mono">{formatCurrency(row.total, row.currency)}</span>
+      cell: (row) => <span className="font-bold text-foreground select-none">{formatCurrency(row.total, row.currency)}</span>
     },
     {
       header: "Amount Paid",
       accessorKey: "amountPaid",
-      cell: (row) => <span className="font-bold text-emerald-500 font-mono">{formatCurrency(row.amountPaid, row.currency)}</span>
+      cell: (row) => <span className="font-bold text-emerald-500 select-none">{formatCurrency(row.amountPaid, row.currency)}</span>
     },
     {
       header: "Status",
@@ -117,7 +117,7 @@ export const ClientDetails: React.FC = () => {
     {
       header: "Receipt ID",
       accessorKey: "id",
-      cell: (row) => <span className="font-mono text-slate-400">{row.id}</span>
+      cell: (row) => <span className="text-slate-400 select-none">{row.id}</span>
     },
     {
       header: "Settled Invoice",
@@ -131,7 +131,7 @@ export const ClientDetails: React.FC = () => {
     {
       header: "Amount Paid",
       accessorKey: "amount",
-      cell: (row) => <span className="font-bold text-emerald-500 font-mono">+{formatCurrency(row.amount, row.currency)}</span>
+      cell: (row) => <span className="font-bold text-emerald-500 select-none">+{formatCurrency(row.amount, row.currency)}</span>
     },
     {
       header: "Method",
@@ -204,13 +204,13 @@ export const ClientDetails: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 select-none">
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Billed Contracts</span>
-          <span className="block text-xl font-bold text-foreground font-mono mt-2">{formatCurrency(client.totalBilled, currency)}</span>
+          <span className="block text-xl font-bold text-foreground mt-2">{formatCurrency(client.totalBilled, currency)}</span>
           <FileText className="absolute top-4 right-4 w-4 h-4 text-slate-400" />
         </div>
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Outstanding Balances</span>
           <span className={cn(
-            "block text-xl font-bold font-mono mt-2",
+            "block text-xl font-bold mt-2",
             client.outstandingAmount > 0 ? "text-amber-500" : "text-emerald-500"
           )}>
             {formatCurrency(client.outstandingAmount, currency)}
@@ -219,7 +219,7 @@ export const ClientDetails: React.FC = () => {
         </div>
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Projects Log</span>
-          <span className="block text-xl font-bold text-foreground font-mono mt-2">{projects.length} Total</span>
+          <span className="block text-xl font-bold text-foreground mt-2">{projects.length} Total</span>
           <FolderGit className="absolute top-4 right-4 w-4 h-4 text-slate-400" />
         </div>
       </div>
@@ -272,7 +272,7 @@ export const ClientDetails: React.FC = () => {
               />
               
               <div className="border-t pt-4 mt-4 flex items-center justify-between shrink-0 select-none">
-                <span className="text-[10px] text-muted-foreground font-semibold">Changes are saved to local sandbox database</span>
+                <span className="text-[10px] text-muted-foreground font-semibold">Changes are saved to local database</span>
                 <button
                   onClick={handleSaveNote}
                   disabled={savingNote}
