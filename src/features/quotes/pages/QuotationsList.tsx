@@ -1009,7 +1009,7 @@ export const QuotationsList: React.FC = () => {
                     >
                       <option value="0">Select a Tax (0%)</option>
                       <option value="5">Standard (5%)</option>
-                      <option value="10">VAT (10%)</option>
+                      <option value="10">Tax (10%)</option>
                       <option value="15">Surcharge (15%)</option>
                       <option value="18">GST (18%)</option>
                     </select>

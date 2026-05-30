@@ -516,7 +516,7 @@ export const InvoiceBuilder: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 border-t pt-6 select-none">
             {/* Tax */}
             <div className="flex flex-col gap-1.5 select-none">
-              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">VAT / Tax Rate (%)</label>
+              <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Tax Rate (%)</label>
               <div className="relative group">
                 <input
                   type="number"
@@ -649,7 +649,7 @@ export const InvoiceBuilder: React.FC = () => {
               )}
               {taxRate > 0 && (
                 <div className="flex justify-between w-48 font-semibold">
-                  <span>VAT / Tax ({taxRate}%):</span>
+                  <span>Tax ({taxRate}%):</span>
                   <span className="text-slate-800 font-mono">+{formatCurrency(taxAmount, currency)}</span>
                 </div>
               )}

@@ -236,7 +236,7 @@ export const InvoiceDetails: React.FC = () => {
               )}
               {invoice.taxRate > 0 && (
                 <div className="flex justify-between w-48 font-semibold">
-                  <span>VAT / Tax ({invoice.taxRate}%):</span>
+                  <span>Tax ({invoice.taxRate}%):</span>
                   <span className="text-slate-800 font-mono">+{formatCurrency(invoice.taxAmount, invoice.currency)}</span>
                 </div>
               )}
