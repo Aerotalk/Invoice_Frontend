@@ -36,7 +36,17 @@ export const apiService = {
     const client = res.data.data;
     // Adapt the nested relation format from Prisma
     return {
-      client: client,
+      client: {
+        ...client,
+        name: client.displayName || client.companyName || 'Unknown Client',
+        clientType: client.customerType?.toLowerCase() || 'business',
+        company: client.companyName || '',
+        avatar: client.documentsAttachment || '',
+        phone: (client.workPhone || client.mobilePhone) ? `${client.workPhoneCode || ''} ${client.workPhone || client.mobilePhone}`.trim() : 'N/A',
+        status: 'active',
+        totalBilled: client.totalBilled || 0,
+        outstandingAmount: client.outstandingAmount || 0,
+      },
       invoices: client.quotations || [], // TBD: If quotes/invoices overlap
       payments: [],
       projects: client.projects || []
