@@ -78,7 +78,7 @@ export const InvoiceBuilder: React.FC = () => {
           setInvoiceNumber(inv.invoiceNumber);
           setIssueDate(inv.issueDate);
           setDueDate(inv.dueDate);
-          setItems(inv.items.map(item => ({
+          setItems(inv.items.map((item: any) => ({
             description: item.description,
             quantity: item.quantity,
             rate: item.rate

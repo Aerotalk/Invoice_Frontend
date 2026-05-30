@@ -157,7 +157,7 @@ export const apiService = {
     return res.data.data;
   },
 
-  deleteQuote: async () => {
+  deleteQuote: async (id: string) => {
     // Delete quote
     return true;
   },
@@ -190,15 +190,42 @@ export const apiService = {
     return res.data.data;
   },
 
-  deleteChallan: async () => {
+  updateChallan: async (id: string, data: any) => ({}),
+
+  deleteChallan: async (id: string) => {
     return true;
   },
 
-  // Unused Modules (Left empty for future)
+  // --- INVOICES MODULE ---
   getInvoices: async () => [],
-  createInvoice: async () => ({}),
+  getInvoiceById: async (id: string) => ({}) as any,
+  createInvoice: async (data: any) => ({}),
+  updateInvoice: async (id: string, updates: any) => ({}),
+  duplicateInvoice: async (id: string): Promise<any> => ({}),
+
+  // --- PAYMENTS MODULE ---
   getPayments: async () => [],
+  recordPayment: async (data: any) => ({}),
+  refundPayment: async (id: string) => ({}),
+
+  // --- EXPENSES MODULE ---
   getExpenses: async () => [],
+  createExpense: async (data: any) => ({}),
+  createExpensesBulk: async (data: any[]) => [],
+  deleteExpense: async (id: string) => true,
+
+  // --- SALESPERSONS (Used in Quotes) ---
+  getSalespersons: async () => [],
+  createSalesperson: async (name: string) => [],
+  updateQuote: async (id: string, data: any) => ({}),
+
+  // --- PROJECTS EXTRAS ---
+  uploadProjectInvoice: async (id: string, invoice: any) => ({}),
+
+  // --- TIME TRACKING ---
   getTimeEntries: async () => [],
+  createTimeEntry: async (data: any) => ({}),
+
+  // --- AUDIT LOGS ---
   getAuditLogs: async () => []
 };
