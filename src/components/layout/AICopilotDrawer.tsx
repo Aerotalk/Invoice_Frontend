@@ -55,8 +55,8 @@ export const AICopilotDrawer: React.FC = () => {
         `Navigate to the Clients tab to see who has an outstanding balance.\n\n`;
     } else if (query.includes("tax") || query.includes("advisory")) {
       reply = `**InvoiceIQ Tax Advisory Tip:**\n\n` +
-        `1. Track your tax-deductible expense records in the Expenses tab.\n` +
-        `2. Remember to upload PDF receipts to justify write-offs.\n` +
+        `1. You currently have logged **${db.expenses.filter(e => e.isTaxDeductible).length} tax-deductible expense records** totaling **${formatCurrency(db.expenses.filter(e => e.isTaxDeductible).reduce((s, e) => s + e.amount, 0))}**.\n` +
+        `2. Remember to upload PDF receipts for WeWork studio rent logs to justify write-offs.\n` +
         `3. Consult an accountant regarding quarterly VAT reporting schedules.`;
     } else {
       reply = "I understand! I can help you compile metrics, draft invoicing emails, or fetch client billing balances. Try typing **'outstanding balance'** or **'draft overdue email'** to see my live integrations.";

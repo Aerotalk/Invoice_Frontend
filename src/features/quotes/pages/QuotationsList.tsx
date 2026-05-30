@@ -1031,7 +1031,7 @@ export const QuotationsList: React.FC = () => {
                     >
                       <option value="0">Select a Tax</option>
                       <option value="5">Standard (5%)</option>
-                      <option value="10">VAT (10%)</option>
+                      <option value="10">GST (10%)</option>
                       <option value="15">Surcharge (15%)</option>
                       <option value="18">GST (18%)</option>
                     </select>
@@ -1076,10 +1076,7 @@ export const QuotationsList: React.FC = () => {
 
           {/* Drawer Actions Footer */}
           <div className="border-t pt-4 flex items-center justify-between bg-card z-10 shrink-0 select-none">
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold uppercase tracking-wide">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span>Saves to local workspace</span>
-            </div>
+            <div />
 
             <div className="flex items-center gap-2">
               <button
