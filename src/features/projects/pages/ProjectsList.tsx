@@ -22,6 +22,7 @@ export const ProjectsList: React.FC = () => {
   const [clientId, setClientId] = useState('');
   const [vendorIds, setVendorIds] = useState<string[]>([]);
   const [budget, setBudget] = useState('');
+  const [projectCurrency, setProjectCurrency] = useState(currency || 'INR');
   const [dueDate, setDueDate] = useState('');
 
   // Custom multi-select states
@@ -29,6 +30,13 @@ export const ProjectsList: React.FC = () => {
   const [vendorSearch, setVendorSearch] = useState('');
   const [showVendorError, setShowVendorError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Sync project currency with preference when loaded
+  useEffect(() => {
+    if (currency) {
+      setProjectCurrency(currency);
+    }
+  }, [currency]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -85,6 +93,7 @@ export const ProjectsList: React.FC = () => {
         clientName: client.name,
         vendors: selectedVendors,
         budget: Number(budget),
+        currency: projectCurrency,
         dueDate,
         status: 'planning',
         teamMembers: [
@@ -102,6 +111,7 @@ export const ProjectsList: React.FC = () => {
       setVendorSearch('');
       setShowVendorError(false);
       setBudget('');
+      setProjectCurrency(currency || 'INR');
       setDueDate('');
     } catch (error) {
       console.error(error);
@@ -180,7 +190,7 @@ export const ProjectsList: React.FC = () => {
               <div>
                 <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Project Scope</span>
                 <span className="block text-xs font-bold text-foreground font-mono mt-0.5">
-                  {formatCurrency(proj.budget, currency)}
+                  {formatCurrency(proj.budget, proj.currency || currency)}
                 </span>
               </div>
 
@@ -349,14 +359,27 @@ export const ProjectsList: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Budget *</label>
-              <input
-                type="number"
-                required
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm"
-                placeholder="0.00"
-              />
+              <div className="flex rounded-lg border border-slate-300 dark:border-slate-700 bg-card overflow-hidden focus-within:border-primary transition-colors">
+                <select
+                  value={projectCurrency}
+                  onChange={(e) => setProjectCurrency(e.target.value)}
+                  className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-r border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground outline-none cursor-pointer shrink-0"
+                >
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="JPY">JPY (¥)</option>
+                </select>
+                <input
+                  type="number"
+                  required
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  className="w-full px-3 py-2 bg-transparent outline-none text-sm text-foreground"
+                  placeholder="0.00"
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -366,7 +389,7 @@ export const ProjectsList: React.FC = () => {
                 required
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm"
+                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700"
               />
             </div>
           </div>

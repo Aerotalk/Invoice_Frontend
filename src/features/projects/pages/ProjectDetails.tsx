@@ -134,7 +134,7 @@ export const ProjectDetails: React.FC = () => {
         <div className="flex items-center gap-3 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6 select-none border-border shrink-0">
           <div>
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Project Budget</span>
-            <span className="block text-base font-extrabold text-foreground font-mono mt-0.5">{formatCurrency(project.budget, currency)}</span>
+            <span className="block text-base font-extrabold text-foreground font-mono mt-0.5">{formatCurrency(project.budget, project.currency || currency)}</span>
             <span className="block text-[9px] text-muted-foreground font-semibold mt-1">Due: {formatDate(project.dueDate)}</span>
           </div>
         </div>

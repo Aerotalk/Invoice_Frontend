@@ -286,6 +286,7 @@ export interface Project {
   vendors?: { id: string; name: string }[];
   status: ProjectStatus;
   budget: number;
+  currency?: string;
   progress: number;
   dueDate: string;
   teamMembers: string[];
