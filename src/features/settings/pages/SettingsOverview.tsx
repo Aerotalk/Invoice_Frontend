@@ -169,7 +169,7 @@ export const SettingsOverview: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4 text-xs font-semibold select-none">
               <div className="flex flex-col gap-1.5 select-none col-span-2 sm:col-span-1">
-                <label className="text-muted-foreground font-bold tracking-wide uppercase">Standard Tax VAT (%)</label>
+                <label className="text-muted-foreground font-bold tracking-wide uppercase">Standard Tax GST (%)</label>
                 <input
                   type="number"
                   value={defaultTaxRate}

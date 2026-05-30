@@ -82,11 +82,11 @@ export const ReportsOverview: React.FC = () => {
     <div className="space-y-6 select-none animate-fade-in pb-12">
       <PageHeader
         title="Reports"
-        description="Audit multi-currency profit balances, download custom spreadsheets, and review operational VAT margins."
+        description="Audit multi-currency profit balances, download custom spreadsheets, and review operational GST margins."
         actions={
           <div className="flex items-center gap-2 select-none">
             <button
-              onClick={() => handleExport("VAT_Tax_Summary_CSV")}
+              onClick={() => handleExport("GST_Tax_Summary_CSV")}
               disabled={downloading !== null}
               className="inline-flex items-center gap-1.5 px-3 py-2 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-bold active:scale-95 transition-all select-none disabled:opacity-40"
             >
@@ -108,8 +108,8 @@ export const ReportsOverview: React.FC = () => {
       {/* Recharts Dual Bar chart breakdown */}
       <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
         <div>
-          <h3 className="text-sm font-bold text-foreground">Cash Outflow & VAT Summaries</h3>
-          <p className="text-xs text-muted-foreground font-medium">Monthly breakdowns comparing net revenue against operating expenses and VAT</p>
+          <h3 className="text-sm font-bold text-foreground">Cash Outflow & GST Summaries</h3>
+          <p className="text-xs text-muted-foreground font-medium">Monthly breakdowns comparing net revenue against operating expenses and GST</p>
         </div>
 
         <div className="h-[220px] w-full mt-4">
@@ -129,7 +129,7 @@ export const ReportsOverview: React.FC = () => {
               <Legend verticalAlign="top" height={36} iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
               <Bar dataKey="revenue" fill="hsl(var(--primary))" name="Net Revenue" radius={[4, 4, 0, 0]} maxBarSize={20} />
               <Bar dataKey="expenses" fill="#10b981" name="Expenses" radius={[4, 4, 0, 0]} maxBarSize={20} />
-              <Bar dataKey="tax" fill="#f59e0b" name="VAT Pools" radius={[4, 4, 0, 0]} maxBarSize={20} />
+              <Bar dataKey="tax" fill="#f59e0b" name="GST Pools" radius={[4, 4, 0, 0]} maxBarSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </div>

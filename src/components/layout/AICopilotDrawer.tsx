@@ -76,7 +76,7 @@ export const AICopilotDrawer: React.FC = () => {
       reply = `**InvoiceIQ Tax Advisory Tip:**\n\n` +
         `1. You currently have logged **${db.expenses.filter(e => e.isTaxDeductible).length} tax-deductible expense records** totaling **${formatCurrency(db.expenses.filter(e => e.isTaxDeductible).reduce((s, e) => s + e.amount, 0))}**.\n` +
         `2. Remember to upload PDF receipts for WeWork studio rent logs to justify write-offs.\n` +
-        `3. Consult an accountant regarding quarterly VAT reporting schedules.`;
+        `3. Consult an accountant regarding quarterly GST reporting schedules.`;
     } else {
       reply = "I understand! I can help you compile metrics, draft invoicing emails, or fetch client billing balances. Try typing **'outstanding balance'** or **'draft overdue email'** to see my live integrations.";
     }
