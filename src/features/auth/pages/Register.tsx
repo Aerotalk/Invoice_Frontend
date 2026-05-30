@@ -68,7 +68,7 @@ const registerSchema = zod.object({
 type RegisterFormValues = zod.infer<typeof registerSchema>;
 
 export const Register: React.FC = () => {
-  const { login } = useAuthStore();
+  const { register: authRegister } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -110,8 +110,7 @@ export const Register: React.FC = () => {
     setLoading(true);
     setErrorMsg("");
     try {
-      // Simulate real register and immediately auto-authenticate
-      const success = await login(values.email, "admin");
+      const success = await authRegister(values);
       if (success) {
         alert("Account created successfully! Welcome to your InvoiceIQ workspace.");
         navigate("/dashboard");

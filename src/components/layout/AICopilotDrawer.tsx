@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, User, Sparkles, Copy, RefreshCw, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAIStore, ChatMessage } from '../../store/aiStore';
-import { getMockDB } from '../../mock/database';
 import { cn, formatCurrency } from '../../lib/utils';
 
 export const AICopilotDrawer: React.FC = () => {
@@ -35,47 +34,29 @@ export const AICopilotDrawer: React.FC = () => {
     setTyping(true);
     await new Promise((resolve) => setTimeout(resolve, 1400)); // typing effect delay
     
-    const db = getMockDB();
     const query = userText.toLowerCase();
     let reply = "";
 
     if (query.includes("reminder") || query.includes("email") || query.includes("follow")) {
-      // Find overdue invoice
-      const overdue = db.invoices.find(i => i.status === 'overdue');
-      if (overdue) {
-        reply = `Here is a drafted overdue follow-up email for **${overdue.clientName}**:\n\n` +
-          `**Subject:** Urgent: Invoice ${overdue.invoiceNumber} is Overdue\n\n` +
-          `Dear ${overdue.clientName.split(' ')[0]},\n\n` +
-          `I hope you are well. This is a friendly reminder that invoice **${overdue.invoiceNumber}** (issued on ${overdue.issueDate}) was due on ${overdue.dueDate} and is currently overdue. \n\n` +
-          `The outstanding amount is **${formatCurrency(overdue.amountDue, overdue.currency)}**. Please process payment at your earliest convenience.\n\n` +
+        reply = `Here is a drafted overdue follow-up email for your client:\n\n` +
+          `**Subject:** Urgent: Invoice is Overdue\n\n` +
+          `Dear Client,\n\n` +
+          `I hope you are well. This is a friendly reminder that your invoice was due recently and is currently overdue. \n\n` +
+          `Please process payment at your earliest convenience.\n\n` +
           `Let me know if you need any billing adjustments or payment options.\n\n` +
           `Best regards,\n` +
-          `Alex Sterling\nInvoiceIQ Admin`;
-      } else {
-        reply = "You currently have no overdue invoices! I can draft a standard billing template if you'd like.";
-      }
+          `InvoiceIQ Admin`;
     } else if (query.includes("revenue") || query.includes("earnings") || query.includes("financial")) {
-      const totalRev = db.payments.filter(p => p.status === 'success').reduce((sum, p) => sum + p.amount, 0);
-      const pendingRev = db.invoices.filter(i => i.status === 'sent' || i.status === 'viewd' || i.status === 'viewed').reduce((sum, i) => sum + i.amountDue, 0);
-      
       reply = `According to your active database:\n\n` +
-        `- **Total Revenue Received:** ${formatCurrency(totalRev)}\n` +
-        `- **Pending Outstanding Balance:** ${formatCurrency(pendingRev)}\n` +
-        `- **Paid Invoice Rate:** ${db.invoices.filter(i => i.status === 'paid').length} of ${db.invoices.length} total.`;
+        `- **Total Revenue Received:** Available in Dashboard\n` +
+        `- **Pending Outstanding Balance:** View Reports\n`;
     } else if (query.includes("client") || query.includes("who")) {
-      const active = db.clients.filter(c => c.status === 'active');
-      const outstandingList = db.invoices
-        .filter(i => i.amountDue > 0)
-        .map(i => `${i.clientName} (${formatCurrency(i.amountDue)})`)
-        .join(', ');
-
-      reply = `You have **${db.clients.length} clients** registered (${active.length} active).\n\n` +
-        `The clients with outstanding balances are: **${outstandingList || "None"}**.\n\n` +
-        `Sarah Jenkins (Acme Corp) is your top client with a total billed value of ${formatCurrency(42500)}.`;
+      reply = `You have multiple clients registered.\n\n` +
+        `Navigate to the Clients tab to see who has an outstanding balance.\n\n`;
     } else if (query.includes("tax") || query.includes("advisory")) {
       reply = `**InvoiceIQ Tax Advisory Tip:**\n\n` +
-        `1. You currently have logged **${db.expenses.filter(e => e.isTaxDeductible).length} tax-deductible expense records** totaling **${formatCurrency(db.expenses.filter(e => e.isTaxDeductible).reduce((s, e) => s + e.amount, 0))}**.\n` +
-        `2. Remember to upload PDF receipts for WeWork studio rent logs to justify write-offs.\n` +
+        `1. Track your tax-deductible expense records in the Expenses tab.\n` +
+        `2. Remember to upload PDF receipts to justify write-offs.\n` +
         `3. Consult an accountant regarding quarterly VAT reporting schedules.`;
     } else {
       reply = "I understand! I can help you compile metrics, draft invoicing emails, or fetch client billing balances. Try typing **'outstanding balance'** or **'draft overdue email'** to see my live integrations.";

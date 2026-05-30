@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { AppNotification } from '../types';
-import { getMockDB, saveMockDB } from '../mock/database';
 
 interface NotificationState {
   notifications: AppNotification[];
@@ -16,46 +15,38 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   unreadCount: 0,
 
   fetchNotifications: () => {
-    const db = getMockDB();
-    const unread = db.notifications.filter(n => !n.isRead).length;
-    set({ notifications: db.notifications, unreadCount: unread });
+    // Left empty for future implementation
   },
 
   markAsRead: (id) => set((state) => {
-    const db = getMockDB();
-    db.notifications = db.notifications.map(n => 
+    const updated = state.notifications.map(n => 
       n.id === id ? { ...n, isRead: true } : n
     );
-    saveMockDB(db);
     return {
-      notifications: db.notifications,
-      unreadCount: db.notifications.filter(n => !n.isRead).length
+      notifications: updated,
+      unreadCount: updated.filter(n => !n.isRead).length
     };
   }),
 
   markAllAsRead: () => set((state) => {
-    const db = getMockDB();
-    db.notifications = db.notifications.map(n => ({ ...n, isRead: true }));
-    saveMockDB(db);
+    const updated = state.notifications.map(n => ({ ...n, isRead: true }));
     return {
-      notifications: db.notifications,
+      notifications: updated,
       unreadCount: 0
     };
   }),
 
   addNotification: (notif) => set((state) => {
-    const db = getMockDB();
     const newNotif: AppNotification = {
       ...notif,
       id: `n-${Date.now()}`,
       isRead: false,
       date: new Date().toISOString()
     };
-    db.notifications = [newNotif, ...db.notifications];
-    saveMockDB(db);
+    const updated = [newNotif, ...state.notifications];
     return {
-      notifications: db.notifications,
-      unreadCount: db.notifications.filter(n => !n.isRead).length
+      notifications: updated,
+      unreadCount: updated.filter(n => !n.isRead).length
     };
   })
 }));
