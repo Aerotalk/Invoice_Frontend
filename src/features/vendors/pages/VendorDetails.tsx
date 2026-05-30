@@ -25,6 +25,7 @@ import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const VendorDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,12 +59,12 @@ export const VendorDetails: React.FC = () => {
     setSavingNote(true);
     try {
       await apiService.updateVendor(id, { notes: noteText });
-      alert("Vendor internal notes updated!");
+      toast.success("Vendor internal notes updated!");
       const updated = await apiService.getVendorById(id);
       setData(updated);
     } catch (e) {
       console.error(e);
-      alert("Failed to save notes.");
+      toast.error("Failed to save notes.");
     } finally {
       setSavingNote(false);
     }

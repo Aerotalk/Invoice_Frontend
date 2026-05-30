@@ -22,6 +22,7 @@ import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const ClientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -55,7 +56,7 @@ export const ClientDetails: React.FC = () => {
     setSavingNote(true);
     try {
       await apiService.updateClient(id, { notes: noteText });
-      alert("Client internal notes updated!");
+      toast.success("Client internal notes updated!");
       // Reload context
       const updated = await apiService.getClientById(id);
       setData(updated);

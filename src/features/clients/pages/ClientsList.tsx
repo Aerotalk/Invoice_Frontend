@@ -34,6 +34,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Geographical datasets for premium select dropdowns
 const locationData: Record<string, Record<string, string[]>> = {
@@ -346,7 +347,7 @@ export const ClientsList: React.FC = () => {
   // Simulating document uploads
   const handleMockUpload = () => {
     if (uploadedDocuments.length >= 3) {
-      alert("Maximum of 3 files allowed.");
+      toast.error("Maximum of 3 files allowed.");
       return;
     }
     const files = ['nda_agreement_signed.pdf', 'invoice_guide.docx', 'client_onboarding.pdf', 'business_licence.png'];
@@ -421,7 +422,7 @@ export const ClientsList: React.FC = () => {
       };
 
       await apiService.createClient(payload);
-      alert("Client profile added successfully!");
+      toast.success("Client profile added successfully!");
       setDrawerOpen(false);
       reset();
       setContactPersons([]);
@@ -429,7 +430,7 @@ export const ClientsList: React.FC = () => {
       loadClients();
     } catch (e) {
       console.error(e);
-      alert("Failed to save client details.");
+      toast.error("Failed to save client details.");
     }
   };
 
@@ -551,11 +552,11 @@ export const ClientsList: React.FC = () => {
                       setActiveClientMenu(null);
                       try {
                         await apiService.deleteClient(row.id);
-                        alert("Client profile deleted successfully!");
+                        toast.success("Client profile deleted successfully!");
                         loadClients();
                       } catch (err) {
                         console.error(err);
-                        alert("Failed to delete client.");
+                        toast.error("Failed to delete client.");
                       }
                     }
                   }}

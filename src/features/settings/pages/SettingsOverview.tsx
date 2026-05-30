@@ -20,6 +20,7 @@ import {
   Plus
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const SettingsOverview: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
@@ -50,7 +51,7 @@ export const SettingsOverview: React.FC = () => {
 
   const handleAddLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (logos.length >= 5) {
-      alert("You can only add up to 5 logos.");
+      toast.success("You can only add up to 5 logos.");
       return;
     }
     const file = e.target.files?.[0];
@@ -73,7 +74,7 @@ export const SettingsOverview: React.FC = () => {
 
   const handleAddAddress = () => {
     if (addresses.length >= 5) {
-      alert("You can only add up to 5 addresses.");
+      toast.success("You can only add up to 5 addresses.");
       return;
     }
     if (newAddress.trim()) {
@@ -102,12 +103,12 @@ export const SettingsOverview: React.FC = () => {
       logos: logos,
       addresses: addresses,
     });
-    alert("Workspace Settings Profile updated successfully!");
+    toast.success("Workspace Settings Profile updated successfully!");
   };
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("API Key token copied to clipboard!");
+    toast.success("API Key token copied to clipboard!");
   };
 
   return (

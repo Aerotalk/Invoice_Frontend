@@ -31,6 +31,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Zod schema designed to prevent input/output type conflicts in form bindings
 const challanSchema = zod.object({
@@ -191,7 +192,7 @@ export const DeliveryChallansList: React.FC = () => {
   // Mock Upload attachments helper
   const handleMockUploadFile = () => {
     if (uploadedFiles.length >= 3) {
-      alert("Maximum of 3 file attachments allowed.");
+      toast.error("Maximum of 3 file attachments allowed.");
       return;
     }
     setUploadingFile(true);
@@ -213,7 +214,7 @@ export const DeliveryChallansList: React.FC = () => {
     const activeClient = clients.find(c => c.id === values.clientId);
     const filteredItems = itemRows.filter(r => r.name.trim() !== "");
     if (filteredItems.length === 0) {
-      alert("Please configure at least one dynamic item with details.");
+      toast.error("Please configure at least one dynamic item with details.");
       return;
     }
 
@@ -245,7 +246,7 @@ export const DeliveryChallansList: React.FC = () => {
       };
 
       await apiService.createChallan(payload);
-      alert("Delivery challan issued successfully!");
+      toast.success("Delivery challan issued successfully!");
       setDrawerOpen(false);
       reset();
       setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
@@ -253,7 +254,7 @@ export const DeliveryChallansList: React.FC = () => {
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Failed to save challan details.");
+      toast.error("Failed to save challan details.");
     }
   };
 
@@ -261,7 +262,7 @@ export const DeliveryChallansList: React.FC = () => {
   const handleSaveAsDraft = async () => {
     const clId = watch("clientId");
     if (!clId) {
-      alert("Please select a customer to save this challan.");
+      toast.error("Please select a customer to save this challan.");
       return;
     }
 
@@ -296,7 +297,7 @@ export const DeliveryChallansList: React.FC = () => {
       };
 
       await apiService.createChallan(payload);
-      alert("Challan draft saved successfully!");
+      toast.success("Challan draft saved successfully!");
       setDrawerOpen(false);
       reset();
       setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
@@ -408,7 +409,7 @@ export const DeliveryChallansList: React.FC = () => {
                       setActiveChallanMenu(null);
                       try {
                         await apiService.updateChallan(row.id, { status: "issued" });
-                        alert("Challan marked as issued!");
+                        toast.success("Challan marked as issued!");
                         loadData();
                       } catch (err) {
                         console.error(err);
@@ -428,7 +429,7 @@ export const DeliveryChallansList: React.FC = () => {
                       setActiveChallanMenu(null);
                       try {
                         await apiService.deleteChallan(row.id);
-                        alert("Challan deleted successfully!");
+                        toast.success("Challan deleted successfully!");
                         loadData();
                       } catch (err) {
                         console.error(err);
@@ -737,7 +738,7 @@ export const DeliveryChallansList: React.FC = () => {
                           total: p.sellingPrice
                         }));
                         setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
-                        alert("Added top products catalog in bulk!");
+                        toast.success("Added top products catalog in bulk!");
                       }
                     }}
                     className="px-3 py-1.5 text-[10px] font-extrabold text-primary hover:underline hover:underline-offset-2 cursor-pointer"

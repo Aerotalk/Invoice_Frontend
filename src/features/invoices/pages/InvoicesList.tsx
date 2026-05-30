@@ -8,6 +8,7 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const InvoicesList: React.FC = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -35,7 +36,7 @@ export const InvoicesList: React.FC = () => {
   const handleDuplicate = async (id: string) => {
     try {
       await apiService.duplicateInvoice(id);
-      alert("Invoice duplicated successfully!");
+      toast.success("Invoice duplicated successfully!");
       loadInvoices();
     } catch (e) {
       console.error(e);
@@ -45,7 +46,7 @@ export const InvoicesList: React.FC = () => {
   const handleMarkPaid = async (id: string) => {
     try {
       await apiService.updateInvoice(id, { status: 'paid' });
-      alert("Invoice marked as Paid!");
+      toast.success("Invoice marked as Paid!");
       loadInvoices();
     } catch (e) {
       console.error(e);

@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../store/authStore';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { User, Mail, ShieldAlert, Key, Save, CheckCircle2, Globe, Image, Upload, Trash2, Plus, Link } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 const presetStarlight = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%23064e3b"/><circle cx="20" cy="20" r="12" fill="%2310b981"/><polygon points="20,13 22,18 27,18 23,21 25,26 20,23 15,26 17,21 13,18 18,18" fill="%23ffffff"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">STARLIGHT</text></svg>`;
 
@@ -36,7 +37,7 @@ export const UserProfilePage: React.FC = () => {
 
   const handleAddPreset = (presetUrl: string) => {
     if (logos.length >= 5) {
-      alert("You can add up to 5 logos only!");
+      toast.success("You can add up to 5 logos only!");
       return;
     }
     setLogos([...logos, presetUrl]);
@@ -46,11 +47,11 @@ export const UserProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (logos.length >= 5) {
-      alert("You can add up to 5 logos only!");
+      toast.success("You can add up to 5 logos only!");
       return;
     }
     if (file.size > 1024 * 1024) {
-      alert("File size too large! Please choose an image smaller than 1MB.");
+      toast.error("File size too large! Please choose an image smaller than 1MB.");
       return;
     }
 
@@ -68,7 +69,7 @@ export const UserProfilePage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 1024 * 1024) {
-      alert("File size too large! Please choose a profile picture smaller than 1MB.");
+      toast.error("File size too large! Please choose a profile picture smaller than 1MB.");
       return;
     }
 
@@ -85,7 +86,7 @@ export const UserProfilePage: React.FC = () => {
   const handleAddUrl = () => {
     if (!urlInput.trim()) return;
     if (logos.length >= 5) {
-      alert("You can add up to 5 logos only!");
+      toast.success("You can add up to 5 logos only!");
       return;
     }
     setLogos([...logos, urlInput.trim()]);
@@ -103,7 +104,7 @@ export const UserProfilePage: React.FC = () => {
       avatar,
       logos
     });
-    alert("User Profile updated successfully!");
+    toast.success("User Profile updated successfully!");
   };
 
   return (

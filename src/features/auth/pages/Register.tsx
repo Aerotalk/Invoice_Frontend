@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from '../../../store/authStore';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Dependent geographical dataset
 const locationData: Record<string, Record<string, string[]>> = {
@@ -112,7 +113,7 @@ export const Register: React.FC = () => {
     try {
       const success = await authRegister(values);
       if (success) {
-        alert("Account created successfully! Welcome to your InvoiceIQ workspace.");
+        toast.success("Account created successfully! Welcome to your InvoiceIQ workspace.");
         navigate("/dashboard");
       }
     } catch (err: any) {

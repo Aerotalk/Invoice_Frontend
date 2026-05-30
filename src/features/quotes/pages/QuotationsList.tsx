@@ -31,6 +31,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Zod schema designed to prevent input/output type conflicts in form bindings
 const quoteSchema = zod.object({
@@ -242,7 +243,7 @@ export const QuotationsList: React.FC = () => {
   // Mock Upload attachments helper
   const handleMockUploadFile = () => {
     if (uploadedFiles.length >= 3) {
-      alert("Maximum of 3 file attachments allowed.");
+      toast.error("Maximum of 3 file attachments allowed.");
       return;
     }
     setUploadingFile(true);
@@ -267,7 +268,7 @@ export const QuotationsList: React.FC = () => {
     // Verify row items aren't completely empty
     const filteredItems = itemRows.filter(r => r.name.trim() !== "");
     if (filteredItems.length === 0) {
-      alert("Please configure at least one dynamic item with details.");
+      toast.error("Please configure at least one dynamic item with details.");
       return;
     }
 
@@ -306,7 +307,7 @@ export const QuotationsList: React.FC = () => {
       };
 
       await apiService.createQuote(payload);
-      alert("Quotation registered successfully!");
+      toast.success("Quotation registered successfully!");
       setDrawerOpen(false);
       reset();
       setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
@@ -314,7 +315,7 @@ export const QuotationsList: React.FC = () => {
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Failed to save quote details.");
+      toast.error("Failed to save quote details.");
     }
   };
 
@@ -323,7 +324,7 @@ export const QuotationsList: React.FC = () => {
     const quoteNum = watch("quoteNumber");
     const clId = watch("clientId");
     if (!clId) {
-      alert("Please select a customer to save this quote.");
+      toast.error("Please select a customer to save this quote.");
       return;
     }
 
@@ -366,7 +367,7 @@ export const QuotationsList: React.FC = () => {
       };
 
       await apiService.createQuote(payload);
-      alert("Quotation saved as draft successfully!");
+      toast.success("Quotation saved as draft successfully!");
       setDrawerOpen(false);
       reset();
       setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
@@ -478,7 +479,7 @@ export const QuotationsList: React.FC = () => {
                       setActiveQuoteMenu(null);
                       try {
                         await apiService.updateQuote(row.id, { status: "accepted" });
-                        alert("Quote marked as accepted!");
+                        toast.success("Quote marked as accepted!");
                         loadData();
                       } catch (err) {
                         console.error(err);
@@ -498,7 +499,7 @@ export const QuotationsList: React.FC = () => {
                       setActiveQuoteMenu(null);
                       try {
                         await apiService.deleteQuote(row.id);
-                        alert("Quotation deleted successfully!");
+                        toast.success("Quotation deleted successfully!");
                         loadData();
                       } catch (err) {
                         console.error(err);
@@ -897,7 +898,7 @@ export const QuotationsList: React.FC = () => {
                           total: p.sellingPrice
                         }));
                         setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
-                        alert("Added top products catalog in bulk!");
+                        toast.success("Added top products catalog in bulk!");
                       }
                     }}
                     className="px-3 py-1.5 text-[10px] font-extrabold text-primary hover:underline hover:underline-offset-2 cursor-pointer"

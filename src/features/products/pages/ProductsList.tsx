@@ -26,6 +26,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Zod schema designed to prevent input/output type conflicts
 const productSchema = zod.object({
@@ -209,14 +210,14 @@ export const ProductsList: React.FC = () => {
       };
 
       await apiService.createProduct(payload);
-      alert("Product profile added successfully!");
+      toast.success("Product profile added successfully!");
       setDrawerOpen(false);
       reset();
       setSelectedMockImage(null);
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Failed to save product details.");
+      toast.error("Failed to save product details.");
     }
   };
 
@@ -314,7 +315,7 @@ export const ProductsList: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     setActiveProductMenu(null);
-                    alert(`Product Details:\nName: ${row.name}\nType: ${row.type}\nUnit: ${row.unit}\nSelling Price: ${formatCurrency(row.sellingPrice, currency)}\nDescription: ${row.description || "N/A"}`);
+                    toast.success(`Product Details:\nName: ${row.name}\nType: ${row.type}\nUnit: ${row.unit}\nSelling Price: ${formatCurrency(row.sellingPrice, currency)}\nDescription: ${row.description || "N/A"}`);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
@@ -328,11 +329,11 @@ export const ProductsList: React.FC = () => {
                       setActiveProductMenu(null);
                       try {
                         await apiService.deleteProduct(row.id);
-                        alert("Product item deleted successfully!");
+                        toast.success("Product item deleted successfully!");
                         loadData();
                       } catch (err) {
                         console.error(err);
-                        alert("Failed to delete product.");
+                        toast.error("Failed to delete product.");
                       }
                     }
                   }}

@@ -16,6 +16,7 @@ import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate, cn } from '../../../lib/utils';
 import { ProjectInvoice } from '../../../types';
+import toast from 'react-hot-toast';
 
 export const ProjectDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,7 +54,7 @@ export const ProjectDetails: React.FC = () => {
     e.preventDefault();
     const file = fileInputRef.current?.files?.[0];
     if (!project || !invId || !invDesc || !invDate || !file) {
-      alert("Please fill all details and select a document.");
+      toast.error("Please fill all details and select a document.");
       return;
     }
 
