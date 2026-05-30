@@ -1,23 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { StatusBadge } from '../../../components/common/StatusBadge';
+import { Drawer } from '../../../components/common/Drawer';
 import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { Link } from 'react-router-dom';
-import { FolderGit, Plus, Briefcase, Calendar, Users } from 'lucide-react';
+import { FolderGit, Plus, Briefcase, Calendar, Users, ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 export const ProjectsList: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { currency } = usePreferencesStore();
 
-  const loadProjects = async () => {
+  // Form state
+  const [name, setName] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [vendorIds, setVendorIds] = useState<string[]>([]);
+  const [budget, setBudget] = useState('');
+  const [dueDate, setDueDate] = useState('');
+
+  // Custom multi-select states
+  const [vendorDropdownOpen, setVendorDropdownOpen] = useState(false);
+  const [vendorSearch, setVendorSearch] = useState('');
+  const [showVendorError, setShowVendorError] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setVendorDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const loadData = async () => {
     setLoading(true);
     try {
-      const res = await apiService.getProjects();
-      setProjects(res);
+      const [projRes, cliRes, vendRes] = await Promise.all([
+        apiService.getProjects(),
+        apiService.getClients(),
+        apiService.getVendors()
+      ]);
+      setProjects(projRes);
+      setClients(cliRes);
+      setVendors(vendRes);
     } catch (e) {
       console.error(e);
     } finally {
@@ -26,8 +62,52 @@ export const ProjectsList: React.FC = () => {
   };
 
   useEffect(() => {
-    loadProjects();
+    loadData();
   }, []);
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !clientId || vendorIds.length === 0 || !budget || !dueDate) {
+      setShowVendorError(vendorIds.length === 0);
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    const client = clients.find(c => c.id === clientId);
+    const selectedVendors = vendors.filter(v => vendorIds.includes(v.id)).map(v => ({ id: v.id, name: v.name }));
+
+    if (!client || selectedVendors.length === 0) return;
+
+    try {
+      const newProj = await apiService.createProject({
+        name,
+        clientId,
+        clientName: client.name,
+        vendors: selectedVendors,
+        budget: Number(budget),
+        dueDate,
+        status: 'planning',
+        teamMembers: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
+        ]
+      } as any);
+
+      setProjects([newProj, ...projects]);
+      setDrawerOpen(false);
+      // Reset form
+      setName('');
+      setClientId('');
+      setVendorIds([]);
+      setVendorSearch('');
+      setShowVendorError(false);
+      setBudget('');
+      setDueDate('');
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create project");
+    }
+  };
 
   if (loading) {
     return (
@@ -46,10 +126,10 @@ export const ProjectsList: React.FC = () => {
     <div className="space-y-6 select-none animate-fade-in">
       <PageHeader
         title="Projects"
-        description="Oversee company contracts, check task list milestones, map developer teams, and track timelines."
+        description="Manage client projects, track budgets, and upload vendor invoices."
         actions={
           <button
-            onClick={() => alert("Creating a new project plan...")}
+            onClick={() => setDrawerOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5"
           >
             <Plus className="w-4 h-4" />
@@ -63,10 +143,8 @@ export const ProjectsList: React.FC = () => {
         {projects.map((proj) => (
           <div 
             key={proj.id} 
-            className="p-6 border rounded-2xl bg-card text-card-foreground shadow-premium flex flex-col justify-between gap-5 select-none hover:-translate-y-0.5 transition-transform group relative overflow-hidden"
+            className="p-5 border rounded-lg bg-card text-card-foreground flex flex-col justify-between gap-5 select-none hover:border-slate-300 dark:hover:border-slate-700 transition-colors relative"
           >
-            {/* Ambient indicator */}
-            <div className="absolute top-0 left-0 h-1 bg-indigo-500 w-full opacity-60 shrink-0" />
             
             <div className="flex items-start justify-between border-b pb-4">
               <div>
@@ -76,26 +154,25 @@ export const ProjectsList: React.FC = () => {
                 >
                   {proj.name}
                 </Link>
-                <span className="text-[10px] text-muted-foreground uppercase flex items-center gap-1 mt-1 font-semibold">
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  {proj.clientName}
-                </span>
+                <div className="text-[10px] text-muted-foreground uppercase flex flex-col gap-1 mt-2 font-semibold">
+                  <span className="flex items-center gap-1">
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    Client: <span className="text-foreground">{proj.clientName}</span>
+                  </span>
+                  {proj.vendors && proj.vendors.length > 0 && (
+                    <span className="flex items-start gap-1">
+                      <FolderGit className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground mb-0.5">Vendors:</span>
+                        {proj.vendors.map((v: any) => (
+                          <span key={v.id} className="text-foreground">{v.name}</span>
+                        ))}
+                      </div>
+                    </span>
+                  )}
+                </div>
               </div>
               <StatusBadge status={proj.status} />
-            </div>
-
-            {/* Task Progress Bar */}
-            <div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-bold mb-1.5">
-                <span>Milestone Progress</span>
-                <span className="text-foreground">{proj.progress}%</span>
-              </div>
-              <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary rounded-full transition-all duration-500" 
-                  style={{ width: `${proj.progress}%` }}
-                />
-              </div>
             </div>
 
             {/* Budget & Team ring */}
@@ -130,7 +207,7 @@ export const ProjectsList: React.FC = () => {
                 to={`/dashboard/projects/${proj.id}`} 
                 className="text-primary hover:underline hover:underline-offset-2 flex items-center gap-1 active:scale-95"
               >
-                Open Kanban
+                View Details
               </Link>
             </div>
 
@@ -138,6 +215,180 @@ export const ProjectsList: React.FC = () => {
         ))}
       </div>
 
+      <Drawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="Add New Project"
+        size="lg"
+      >
+        <form onSubmit={handleCreateProject} className="space-y-5 text-sm p-2 pb-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Project Name *</label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700"
+              placeholder="e.g. Website Redesign"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div className="md:col-span-5 space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client *</label>
+              <select
+                required
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm cursor-pointer border-slate-300 dark:border-slate-700"
+              >
+                <option value="">Select Client</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="md:col-span-7 space-y-1.5 relative" ref={dropdownRef}>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Vendors *</label>
+              
+              {/* Dropdown Button */}
+              <button
+                type="button"
+                onClick={() => setVendorDropdownOpen(!vendorDropdownOpen)}
+                className={cn(
+                  "w-full px-3 py-2 border rounded-lg bg-card text-left text-sm cursor-pointer flex items-center justify-between transition-colors focus:border-primary",
+                  vendorIds.length === 0 && showVendorError ? "border-rose-500" : "border-slate-300 dark:border-slate-700"
+                )}
+              >
+                <span className="truncate text-xs font-medium text-foreground">
+                  {vendorIds.length === 0 
+                    ? "Select Vendors" 
+                    : `${vendorIds.length} Vendor${vendorIds.length > 1 ? 's' : ''} Selected`}
+                </span>
+                <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+              </button>
+
+              {/* Selected vendor badges list below the button for quick view & removal */}
+              {vendorIds.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 max-h-20 overflow-y-auto">
+                  {vendors.filter(v => vendorIds.includes(v.id)).map(v => (
+                    <span 
+                      key={v.id} 
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold"
+                    >
+                      {v.name}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVendorIds(vendorIds.filter(id => id !== v.id));
+                        }}
+                        className="hover:text-rose-500 font-extrabold focus:outline-none ml-0.5 text-[8px]"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Dropdown Panel */}
+              {vendorDropdownOpen && (
+                <div className="absolute z-50 w-full mt-1 border rounded-lg bg-card shadow-lg max-h-60 overflow-y-auto p-2 space-y-1 border-slate-200 dark:border-slate-800 animate-fade-in-up">
+                  {/* Search bar inside dropdown */}
+                  <div className="relative mb-2 shrink-0">
+                    <input
+                      type="text"
+                      placeholder="Search vendors..."
+                      value={vendorSearch}
+                      onChange={(e) => setVendorSearch(e.target.value)}
+                      className="w-full pl-8 pr-3 py-1.5 border rounded-md bg-slate-50 dark:bg-slate-900/50 outline-none text-xs focus:border-primary border-slate-300 dark:border-slate-700"
+                    />
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  </div>
+
+                  {/* Vendor Items List */}
+                  <div className="space-y-0.5 overflow-y-auto max-h-40">
+                    {vendors.filter(v => v.name.toLowerCase().includes(vendorSearch.toLowerCase())).length > 0 ? (
+                      vendors.filter(v => v.name.toLowerCase().includes(vendorSearch.toLowerCase())).map(v => {
+                        const isChecked = vendorIds.includes(v.id);
+                        return (
+                          <label
+                            key={v.id}
+                            className="flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors text-xs font-semibold text-foreground select-none"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setVendorIds(vendorIds.filter(id => id !== v.id));
+                                } else {
+                                  setVendorIds([...vendorIds, v.id]);
+                                }
+                              }}
+                              className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary cursor-pointer"
+                            />
+                            <span>{v.name}</span>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-xs text-muted-foreground">
+                        No vendors found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Budget *</label>
+              <input
+                type="number"
+                required
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Due Date *</label>
+              <input
+                type="date"
+                required
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-6 border-t mt-6">
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(false)}
+              className="px-4 py-2 border rounded-lg hover:bg-muted font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Create Project
+            </button>
+          </div>
+        </form>
+      </Drawer>
     </div>
   );
 };
+

@@ -19,27 +19,37 @@ import {
   Building,
   Briefcase,
   FileCheck2,
-  ListPlus
+  ListPlus,
+  Eye
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
 
 const expenseSchema = zod.object({
-  description: zod.string().min(2, { message: "Description must be at least 2 characters" }),
+  description: zod.string().optional(),
   amount: zod.number().min(1, { message: "Amount must be greater than 0" }),
-  category: zod.enum(['Software', 'Marketing', 'Rent', 'Office Supplies', 'Travel', 'Consulting', 'Other']),
+  category: zod.enum(['Software', 'Marketing', 'Rent', 'Office Supplies', 'Travel', 'Consulting', 'Purchase Order', 'Other']),
   date: zod.string(),
-  isTaxDeductible: zod.boolean(),
+  expenseType: zod.enum(['goods', 'services']),
+  sac: zod.string().optional(),
+  gstTreatment: zod.string(),
+  sourceOfSupply: zod.string(),
+  destinationOfSupply: zod.string(),
+  reverseCharge: zod.boolean().optional(),
+  taxId: zod.string().optional(),
+  amountIs: zod.enum(['inclusive', 'exclusive']),
+  isTaxDeductible: zod.boolean().optional(),
   invoiceNumber: zod.string(),
-  notes: zod.string(),
-  clientId: zod.string()
+  notes: zod.string().optional(),
+  clientId: zod.string().optional(),
+  vendorId: zod.string().optional()
 });
 
 type ExpenseFormValues = zod.infer<typeof expenseSchema>;
 
 interface BulkExpenseRow {
   date: string;
-  category: 'Software' | 'Marketing' | 'Rent' | 'Office Supplies' | 'Travel' | 'Consulting' | 'Other';
+  category: 'Software' | 'Marketing' | 'Rent' | 'Office Supplies' | 'Travel' | 'Consulting' | 'Purchase Order' | 'Other';
   amount: number;
   clientId: string;
   projectId: string;
@@ -50,6 +60,7 @@ interface BulkExpenseRow {
 export const ExpensesDashboard: React.FC = () => {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [clients, setClients] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
   const [allProjects, setAllProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -74,14 +85,24 @@ export const ExpensesDashboard: React.FC = () => {
     defaultValues: {
       category: 'Software',
       date: new Date().toISOString().split('T')[0],
+      expenseType: 'services',
+      sac: '',
+      gstTreatment: '',
+      sourceOfSupply: '',
+      destinationOfSupply: '',
+      reverseCharge: false,
+      taxId: '',
+      amountIs: 'exclusive',
       isTaxDeductible: true,
       invoiceNumber: '',
       notes: '',
-      clientId: ''
+      clientId: '',
+      vendorId: ''
     }
   });
 
   const selectedClientId = watch("clientId");
+  const categoryVal = watch("category");
 
   // Load database metadata and assets
   const loadData = async () => {
@@ -90,10 +111,12 @@ export const ExpensesDashboard: React.FC = () => {
       const expenseRes = await apiService.getExpenses();
       const clientRes = await apiService.getClients();
       const projectsRes = await apiService.getProjects();
+      const vendorsRes = await apiService.getVendors();
 
       setExpenses(expenseRes);
       setClients(clientRes);
       setAllProjects(projectsRes);
+      setVendors(vendorsRes);
     } catch (e) {
       console.error(e);
     } finally {
@@ -119,18 +142,21 @@ export const ExpensesDashboard: React.FC = () => {
   // Single Record submit
   const onSubmitExpense = async (values: ExpenseFormValues) => {
     const activeClient = clients.find(c => c.id === values.clientId);
+    const activeVendor = vendors.find(v => v.id === values.vendorId);
     try {
       await apiService.createExpense({
         category: values.category,
         amount: values.amount,
-        description: values.description,
+        description: values.description || '',
         date: values.date,
         receiptUrl: uploadedReceipt,
-        isTaxDeductible: values.isTaxDeductible,
+        isTaxDeductible: values.isTaxDeductible || false,
         invoiceNumber: values.invoiceNumber || undefined,
         notes: values.notes || undefined,
         clientId: values.clientId || undefined,
         clientName: activeClient?.name || undefined,
+        vendorId: categoryVal === 'Purchase Order' ? values.vendorId : undefined,
+        vendorName: categoryVal === 'Purchase Order' ? activeVendor?.name : undefined,
         currency: currency
       });
       alert("Expense logged successfully!");
@@ -347,30 +373,28 @@ export const ExpensesDashboard: React.FC = () => {
       )
     },
     {
-      header: "Receipt Image",
-      accessorKey: "receiptUrl",
-      cell: (row) => row.receiptUrl ? (
-        <a 
-          href={row.receiptUrl} 
-          target="_blank" 
-          rel="noreferrer"
-          className="text-[10px] font-bold text-primary hover:underline font-mono"
-        >
-          View Receipt
-        </a>
-      ) : (
-        <span className="text-[10px] text-slate-400">No Attachment</span>
-      )
-    },
-    {
-      header: "Delete",
+      header: "Actions",
       cell: (row) => (
-        <button
-          onClick={() => handleDelete(row.id)}
-          className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all select-none cursor-pointer"
-        >
-          <Trash2 className="w-3.5 h-3.5 shrink-0" />
-        </button>
+        <div className="flex items-center gap-2">
+          {row.receiptUrl || row.category === 'Purchase Order' ? (
+            <button
+              onClick={() => window.open(row.receiptUrl || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank')}
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded border hover:bg-slate-50 dark:hover:bg-slate-800 text-[10px] font-bold text-primary transition-colors active:scale-95"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              View PDF
+            </button>
+          ) : (
+            <span className="text-[10px] text-slate-400">No Receipt</span>
+          )}
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all select-none cursor-pointer"
+            title="Delete Expense"
+          >
+            <Trash2 className="w-3.5 h-3.5 shrink-0" />
+          </button>
+        </div>
       )
     }
   ];
@@ -509,149 +533,315 @@ export const ExpensesDashboard: React.FC = () => {
             <form onSubmit={handleSubmit(onSubmitExpense)} className="flex-1 flex flex-col justify-between select-none h-full">
               <div className="flex-1 overflow-y-auto pr-1 pb-6 space-y-5 scrollbar-thin">
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                   
                   {/* Left input parameters column */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Expense Description *</label>
-                      <input
-                        type="text"
-                        placeholder="Vercel cloud hosting subscription"
-                        {...register("description")}
-                        className={cn(
-                          "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary",
-                          errors.description ? "border-rose-500/70" : ""
-                        )}
-                      />
-                      {errors.description && <span className="text-[9px] text-rose-500 font-bold">{errors.description.message}</span>}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Date */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Purchasing Date *</label>
+                  <div className="lg:col-span-2 space-y-5">
+                    
+                    {/* Date */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Date*</label>
+                      <div className="col-span-12 sm:col-span-8">
                         <input
                           type="date"
                           {...register("date")}
-                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary"
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary"
                         />
                       </div>
-                      
-                      {/* Category */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Category *</label>
+                    </div>
+
+                    {/* Category Name */}
+                    <div className="grid grid-cols-12 gap-4 items-start">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500 pt-2">Category Name*</label>
+                      <div className="col-span-12 sm:col-span-8 flex flex-col gap-2">
                         <select
                           {...register("category")}
-                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold cursor-pointer focus:border-primary"
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary appearance-none cursor-pointer"
                         >
+                          <option value="" disabled>Select Category</option>
                           <option value="Software">Software & SaaS</option>
                           <option value="Marketing">Marketing / ADS</option>
                           <option value="Rent">Workspace Rent</option>
                           <option value="Office Supplies">Office Stationery</option>
                           <option value="Travel">Flights & Lodgings</option>
                           <option value="Consulting">Consulting Advisory</option>
+                          <option value="Purchase Order">Purchase Order</option>
                           <option value="Other">Miscellaneous Outflow</option>
+                        </select>
+                        <button type="button" className="flex items-center gap-1 text-[11px] text-primary font-medium hover:underline self-start">
+                          <ListPlus className="w-3.5 h-3.5" /> Itemize
+                        </button>
+                      </div>
+                    </div>
+
+                    {categoryVal === 'Purchase Order' && (
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500 pt-2">Vendor Name*</label>
+                        <div className="col-span-12 sm:col-span-8 flex flex-col gap-2">
+                          <select
+                            {...register("vendorId", { required: categoryVal === 'Purchase Order' })}
+                            className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary appearance-none cursor-pointer"
+                          >
+                            <option value="">Select Vendor</option>
+                            {vendors.map(v => (
+                              <option key={v.id} value={v.id}>{v.name}</option>
+                            ))}
+                          </select>
+                          {errors.vendorId && <span className="text-[9px] text-rose-500 font-bold block">Vendor is required</span>}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Amount */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Amount*</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <div className="flex border rounded border-slate-300 dark:border-slate-700 bg-card overflow-hidden">
+                          <div className="px-3 py-2 bg-slate-50 dark:bg-slate-900 border-r border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center shrink-0 cursor-pointer">
+                            INR <span className="ml-1 text-[8px]">▼</span>
+                          </div>
+                          <input
+                            type="number"
+                            step="any"
+                            {...register("amount", { valueAsNumber: true })}
+                            className={cn(
+                              "w-full px-3 py-2 bg-card outline-none text-xs focus:bg-slate-50 dark:focus:bg-slate-900",
+                              errors.amount ? "bg-rose-50 dark:bg-rose-950/20" : ""
+                            )}
+                          />
+                        </div>
+                        {errors.amount && <span className="text-[9px] text-rose-500 mt-1 block">{errors.amount.message}</span>}
+                      </div>
+                    </div>
+
+                    {/* Expense Type */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Expense Type*</label>
+                      <div className="col-span-12 sm:col-span-8 flex items-center gap-4 text-[11px] font-medium text-foreground">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" value="goods" {...register("expenseType")} className="w-3.5 h-3.5 accent-primary" /> Goods
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" value="services" {...register("expenseType")} className="w-3.5 h-3.5 accent-primary" /> Services
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* SAC */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">SAC</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <input
+                          type="text"
+                          {...register("sac")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary"
+                        />
+                      </div>
+                    </div>
+
+                    {/* GST Treatment */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">GST Treatment*</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <select
+                          {...register("gstTreatment")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary appearance-none cursor-pointer"
+                        >
+                          <option value="">Select GST Treatment</option>
+                          <option value="Registered Business - Regular">Registered Business - Regular</option>
+                          <option value="Registered Business - Composition">Registered Business - Composition</option>
+                          <option value="Unregistered Business">Unregistered Business</option>
+                          <option value="Consumer">Consumer</option>
+                          <option value="Overseas">Overseas</option>
+                          <option value="Special Economic Zone">Special Economic Zone</option>
+                          <option value="Deemed Export">Deemed Export</option>
+                          <option value="Non-GST Supply">Non-GST Supply</option>
+                          <option value="Out Of Scope">Out Of Scope</option>
+                          <option value="Tax Deductor">Tax Deductor</option>
                         </select>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Amount */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Outflow Amount *</label>
-                        <input
-                          type="number"
-                          placeholder="299"
-                          {...register("amount", { valueAsNumber: true })}
-                          className={cn(
-                            "px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary",
-                            errors.amount ? "border-rose-500/70" : ""
-                          )}
-                        />
-                        {errors.amount && <span className="text-[9px] text-rose-500 font-bold">{errors.amount.message}</span>}
+                    {/* Source of Supply */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Source of Supply*</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <select
+                          {...register("sourceOfSupply")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
+                        >
+                          <option value="">State/Province</option>
+                          <option value="West Bengal">[WB] - West Bengal</option>
+                          <option value="Maharashtra">[MH] - Maharashtra</option>
+                          <option value="Delhi">[DL] - Delhi</option>
+                        </select>
                       </div>
+                    </div>
 
-                      {/* Invoice# */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Invoice#</label>
+                    {/* Destination of Supply */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Destination of Supply*</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <select
+                          {...register("destinationOfSupply")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
+                        >
+                          <option value="">State/Province</option>
+                          <option value="West Bengal">[WB] - West Bengal</option>
+                          <option value="Maharashtra">[MH] - Maharashtra</option>
+                          <option value="Delhi">[DL] - Delhi</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Reverse Charge */}
+                    <div className="grid grid-cols-12 gap-4 items-center mt-1">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Reverse Charge</label>
+                      <div className="col-span-12 sm:col-span-8 flex items-center gap-2">
+                        <input type="checkbox" {...register("reverseCharge")} className="w-3.5 h-3.5 rounded border accent-primary" />
+                        <span className="text-[11px] text-foreground font-medium">This transaction is applicable for reverse charge</span>
+                      </div>
+                    </div>
+
+                    {/* Tax */}
+                    <div className="grid grid-cols-12 gap-4 items-center mt-1">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Tax</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <select
+                          {...register("taxId")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
+                        >
+                          <option value="">Select a Tax</option>
+                          <option value="Non-Taxable">Non-Taxable</option>
+                          
+                          <optgroup label="Tax">
+                            <option value="IGST0">IGST0 [0%]</option>
+                            <option value="IGST5">IGST5 [5%]</option>
+                            <option value="IGST12">IGST12 [12%]</option>
+                            <option value="IGST18">IGST18 [18%]</option>
+                            <option value="IGST28">IGST28 [28%]</option>
+                            <option value="IGST40">IGST40 [40%]</option>
+                          </optgroup>
+                          
+                          <optgroup label="Tax Group">
+                            <option value="GST0">GST0 [0%]</option>
+                            <option value="GST5">GST5 [5%]</option>
+                            <option value="GST12">GST12 [12%]</option>
+                            <option value="GST18">GST18 [18%]</option>
+                            <option value="GST28">GST28 [28%]</option>
+                            <option value="GST40">GST40 [40%]</option>
+                          </optgroup>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Amount Is */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Amount Is</label>
+                      <div className="col-span-12 sm:col-span-8 flex items-center gap-4 text-[11px] font-medium text-foreground">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" value="inclusive" {...register("amountIs")} className="w-3.5 h-3.5 accent-primary" /> Tax Inclusive
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input type="radio" value="exclusive" {...register("amountIs")} className="w-3.5 h-3.5 accent-primary" /> Tax Exclusive
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="my-6 border-b border-dashed border-slate-200 dark:border-slate-800" />
+
+                    {/* Invoice# */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Invoice#*</label>
+                      <div className="col-span-12 sm:col-span-8">
                         <input
                           type="text"
-                          placeholder="E.g., INV-9988"
                           {...register("invoiceNumber")}
-                          className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary"
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary"
                         />
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Customer Name</label>
-                      <select
-                        {...register("clientId")}
-                        className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold cursor-pointer focus:border-primary"
-                      >
-                        <option value="">Independent (No Client)</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
-                        ))}
-                      </select>
+                    {/* Notes */}
+                    <div className="grid grid-cols-12 gap-4 items-start">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80 pt-2">Notes</label>
+                      <div className="col-span-12 sm:col-span-8">
+                        <textarea
+                          rows={3}
+                          maxLength={500}
+                          placeholder="Max. 500 characters"
+                          {...register("notes")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary resize-none placeholder:text-slate-400"
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Notes (Max 500 characters)</label>
-                      <textarea
-                        rows={3}
-                        maxLength={500}
-                        placeholder="Configure any specific details..."
-                        {...register("notes")}
-                        className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-primary resize-none"
-                      />
-                    </div>
+                    <div className="my-6 border-b border-dashed border-slate-200 dark:border-slate-800" />
 
-                    <div className="flex items-center gap-2 cursor-pointer font-bold text-foreground select-none mt-2">
-                      <input
-                        type="checkbox"
-                        {...register("isTaxDeductible")}
-                        className="w-3.5 h-3.5 rounded border accent-indigo-500 cursor-pointer"
-                      />
-                      <label className="cursor-pointer text-[10px] uppercase tracking-wider">Tax Deductible Write-Off</label>
+                    {/* Customer Name */}
+                    <div className="grid grid-cols-12 gap-4 items-center">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Customer Name</label>
+                      <div className="col-span-12 sm:col-span-8 flex gap-0">
+                        <select
+                          {...register("clientId")}
+                          className="w-full px-3 py-2 border border-r-0 rounded-l border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
+                        >
+                          <option value="">Select or add a customer</option>
+                          {clients.map(c => (
+                            <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                          ))}
+                        </select>
+                        <button type="button" className="px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-r flex items-center justify-center shrink-0 border border-blue-500 transition-colors">
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                   </div>
 
                   {/* Right dropzone attachment column */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Attach Outflow Receipt Image</label>
-                    
-                    <div 
-                      onClick={handleReceiptUploadClick}
-                      className={cn(
-                        "p-12 border border-dashed rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative select-none bg-slate-50/50 hover:bg-muted dark:bg-[#0b101c]/40 hover:border-indigo-500/30",
-                        uploadedReceipt ? "bg-emerald-500/5 border-emerald-500/25" : ""
-                      )}
-                    >
-                      {isUploading ? (
-                        <div className="w-full max-w-[180px] space-y-2 select-none">
-                          <span className="block text-[10px] font-bold text-indigo-500">Uploading invoice attachment...</span>
-                          <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
+                  <div className="lg:col-span-1 flex flex-col pt-2">
+                    <div className="p-8 border border-slate-200 dark:border-slate-800 rounded-xl bg-card shadow-sm flex flex-col items-center justify-center text-center">
+                      <div 
+                        onClick={handleReceiptUploadClick}
+                        className={cn(
+                          "w-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 select-none",
+                          uploadedReceipt ? "" : ""
+                        )}
+                      >
+                        {isUploading ? (
+                          <div className="w-full space-y-3 select-none py-4">
+                            <span className="block text-xs font-bold text-primary">Uploading...</span>
+                            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary transition-all duration-150" style={{ width: `${uploadProgress}%` }} />
+                            </div>
                           </div>
-                        </div>
-                      ) : uploadedReceipt ? (
-                        <div className="flex flex-col items-center gap-2 animate-fade-in select-none">
-                          <div className="p-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/15 rounded-full shrink-0">
-                            <Check className="w-4 h-4" />
+                        ) : uploadedReceipt ? (
+                          <div className="flex flex-col items-center gap-3 animate-fade-in select-none py-4">
+                            <div className="p-3 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full">
+                              <Check className="w-5 h-5" />
+                            </div>
+                            <span className="text-xs font-bold text-emerald-500">Capture Completed!</span>
                           </div>
-                          <span className="text-[11px] font-bold text-emerald-500">Capture Completed!</span>
-                          <span className="text-[9px] text-muted-foreground font-mono">receipt_invoice_seed.jpg</span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center select-none shrink-0 text-muted-foreground">
-                          <UploadCloud className="w-8 h-8 mb-2 text-slate-400" />
-                          <span className="text-[11px] font-bold text-foreground">Drag & Drop your receipts here</span>
-                          <span className="text-[9px] text-slate-400 block mt-0.5">PDF, PNG, JPG accepted (max 4MB)</span>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex flex-col items-center select-none w-full">
+                            <div className="w-16 h-16 rounded-xl bg-indigo-500 text-white flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20 overflow-hidden relative">
+                               <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-indigo-600"></div>
+                               <svg className="w-8 h-8 relative z-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v6h-2zm0 8h2v2h-2z" opacity="0.3"/>
+                                 <path d="M14 10H10v5h4v-5zm-2 3.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5z"/>
+                               </svg>
+                            </div>
+                            <span className="text-[13px] font-bold text-foreground mb-1">Drag or Drop your Receipts</span>
+                            <span className="text-[10px] text-slate-400 mb-6">Maximum file size allowed is 10MB</span>
+                            
+                            <div className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-xs font-semibold text-foreground/80 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700/50">
+                              <UploadCloud className="w-4 h-4 shrink-0 text-slate-500" />
+                              Upload your Files
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -660,19 +850,25 @@ export const ExpensesDashboard: React.FC = () => {
               </div>
 
               {/* Drawer footer actions */}
-              <div className="flex items-center gap-3 justify-end pt-4 border-t shrink-0 select-none bg-card relative z-50 mt-4">
+              <div className="flex items-center gap-3 justify-start pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0 select-none bg-card relative z-50 mt-4">
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded hover:bg-blue-600 transition-colors select-none active:scale-95"
+                >
+                  Save (Alt+S)
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-bold rounded hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors select-none active:scale-95"
+                >
+                  Save and New <span className="text-[10px] text-muted-foreground ml-0.5">(Alt+N)</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(false)}
-                  className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95 cursor-pointer"
+                  className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-bold rounded hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors select-none active:scale-95"
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer"
-                >
-                  Record Expense
                 </button>
               </div>
 

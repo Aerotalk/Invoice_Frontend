@@ -698,7 +698,8 @@ export const apiService = {
       id: `proj-${Date.now()}`,
       progress: 0,
       tasks: [],
-      timeLogs: []
+      timeLogs: [],
+      invoices: []
     };
     db.projects = [newProj, ...db.projects];
     saveMockDB(db);
@@ -716,6 +717,36 @@ export const apiService = {
     db.projects = db.projects.map(p => 
       p.id === id ? { ...p, tasks, progress } : p
     );
+    saveMockDB(db);
+    return db.projects.find(p => p.id === id);
+  },
+
+  uploadProjectInvoice: async (id: string, invoice: any) => {
+    await delay(500);
+    const db = getMockDB();
+    db.projects = db.projects.map(p => {
+      if (p.id === id) {
+        return {
+          ...p,
+          invoices: [...(p.invoices || []), invoice]
+        };
+      }
+      return p;
+    });
+    
+    // Log audit
+    const project = db.projects.find(p => p.id === id);
+    if (project) {
+      const log: AuditLog = {
+        id: `al-${Date.now()}`,
+        user: "Admin",
+        action: "Project Invoice Uploaded",
+        details: `Uploaded invoice to project ${project.name}`,
+        timestamp: new Date().toISOString()
+      };
+      db.auditLogs = [log, ...db.auditLogs];
+    }
+    
     saveMockDB(db);
     return db.projects.find(p => p.id === id);
   },

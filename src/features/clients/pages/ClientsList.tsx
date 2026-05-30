@@ -83,6 +83,9 @@ const clientSchema = zod.object({
   language: zod.string().min(1, { message: "Language is required" }),
   
   // Tab 1: Other Details
+  gstTreatment: zod.string().min(1, { message: "GST Treatment is required" }),
+  placeOfSupply: zod.string().min(1, { message: "Place of Supply is required" }),
+  taxPreference: zod.enum(['Taxable', 'Tax Exempt']),
   pan: zod.string(),
   paymentTerms: zod.string(),
   enablePortal: zod.boolean(),
@@ -186,6 +189,9 @@ export const ClientsList: React.FC = () => {
       mobileCode: '+91',
       mobile: '',
       language: 'English',
+      gstTreatment: '',
+      placeOfSupply: '',
+      taxPreference: 'Taxable',
       pan: '',
       paymentTerms: 'Due on Receipt',
       enablePortal: false,
@@ -373,6 +379,9 @@ export const ClientsList: React.FC = () => {
         displayName: values.displayName,
         currency: values.currency,
         language: values.language,
+        gstTreatment: values.gstTreatment,
+        placeOfSupply: values.placeOfSupply,
+        taxPreference: values.taxPreference,
         pan: values.pan,
         paymentTerms: values.paymentTerms,
         enablePortal: values.enablePortal,
@@ -943,15 +952,115 @@ export const ClientsList: React.FC = () => {
                   <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       
+                      {/* GST Treatment */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                          GST Treatment <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          {...register("gstTreatment")}
+                          className={cn(
+                            "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer appearance-none",
+                            errors.gstTreatment ? "border-rose-500/70" : ""
+                          )}
+                        >
+                          <option value="" disabled>Select a GST treatment</option>
+                          <option value="Registered Business - Regular">Registered Business - Regular</option>
+                          <option value="Registered Business - Composition">Registered Business - Composition</option>
+                          <option value="Unregistered Business">Unregistered Business</option>
+                          <option value="Consumer">Consumer</option>
+                          <option value="Overseas">Overseas</option>
+                          <option value="Special Economic Zone">Special Economic Zone</option>
+                          <option value="Deemed Export">Deemed Export</option>
+                          <option value="Non-GST Supply">Non-GST Supply</option>
+                          <option value="Out Of Scope">Out Of Scope</option>
+                          <option value="Tax Deductor">Tax Deductor</option>
+                        </select>
+                        {errors.gstTreatment && <span className="text-[9px] text-rose-500 font-bold">{errors.gstTreatment.message}</span>}
+                      </div>
+
+                      {/* Place of Supply */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                          Place of Supply <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          {...register("placeOfSupply")}
+                          className={cn(
+                            "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer appearance-none",
+                            errors.placeOfSupply ? "border-rose-500/70" : ""
+                          )}
+                        >
+                          <option value="" disabled>Select a state</option>
+                          <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                          <option value="Andhra Pradesh">Andhra Pradesh</option>
+                          <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                          <option value="Assam">Assam</option>
+                          <option value="Bihar">Bihar</option>
+                          <option value="Chandigarh">Chandigarh</option>
+                          <option value="Chhattisgarh">Chhattisgarh</option>
+                          <option value="Delhi">Delhi</option>
+                          <option value="Goa">Goa</option>
+                          <option value="Gujarat">Gujarat</option>
+                          <option value="Haryana">Haryana</option>
+                          <option value="Himachal Pradesh">Himachal Pradesh</option>
+                          <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                          <option value="Jharkhand">Jharkhand</option>
+                          <option value="Karnataka">Karnataka</option>
+                          <option value="Kerala">Kerala</option>
+                          <option value="Maharashtra">Maharashtra</option>
+                          <option value="Odisha">Odisha</option>
+                          <option value="Punjab">Punjab</option>
+                          <option value="Rajasthan">Rajasthan</option>
+                          <option value="Tamil Nadu">Tamil Nadu</option>
+                          <option value="Telangana">Telangana</option>
+                          <option value="Uttar Pradesh">Uttar Pradesh</option>
+                          <option value="West Bengal">West Bengal</option>
+                        </select>
+                        {errors.placeOfSupply && <span className="text-[9px] text-rose-500 font-bold">{errors.placeOfSupply.message}</span>}
+                      </div>
+
                       {/* PAN */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">PAN (Tax Identification Number)</label>
+                        <div className="flex items-center gap-1">
+                          <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">PAN</label>
+                          <span className="text-slate-400 group relative">
+                            <AlertCircle className="w-2.5 h-2.5" />
+                          </span>
+                        </div>
                         <input
                           type="text"
                           placeholder="ABCDE1234F"
                           {...register("pan")}
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
+                      </div>
+
+                      {/* Tax Preference */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                          Tax Preference <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-4 h-full pt-1.5">
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              value="Taxable"
+                              {...register("taxPreference")}
+                              className="text-primary focus:ring-primary h-3.5 w-3.5 border-slate-300"
+                            />
+                            <span className="text-xs font-medium text-foreground">Taxable</span>
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              value="Tax Exempt"
+                              {...register("taxPreference")}
+                              className="text-primary focus:ring-primary h-3.5 w-3.5 border-slate-300"
+                            />
+                            <span className="text-xs font-medium text-foreground">Tax Exempt</span>
+                          </label>
+                        </div>
                       </div>
 
                       {/* Payment Terms */}

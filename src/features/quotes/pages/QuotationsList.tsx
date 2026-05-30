@@ -63,6 +63,7 @@ interface QuoteItemInput {
   name: string;
   quantity: number;
   rate: number;
+  taxRate: number;
   total: number;
 }
 
@@ -87,7 +88,7 @@ export const QuotationsList: React.FC = () => {
 
   // Dynamic row builder states
   const [itemRows, setItemRows] = useState<QuoteItemInput[]>([
-    { productId: "", name: "", quantity: 1, rate: 0, total: 0 }
+    { productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }
   ]);
 
   // Quick search filter input state
@@ -171,12 +172,12 @@ export const QuotationsList: React.FC = () => {
 
   // Dynamic row builder methods
   const handleAddRow = () => {
-    setItemRows([...itemRows, { productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+    setItemRows([...itemRows, { productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
   };
 
   const handleRemoveRow = (index: number) => {
     if (itemRows.length <= 1) {
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
       return;
     }
     setItemRows(itemRows.filter((_, idx) => idx !== index));
@@ -207,6 +208,8 @@ export const QuotationsList: React.FC = () => {
       const r = Math.max(0, Number(val));
       row.rate = r;
       row.total = row.quantity * r;
+    } else if (field === 'taxRate') {
+      row.taxRate = Number(val);
     } else if (field === 'name') {
       row.name = val;
     }
@@ -306,7 +309,7 @@ export const QuotationsList: React.FC = () => {
       alert("Quotation registered successfully!");
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -366,7 +369,7 @@ export const QuotationsList: React.FC = () => {
       alert("Quotation saved as draft successfully!");
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -460,12 +463,12 @@ export const QuotationsList: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setActiveQuoteMenu(null);
-                    alert(`Quote details preview:\nSubject: ${row.subject || "N/A"}\nSubtotal: ${formatCurrency(row.subtotal, currency)}\nDiscount: ${row.discountRate}%\nTax: ${row.taxRate}% (${row.taxType.toUpperCase()})\nGrand Total: ${formatCurrency(row.total, currency)}`);
+                    window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  Quick Details
+                  View PDF
                 </button>
 
                 {row.status === 'sent' && (
@@ -551,7 +554,7 @@ export const QuotationsList: React.FC = () => {
               reset();
               const nextNum = `QT-${String((quotes.length || 0) + 1).padStart(6, '0')}`;
               setValue("quoteNumber", nextNum);
-              setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, total: 0 }]);
+              setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
               setUploadedFiles([]);
               setIsCustomQuoteCode(false);
               setDrawerOpen(true);
@@ -609,18 +612,6 @@ export const QuotationsList: React.FC = () => {
                     ))}
                   </select>
                   {errors.clientId && <span className="text-[9px] text-rose-500 font-bold">{errors.clientId.message}</span>}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
-                    Subject
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Let your customer know what this Quote is for"
-                    {...register("subject")}
-                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                  />
                 </div>
               </div>
             </div>
@@ -757,6 +748,20 @@ export const QuotationsList: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Subject */}
+              <div className="flex flex-col gap-1.5 mt-4">
+                <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px] flex items-center gap-1">
+                  Subject
+                  <AlertCircle className="w-3 h-3 text-slate-400" />
+                </label>
+                <textarea
+                  placeholder="Let your customer know what this Quote is for"
+                  {...register("subject")}
+                  className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-none h-[42px] leading-relaxed"
+                />
+              </div>
+
             </div>
 
             {/* Line Item Table builder */}
@@ -771,11 +776,12 @@ export const QuotationsList: React.FC = () => {
               <div className="p-4 space-y-4">
                 {/* Headers */}
                 <div className="grid grid-cols-12 gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider border-b pb-2 select-none hidden sm:grid">
-                  <div className="col-span-5">Item Details</div>
+                  <div className="col-span-4">Item Details</div>
                   <div className="col-span-2 text-center">Quantity</div>
-                  <div className="col-span-2 text-right">Rate</div>
-                  <div className="col-span-2 text-right">Amount</div>
-                  <div className="col-span-1 text-center">Delete</div>
+                  <div className="col-span-2 text-right flex items-center justify-end gap-1">Rate <Calculator className="w-3 h-3" /></div>
+                  <div className="col-span-2 text-center flex items-center justify-center gap-1">Tax <AlertCircle className="w-3 h-3 text-slate-400" /></div>
+                  <div className="col-span-1 text-right">Amount</div>
+                  <div className="col-span-1 hidden"></div>
                 </div>
 
                 {/* Rows */}
@@ -784,7 +790,7 @@ export const QuotationsList: React.FC = () => {
                     <div key={index} className="grid grid-cols-12 gap-2 items-center border-b pb-3 sm:pb-0 sm:border-b-0">
                       
                       {/* Product select + description */}
-                      <div className="col-span-12 sm:col-span-5 flex flex-col gap-1">
+                      <div className="col-span-12 sm:col-span-4 flex flex-col gap-1">
                         <select
                           value={row.productId}
                           onChange={(e) => handleRowChange(index, "productId", e.target.value)}
@@ -828,8 +834,23 @@ export const QuotationsList: React.FC = () => {
                         />
                       </div>
 
+                      {/* Tax */}
+                      <div className="col-span-6 sm:col-span-2">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden text-center">Tax</span>
+                        <select
+                          value={row.taxRate}
+                          onChange={(e) => handleRowChange(index, "taxRate", e.target.value)}
+                          className="w-full px-1 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary text-center appearance-none cursor-pointer"
+                        >
+                          <option value={0}>Select a Tax</option>
+                          <option value={5}>GST5 [5%]</option>
+                          <option value={12}>GST12 [12%]</option>
+                          <option value={18}>GST18 [18%]</option>
+                        </select>
+                      </div>
+
                       {/* Amount */}
-                      <div className="col-span-10 sm:col-span-2 text-right">
+                      <div className="col-span-10 sm:col-span-1 text-right">
                         <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Amount</span>
                         <span className="text-xs font-bold text-foreground block pr-2 select-none mt-1 sm:mt-0">
                           {formatCurrency(row.total, currency)}
@@ -872,6 +893,7 @@ export const QuotationsList: React.FC = () => {
                           name: p.name,
                           quantity: 1,
                           rate: p.sellingPrice,
+                          taxRate: 0,
                           total: p.sellingPrice
                         }));
                         setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
@@ -1007,7 +1029,7 @@ export const QuotationsList: React.FC = () => {
                       {...register("taxRate")}
                       className="px-2 py-1 border rounded bg-card outline-none text-xs font-semibold focus:border-primary appearance-none cursor-pointer"
                     >
-                      <option value="0">Select a Tax (0%)</option>
+                      <option value="0">Select a Tax</option>
                       <option value="5">Standard (5%)</option>
                       <option value="10">VAT (10%)</option>
                       <option value="15">Surcharge (15%)</option>

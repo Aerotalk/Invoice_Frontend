@@ -32,6 +32,10 @@ const productSchema = zod.object({
   name: zod.string().min(2, { message: "Item name must be at least 2 characters" }),
   type: zod.enum(['goods', 'service']),
   unit: zod.string().min(1, { message: "Unit is required" }),
+  hsnCode: zod.string().optional(),
+  taxPreference: zod.string().min(1, { message: "Tax Preference is required" }),
+  intraStateTaxRate: zod.string().optional(),
+  interStateTaxRate: zod.string().optional(),
   sellingPrice: zod.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
     message: "Price must be a positive number"
   }),
@@ -67,6 +71,10 @@ export const ProductsList: React.FC = () => {
       name: '',
       type: 'goods',
       unit: '',
+      hsnCode: '',
+      taxPreference: 'Taxable',
+      intraStateTaxRate: '',
+      interStateTaxRate: '',
       sellingPrice: '0',
       description: ''
     }
@@ -191,6 +199,10 @@ export const ProductsList: React.FC = () => {
         name: values.name,
         type: values.type,
         unit: values.unit,
+        hsnCode: values.hsnCode,
+        taxPreference: values.taxPreference,
+        intraStateTaxRate: values.intraStateTaxRate,
+        interStateTaxRate: values.interStateTaxRate,
         sellingPrice: Number(values.sellingPrice),
         description: values.description,
         imageUrl: selectedMockImage || "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150" // default fallback
@@ -563,6 +575,41 @@ export const ProductsList: React.FC = () => {
                   )}
                 </div>
 
+                {/* HSN Code */}
+                <div className="flex flex-col gap-1.5 relative">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    HSN Code
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      {...register("hsnCode")}
+                      className="w-full pl-3 pr-8 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
+                    />
+                    <Search className="w-3.5 h-3.5 text-primary absolute right-3 top-2.5 cursor-pointer" />
+                  </div>
+                </div>
+
+                {/* Tax Preference */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Tax Preference <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    {...register("taxPreference")}
+                    className={cn(
+                      "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer appearance-none",
+                      errors.taxPreference ? "border-rose-500/70" : ""
+                    )}
+                  >
+                    <option value="Taxable">Taxable</option>
+                    <option value="Non-Taxable">Non-Taxable</option>
+                    <option value="Out of Scope">Out of Scope</option>
+                    <option value="Non-GST Supply">Non-GST Supply</option>
+                  </select>
+                  {errors.taxPreference && <span className="text-[9px] text-rose-500 font-bold">{errors.taxPreference.message}</span>}
+                </div>
+
               </div>
 
               {/* Image drag upload mockup box */}
@@ -654,6 +701,56 @@ export const ProductsList: React.FC = () => {
                     {...register("description")}
                     className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-none h-[42px] leading-relaxed"
                   />
+                </div>
+
+              </div>
+            </div>
+
+            {/* Default Tax Rates Category */}
+            <div className="bg-slate-50/40 dark:bg-slate-900/10 p-5 rounded-xl border border-slate-100 dark:border-slate-800/40 space-y-5">
+              <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
+                <Layers className="w-3.5 h-3.5 shrink-0" />
+                Default Tax Rates
+              </span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Intra State Tax Rate */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Intra State Tax Rate
+                  </label>
+                  <select
+                    {...register("intraStateTaxRate")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>Select a Tax</option>
+                    <option value="GST0 [0%]">GST0 [0%]</option>
+                    <option value="GST5 [5%]">GST5 [5%]</option>
+                    <option value="GST12 [12%]">GST12 [12%]</option>
+                    <option value="GST18 [18%]">GST18 [18%]</option>
+                    <option value="GST28 [28%]">GST28 [28%]</option>
+                    <option value="GST40 [40%]">GST40 [40%]</option>
+                  </select>
+                </div>
+
+                {/* Inter State Tax Rate */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Inter State Tax Rate
+                  </label>
+                  <select
+                    {...register("interStateTaxRate")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>Select a Tax</option>
+                    <option value="IGST0 [0%]">IGST0 [0%]</option>
+                    <option value="IGST5 [5%]">IGST5 [5%]</option>
+                    <option value="IGST12 [12%]">IGST12 [12%]</option>
+                    <option value="IGST18 [18%]">IGST18 [18%]</option>
+                    <option value="IGST28 [28%]">IGST28 [28%]</option>
+                    <option value="IGST40 [40%]">IGST40 [40%]</option>
+                  </select>
                 </div>
 
               </div>

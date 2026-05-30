@@ -642,6 +642,16 @@ const initialProjects: Project[] = [
       { id: "tl-1", taskName: "Design mockups approval", hours: 14, date: daysAgo(12), billingRate: 120 },
       { id: "tl-2", taskName: "Frontend components structure", hours: 25, date: daysAgo(8), billingRate: 100 }
     ],
+    vendors: [{ id: "v-1", name: "Vercel Inc." }],
+    invoices: [
+      {
+        id: "inv-1",
+        invoiceId: "INV-VERCEL-001",
+        description: "Vercel Enterprise Hosting",
+        date: daysAgo(10),
+        url: "https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=300"
+      }
+    ]
   },
   {
     id: "proj-2",
@@ -664,6 +674,7 @@ const initialProjects: Project[] = [
     timeLogs: [
       { id: "tl-3", taskName: "Shopify Webhooks configuration", hours: 8, date: daysAgo(2), billingRate: 150 }
     ],
+    invoices: []
   },
   {
     id: "proj-3",
@@ -684,6 +695,7 @@ const initialProjects: Project[] = [
     timeLogs: [
       { id: "tl-4", taskName: "Figma wireframing", hours: 50, date: daysAgo(15), billingRate: 110 }
     ],
+    invoices: []
   }
 ];
 
@@ -835,8 +847,11 @@ export const getMockDB = (): MockDatabase => {
       if (!parsed.salespersons) {
         parsed.salespersons = initialSalespersons;
       }
-      if (!parsed.deliveryChallans) {
-        parsed.deliveryChallans = initialChallans;
+      if (parsed.projects) {
+        parsed.projects = parsed.projects.map((p: any) => ({
+          ...p,
+          invoices: (p.invoices || []).filter((inv: any) => inv && inv.invoiceId && inv.invoiceId.trim() !== '')
+        }));
       }
       return parsed;
     } catch (e) {

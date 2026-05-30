@@ -56,6 +56,9 @@ export interface Client {
   country?: string;
   state?: string;
   city?: string;
+  gstTreatment?: string;
+  placeOfSupply?: string;
+  taxPreference?: 'Taxable' | 'Tax Exempt';
 }
 
 export interface Vendor {
@@ -133,6 +136,10 @@ export interface Product {
   sellingPrice: number;
   description: string;
   createdAt: string;
+  hsnCode?: string;
+  taxPreference?: string;
+  intraStateTaxRate?: string;
+  interStateTaxRate?: string;
 }
 
 export interface QuoteItem {
@@ -222,7 +229,7 @@ export interface Payment {
   currency: string;
 }
 
-export type ExpenseCategory = 'Software' | 'Marketing' | 'Rent' | 'Office Supplies' | 'Travel' | 'Consulting' | 'Other';
+export type ExpenseCategory = 'Software' | 'Marketing' | 'Rent' | 'Office Supplies' | 'Travel' | 'Consulting' | 'Purchase Order' | 'Other';
 
 export interface Expense {
   id: string;
@@ -240,6 +247,8 @@ export interface Expense {
   projectName?: string;
   isBillable?: boolean;
   currency?: string;
+  vendorId?: string;
+  vendorName?: string;
 }
 
 export type TaskStatus = 'todo' | 'in-progress' | 'completed';
@@ -261,11 +270,20 @@ export interface TimeLog {
 
 export type ProjectStatus = 'planning' | 'in-progress' | 'completed' | 'on-hold';
 
+export interface ProjectInvoice {
+  id: string;
+  invoiceId: string;
+  description: string;
+  date: string;
+  url: string;
+}
+
 export interface Project {
   id: string;
   name: string;
   clientName: string;
   clientId: string;
+  vendors?: { id: string; name: string }[];
   status: ProjectStatus;
   budget: number;
   progress: number;
@@ -273,6 +291,7 @@ export interface Project {
   teamMembers: string[];
   tasks: Task[];
   timeLogs: TimeLog[];
+  invoices?: ProjectInvoice[];
 }
 
 export interface TimeEntry {

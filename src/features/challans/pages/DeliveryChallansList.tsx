@@ -393,12 +393,12 @@ export const DeliveryChallansList: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setActiveChallanMenu(null);
-                    alert(`Challan details preview:\nChallan Type: ${row.challanType}\nSubtotal: ${formatCurrency(row.subtotal, currency)}\nDiscount: ${row.discountRate}%\nGrand Total: ${formatCurrency(row.total, currency)}`);
+                    window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  Quick Details
+                  View PDF
                 </button>
 
                 {row.status === 'draft' && (

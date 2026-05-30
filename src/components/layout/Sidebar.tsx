@@ -38,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { name: "Clients", path: "/dashboard/clients", icon: Users },
     { name: "Vendors", path: "/dashboard/vendors", icon: Building2 },
     { name: "Products", path: "/dashboard/products", icon: Package },
-    { name: "Invoices", path: "/dashboard/invoices", icon: FileText },
+    // { name: "Invoices", path: "/dashboard/invoices", icon: FileText },
     { name: "Quotations", path: "/dashboard/quotes", icon: ClipboardList },
     { name: "Delivery Challans", path: "/dashboard/challans", icon: Truck },
     { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
