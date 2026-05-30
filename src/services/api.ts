@@ -18,7 +18,17 @@ export const apiService = {
   // --- CLIENTS MODULE ---
   getClients: async () => {
     const res = await api.get('/clients');
-    return res.data.data;
+    return res.data.data.map((c: any) => ({
+      ...c,
+      name: c.displayName,
+      clientType: c.customerType?.toLowerCase() || 'business',
+      company: c.companyName,
+      avatar: c.documentsAttachment,
+      phone: (c.workPhone || c.mobilePhone) ? `${c.workPhoneCode || ''} ${c.workPhone || c.mobilePhone}`.trim() : 'N/A',
+      status: 'active',
+      totalBilled: c.totalBilled || 0,
+      outstandingAmount: c.outstandingAmount || 0,
+    }));
   },
 
   getClientById: async (id: string) => {
@@ -51,7 +61,17 @@ export const apiService = {
   // --- VENDORS MODULE ---
   getVendors: async () => {
     const res = await api.get('/vendors');
-    return res.data.data;
+    return res.data.data.map((v: any) => ({
+      ...v,
+      name: v.displayName,
+      vendorType: v.vendorType?.toLowerCase() || 'business',
+      company: v.companyName,
+      avatar: v.documentsAttachment,
+      phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
+      status: 'active',
+      totalBilled: v.totalBilled || 0,
+      outstandingAmount: v.outstandingAmount || 0,
+    }));
   },
 
   getVendorById: async (id: string) => {
@@ -77,7 +97,12 @@ export const apiService = {
   // --- PRODUCTS MODULE ---
   getProducts: async () => {
     const res = await api.get('/products');
-    return res.data.data;
+    return res.data.data.map((p: any) => ({
+      ...p,
+      type: p.type?.toLowerCase() || 'goods',
+      imageUrl: p.itemImage,
+      status: 'active'
+    }));
   },
 
   createProduct: async (productData: unknown) => {
@@ -106,7 +131,18 @@ export const apiService = {
   // --- PROJECTS MODULE ---
   getProjects: async () => {
     const res = await api.get('/projects');
-    return res.data.data;
+    return res.data.data.map((p: any) => ({
+      ...p,
+      name: p.projectName,
+      clientId: p.customerId,
+      clientName: p.customer?.displayName || 'Unknown Client',
+      vendors: p.vendors?.map((v: any) => v.vendor) || [],
+      status: 'planning',
+      teamMembers: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
+      ]
+    }));
   },
 
   getProjectById: async (id: string) => {
