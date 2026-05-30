@@ -1,8 +1,11 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const rawBaseUrl = import.meta.env.VITE_API_URL || 'https://invoicebackend-production-0236.up.railway.app/api';
+const baseURL = rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl.replace(/\/$/, '')}/api`;
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://invoicebackend-production-faa7.up.railway.app/api',
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
