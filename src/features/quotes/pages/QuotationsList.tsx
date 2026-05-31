@@ -40,7 +40,7 @@ const quoteSchema = zod.object({
   clientId: zod.string().min(1, { message: "Customer is required" }),
   quoteDate: zod.string().min(1, { message: "Quote date is required" }),
   expiryDate: zod.string(),
-  salesperson: zod.string(),
+  salesperson: zod.string().optional(),
   projectId: zod.string(),
   subject: zod.string(),
   customerNotes: zod.string(),
@@ -683,51 +683,8 @@ export const QuotationsList: React.FC = () => {
                 </div>
               </div>
 
-              {/* Dynamic Project Mapping & Salesperson */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
-                {/* Salesperson Dropdown with custom inline addition */}
-                <div className="flex flex-col gap-1.5 relative">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Salesperson</label>
-                  <div className="flex gap-2">
-                    <select
-                      {...register("salesperson")}
-                      className="flex-1 px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary appearance-none cursor-pointer"
-                    >
-                      <option value="">Select a Salesperson</option>
-                      {salespersons.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
-
-                    <button
-                      type="button"
-                      onClick={() => setSalespersonDropdownOpen(!salespersonDropdownOpen)}
-                      className="px-3 border rounded-lg hover:bg-muted text-slate-500 active:scale-95 transition-all text-xs font-bold shrink-0 flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  {salespersonDropdownOpen && (
-                    <div className="absolute bottom-full left-0 z-50 mb-1 w-full p-2 bg-card border rounded-lg shadow-xl flex gap-1 items-center border-slate-200 dark:border-slate-800">
-                      <input
-                        type="text"
-                        placeholder="Add new salesperson..."
-                        value={newSalesperson}
-                        onChange={(e) => setNewSalesperson(e.target.value)}
-                        className="flex-1 px-2.5 py-1.5 border rounded bg-card outline-none text-[11px] font-semibold focus:border-primary"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddSalesperson}
-                        className="px-2.5 py-1.5 rounded bg-primary text-white text-[10px] font-bold active:scale-95 shrink-0"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  )}
-                </div>
-
+              {/* Dynamic Project Mapping */}
+              <div className="border-t pt-4">
                 {/* Project selector dynamically filtered by Client */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Project Name</label>
