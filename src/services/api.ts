@@ -86,7 +86,40 @@ export const apiService = {
 
   getVendorById: async (id: string) => {
     const res = await api.get(`/vendors/${id}`);
-    return { vendor: res.data.data, expenses: [] };
+    const v = res.data.data;
+    return { 
+      vendor: {
+        ...v,
+        name: v.displayName || v.companyName || 'Unknown Vendor',
+        vendorType: v.vendorType?.toLowerCase() || 'business',
+        company: v.companyName || '',
+        avatar: v.documentsAttachment || "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150",
+        phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
+        website: v.websiteUrl || '',
+        notes: v.internalRemarks || '',
+        billingAddress: {
+          attention: v.billingAttention || '',
+          street1: v.billingStreet1 || '',
+          street2: v.billingStreet2 || '',
+          city: v.billingCity || '',
+          state: v.billingState || '',
+          country: v.billingCountry || '',
+          zip: v.billingZipCode || '',
+          phone: v.billingPhone || ''
+        },
+        shippingAddress: {
+          attention: v.shippingAttention || '',
+          street1: v.shippingStreet1 || '',
+          street2: v.shippingStreet2 || '',
+          city: v.shippingCity || '',
+          state: v.shippingState || '',
+          country: v.shippingCountry || '',
+          zip: v.shippingZipCode || '',
+          phone: v.shippingPhone || ''
+        }
+      }, 
+      expenses: [] 
+    };
   },
 
   createVendor: async (vendorData: unknown) => {
