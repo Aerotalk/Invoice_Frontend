@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
 import { Drawer } from '../../../components/common/Drawer';
@@ -71,6 +71,7 @@ export const ExpensesDashboard: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedReceipt, setUploadedReceipt] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Bulk addition rows
   const [bulkRows, setBulkRows] = useState<BulkExpenseRow[]>([
@@ -246,21 +247,37 @@ export const ExpensesDashboard: React.FC = () => {
     }
   };
 
-  // Simulated Receipt capture
+  // Real Receipt capture
   const handleReceiptUploadClick = () => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size exceeds 10MB limit");
+        return;
+      }
+      setIsUploading(true);
+      setUploadProgress(30);
+      try {
+        const response = await apiService.uploadFile(file);
+        setUploadedReceipt(response.url || `/uploads/${response.filename}`);
+        setUploadProgress(100);
+        toast.success("Receipt uploaded successfully");
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to upload receipt");
+      } finally {
+        setTimeout(() => {
           setIsUploading(false);
-          setUploadedReceipt("https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=300"); // mockup image
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 150);
+          setUploadProgress(0);
+        }, 500);
+      }
+    }
   };
 
   // Recharts outflows distribution math
@@ -806,6 +823,13 @@ export const ExpensesDashboard: React.FC = () => {
 
                   {/* Right dropzone attachment column */}
                   <div className="lg:col-span-1 flex flex-col pt-2">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*,.pdf" 
+                      onChange={handleFileChange} 
+                    />
                     <div className="p-8 border border-slate-200 dark:border-slate-800 rounded-xl bg-card shadow-sm flex flex-col items-center justify-center text-center">
                       <div 
                         onClick={handleReceiptUploadClick}
