@@ -317,6 +317,14 @@ export const apiService = {
     const res = await api.put(`/quotations/${id}`, data);
     return res.data.data;
   },
+  downloadQuotationPdf: async (id: string) => {
+    const res = await api.get(`/quotations/${id}/pdf`, { responseType: 'blob' });
+    return res.data;
+  },
+  downloadChallanPdf: async (id: string) => {
+    const res = await api.get(`/challans/${id}/pdf`, { responseType: 'blob' });
+    return res.data;
+  },
 
   // --- PROJECTS EXTRAS ---
   uploadProjectInvoice: async (id: string, invoice: any) => ({}),

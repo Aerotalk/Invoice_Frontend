@@ -392,9 +392,18 @@ export const DeliveryChallansList: React.FC = () => {
               <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setActiveChallanMenu(null);
-                    window.open('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', '_blank');
+                    try {
+                      const toastId = toast.loading("Generating PDF...");
+                      const blob = await apiService.downloadChallanPdf(row.id);
+                      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                      window.open(url, '_blank');
+                      toast.dismiss(toastId);
+                    } catch (err) {
+                      console.error(err);
+                      toast.error("Failed to load PDF");
+                    }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
