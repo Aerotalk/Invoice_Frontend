@@ -154,9 +154,7 @@ export const ClientsList: React.FC = () => {
     { id: 'cf-1', label: 'GSTIN', value: '' },
     { id: 'cf-2', label: 'Industry', value: 'Technology' }
   ]);
-  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([
-    { name: 'tax_exemption_cert.pdf', size: '1.2 MB' }
-  ]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([]);
   
   // Secondary Contact Form row state
   const [newContact, setNewContact] = useState({
@@ -425,7 +423,7 @@ export const ClientsList: React.FC = () => {
       setDrawerOpen(false);
       reset();
       setContactPersons([]);
-      setUploadedDocuments([{ name: 'tax_exemption_cert.pdf', size: '1.2 MB' }]);
+      setUploadedDocuments([]);
       loadClients();
     } catch (e) {
       console.error(e);
@@ -1161,20 +1159,6 @@ export const ClientsList: React.FC = () => {
                         </div>
                       </div>
 
-                    </div>
-
-                    {/* Enable Portal Checkbox */}
-                    <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border mt-2">
-                      <input
-                        type="checkbox"
-                        id="enablePortal"
-                        {...register("enablePortal")}
-                        className="w-4.5 h-4.5 text-primary border-slate-300 rounded focus:ring-primary cursor-pointer shrink-0"
-                      />
-                      <label htmlFor="enablePortal" className="text-foreground font-bold tracking-wide uppercase text-[10px] cursor-pointer select-none">
-                        Allow Portal Access for this Customer
-                      </label>
-                      <span className="text-[9px] text-slate-400 ml-auto font-normal">Customer can view/pay invoices online</span>
                     </div>
 
                     {/* Document Uploads section (Interactive Mock Simulator) */}
