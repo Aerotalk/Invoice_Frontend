@@ -201,7 +201,15 @@ export const apiService = {
   // --- QUOTATIONS MODULE ---
   getQuotes: async () => {
     const res = await api.get('/quotations');
-    return res.data.data;
+    return res.data.data.map((q: any) => ({
+      ...q,
+      clientName: q.customer?.displayName || 'Unknown Client',
+      clientCompany: q.customer?.companyName || 'Unknown Company',
+      status: q.status || 'draft',
+      total: q.totalAmount || 0,
+      issueDate: q.quoteDate,
+      items: q.items || [],
+    }));
   },
 
   createQuote: async (quoteData: Record<string, unknown>) => {
@@ -237,14 +245,19 @@ export const apiService = {
   },
 
   deleteQuote: async (id: string) => {
-    // Delete quote
+    await api.delete(`/quotations/${id}`);
     return true;
   },
 
-  // --- DELIVERY CHALLANS MODULE ---
   getChallans: async () => {
     const res = await api.get('/challans');
-    return res.data.data;
+    return res.data.data.map((c: any) => ({
+      ...c,
+      clientName: c.customer?.displayName || 'Unknown Client',
+      clientCompany: c.customer?.companyName || 'Unknown Company',
+      status: c.status || 'issued',
+      total: c.totalAmount || 0,
+    }));
   },
 
   createChallan: async (challanData: Record<string, unknown>) => {
@@ -269,9 +282,13 @@ export const apiService = {
     return res.data.data;
   },
 
-  updateChallan: async (id: string, data: any) => ({}),
+  updateChallan: async (id: string, data: any) => {
+    const res = await api.put(`/challans/${id}`, data);
+    return res.data.data;
+  },
 
   deleteChallan: async (id: string) => {
+    await api.delete(`/challans/${id}`);
     return true;
   },
 
@@ -296,7 +313,10 @@ export const apiService = {
   // --- SALESPERSONS (Used in Quotes) ---
   getSalespersons: async () => [],
   createSalesperson: async (name: string) => [],
-  updateQuote: async (id: string, data: any) => ({}),
+  updateQuote: async (id: string, data: any) => {
+    const res = await api.put(`/quotations/${id}`, data);
+    return res.data.data;
+  },
 
   // --- PROJECTS EXTRAS ---
   uploadProjectInvoice: async (id: string, invoice: any) => ({}),
