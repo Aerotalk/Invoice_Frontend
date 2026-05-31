@@ -305,10 +305,22 @@ export const apiService = {
   refundPayment: async (id: string) => ({}),
 
   // --- EXPENSES MODULE ---
-  getExpenses: async () => [],
-  createExpense: async (data: any) => ({}),
-  createExpensesBulk: async (data: any[]) => [],
-  deleteExpense: async (id: string) => true,
+  getExpenses: async () => {
+    const res = await api.get('/expenses');
+    return res.data.data;
+  },
+  createExpense: async (data: any) => {
+    const res = await api.post('/expenses', data);
+    return res.data.data;
+  },
+  createExpensesBulk: async (data: any[]) => {
+    const res = await api.post('/expenses/bulk', data);
+    return res.data.data;
+  },
+  deleteExpense: async (id: string) => {
+    await api.delete(`/expenses/${id}`);
+    return true;
+  },
 
   // --- SALESPERSONS (Used in Quotes) ---
   getSalespersons: async () => [],
