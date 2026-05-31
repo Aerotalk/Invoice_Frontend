@@ -30,7 +30,7 @@ export const SettingsOverview: React.FC = () => {
   const [compName, setCompName] = useState(user?.companyName || "InvoiceIQ Inc.");
   const [adminName, setAdminName] = useState(user?.name || "Alex Sterling");
   const [email, setEmail] = useState(user?.email || "alex@invoiceiq.app");
-  
+
   // Brand & Profile enhancements
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [logos, setLogos] = useState<string[]>(user?.logos || []);
@@ -202,7 +202,7 @@ export const SettingsOverview: React.FC = () => {
               <ImageIcon className="w-4 h-4 text-indigo-500 shrink-0" />
               Profile Avatar
             </h3>
-            
+
             <div className="flex items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-slate-100 overflow-hidden shrink-0 border-2 border-indigo-100 shadow-sm relative group">
                 {avatar ? (
@@ -304,7 +304,7 @@ export const SettingsOverview: React.FC = () => {
                   </button>
                 </div>
               ))}
-              
+
               {addresses.length < 5 && (
                 <div className="pt-2 flex flex-col gap-2">
                   <textarea

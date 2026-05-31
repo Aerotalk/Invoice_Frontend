@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Users, 
-  Eye, 
-  MoreHorizontal, 
-  FilePlus, 
-  User, 
-  Building2, 
-  Phone, 
+import {
+  Plus,
+  Users,
+  Eye,
+  MoreHorizontal,
+  FilePlus,
+  User,
+  Building2,
+  Phone,
   Mail,
-  Globe, 
+  Globe,
   CreditCard,
-  Landmark, 
+  Landmark,
   Sparkles,
   AlertCircle,
   Copy,
@@ -82,7 +82,7 @@ const clientSchema = zod.object({
   mobileCode: zod.string(),
   mobile: zod.string(),
   language: zod.string().min(1, { message: "Language is required" }),
-  
+
   // Tab 1: Other Details
   gstTreatment: zod.string().min(1, { message: "GST Treatment is required" }),
   placeOfSupply: zod.string().min(1, { message: "Place of Supply is required" }),
@@ -145,10 +145,10 @@ export const ClientsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeClientMenu, setActiveClientMenu] = useState<string | null>(null);
-  
+
   // Interactive form tab control
   const [activeFormTab, setActiveFormTab] = useState<'other' | 'address' | 'contacts' | 'custom' | 'remarks'>('other');
-  
+
   // Custom states for interactive elements in the drawer
   const [contactPersons, setContactPersons] = useState<ContactPerson[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([
@@ -156,7 +156,7 @@ export const ClientsList: React.FC = () => {
     { id: 'cf-2', label: 'Industry', value: 'Technology' }
   ]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([]);
-  
+
   // Secondary Contact Form row state
   const [newContact, setNewContact] = useState({
     salutation: 'Mr.',
@@ -288,7 +288,7 @@ export const ClientsList: React.FC = () => {
     const billZip = watch("billingZip") || "";
     const billPhone = watch("billingPhone") || "";
     const billFax = watch("billingFax") || "";
-    
+
     setValue("shippingAttention", billAttention);
     setValue("shippingStreet1", billSt1);
     setValue("shippingStreet2", billSt2);
@@ -351,7 +351,7 @@ export const ClientsList: React.FC = () => {
     const files = ['nda_agreement_signed.pdf', 'invoice_guide.docx', 'client_onboarding.pdf', 'business_licence.png'];
     const selected = files[Math.floor(Math.random() * files.length)];
     const size = `${(Math.random() * 4 + 1).toFixed(1)} MB`;
-    
+
     setUploadedDocuments([...uploadedDocuments, { name: selected, size }]);
   };
 
@@ -363,7 +363,7 @@ export const ClientsList: React.FC = () => {
   const onSubmitClient = async (values: ClientFormValues) => {
     try {
       const fullName = `${values.salutation ? values.salutation + ' ' : ''}${values.firstName} ${values.lastName}`.trim();
-      
+
       const payload = {
         clientType: values.clientType,
         name: fullName,
@@ -373,7 +373,7 @@ export const ClientsList: React.FC = () => {
         avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
         status: "active" as const,
         notes: values.remarks || "",
-        
+
         // Advanced Custom details mapping
         displayName: values.displayName,
         currency: values.currency,
@@ -390,7 +390,7 @@ export const ClientsList: React.FC = () => {
         socialX: values.socialX,
         skype: values.skype,
         socialFacebook: values.socialFacebook,
-        
+
         // Addresses
         billingAddress: {
           attention: values.billingAttention,
@@ -440,14 +440,14 @@ export const ClientsList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
-          <img 
-            src={row.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"} 
-            alt={row.name} 
-            className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0" 
+          <img
+            src={row.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"}
+            alt={row.name}
+            className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0"
           />
           <div>
-            <Link 
-              to={`/dashboard/clients/${row.id}`} 
+            <Link
+              to={`/dashboard/clients/${row.id}`}
               className="block text-xs font-bold text-foreground hover:text-primary hover:underline transition-colors"
             >
               {row.name}
@@ -518,12 +518,12 @@ export const ClientsList: React.FC = () => {
           >
             <MoreHorizontal className="w-4 h-4 shrink-0" />
           </button>
-          
+
           {activeClientMenu === row.id && (
             <>
-              <div 
+              <div
                 onClick={() => setActiveClientMenu(null)}
-                className="fixed inset-0 z-40 select-none" 
+                className="fixed inset-0 z-40 select-none"
               />
               <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <Link
@@ -582,7 +582,7 @@ export const ClientsList: React.FC = () => {
 
   return (
     <div className="space-y-6 select-none animate-fade-in">
-      
+
       {/* Page Header */}
       <PageHeader
         title="Clients"
@@ -620,10 +620,10 @@ export const ClientsList: React.FC = () => {
         size="xl" // Larger modal size to fit all premium details elegantly
       >
         <form onSubmit={handleSubmit(onSubmitClient)} className="flex flex-col h-[82vh] text-xs font-semibold select-none">
-          
+
           {/* Scrollable Form Body */}
           <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6 scrollbar-thin">
-            
+
             {/* --- SECTION 1: CORE CLIENT CLASSIFICATION --- */}
             <div className="bg-slate-50/50 dark:bg-slate-900/35 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60 space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
@@ -635,7 +635,7 @@ export const ClientsList: React.FC = () => {
                   New Partner Setup
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Client Type Toggle */}
                 <div className="flex flex-col gap-2">
@@ -703,7 +703,7 @@ export const ClientsList: React.FC = () => {
               </span>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
+
                 {/* Salutation + First Name + Last Name Group */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
@@ -720,7 +720,7 @@ export const ClientsList: React.FC = () => {
                       <option value="Miss">Miss</option>
                       <option value="Dr.">Dr.</option>
                     </select>
-                    
+
                     <div className="flex-1">
                       <input
                         type="text"
@@ -732,7 +732,7 @@ export const ClientsList: React.FC = () => {
                         )}
                       />
                     </div>
-                    
+
                     <div className="flex-1">
                       <input
                         type="text"
@@ -883,7 +883,7 @@ export const ClientsList: React.FC = () => {
 
             {/* --- SECTION 3: TABBED CONTAINER FOR ADDITIONAL METADATA --- */}
             <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
-              
+
               {/* Tabs Navigation */}
               <div className="flex border-b bg-slate-50/50 dark:bg-slate-900/10 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground overflow-x-auto whitespace-nowrap scrollbar-none">
                 <button
@@ -945,12 +945,12 @@ export const ClientsList: React.FC = () => {
 
               {/* Tabs Content */}
               <div className="p-4 bg-card">
-                
+
                 {/* TAB 1: OTHER DETAILS */}
                 {activeFormTab === 'other' && (
                   <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      
+
                       {/* GST Treatment */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
@@ -1175,7 +1175,7 @@ export const ClientsList: React.FC = () => {
                           Simulate File Upload
                         </button>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         {uploadedDocuments.map((doc, idx) => (
                           <div key={idx} className="flex items-center justify-between p-2 border rounded-lg bg-slate-50/50 dark:bg-slate-900/10 text-[10px]">
@@ -1206,7 +1206,7 @@ export const ClientsList: React.FC = () => {
                 {/* TAB 2: ADDRESS MAPPING */}
                 {activeFormTab === 'address' && (
                   <div className="space-y-6 animate-fade-in">
-                    
+
                     {/* Copy Button Toolbar */}
                     <div className="flex items-center justify-between bg-indigo-50/40 dark:bg-indigo-950/10 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
                       <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
@@ -1236,13 +1236,13 @@ export const ClientsList: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-border">
-                      
+
                       {/* Left: Billing Address */}
                       <div className="space-y-3">
                         <span className="text-[10px] font-extrabold uppercase text-primary tracking-wider flex items-center gap-1">
                           Billing Address
                         </span>
-                        
+
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[9px] text-slate-400 uppercase font-bold">Attention / Point of contact</label>
                           <input
@@ -1350,7 +1350,7 @@ export const ClientsList: React.FC = () => {
                         <span className="text-[10px] font-extrabold uppercase text-indigo-500 tracking-wider flex items-center gap-1">
                           Shipping Address
                         </span>
-                        
+
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[9px] text-slate-400 uppercase font-bold">Attention / Point of contact</label>
                           <input
@@ -1460,20 +1460,20 @@ export const ClientsList: React.FC = () => {
                 {/* TAB 3: CONTACT PERSONS */}
                 {activeFormTab === 'contacts' && (
                   <div className="space-y-4 animate-fade-in">
-                    
+
                     {/* Add secondary contact row form */}
                     <div className="bg-slate-50/60 dark:bg-slate-900/30 p-3 rounded-lg border border-slate-100 dark:border-slate-800/60">
                       <span className="block text-[10px] font-extrabold uppercase text-slate-500 mb-2">
                         Add New Secondary Contact Person
                       </span>
-                      
+
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
-                        
+
                         <div className="flex flex-col gap-1">
                           <label className="text-[8px] text-slate-400 uppercase font-bold">Salutation</label>
                           <select
                             value={newContact.salutation}
-                            onChange={(e) => setNewContact({...newContact, salutation: e.target.value})}
+                            onChange={(e) => setNewContact({ ...newContact, salutation: e.target.value })}
                             className="px-2 py-1.5 border rounded bg-card outline-none text-xs cursor-pointer"
                           >
                             <option value="Mr.">Mr.</option>
@@ -1490,7 +1490,7 @@ export const ClientsList: React.FC = () => {
                             type="text"
                             placeholder="John"
                             value={newContact.firstName}
-                            onChange={(e) => setNewContact({...newContact, firstName: e.target.value})}
+                            onChange={(e) => setNewContact({ ...newContact, firstName: e.target.value })}
                             className="px-2 py-1 border rounded bg-card outline-none text-xs"
                           />
                         </div>
@@ -1501,7 +1501,7 @@ export const ClientsList: React.FC = () => {
                             type="text"
                             placeholder="Doe"
                             value={newContact.lastName}
-                            onChange={(e) => setNewContact({...newContact, lastName: e.target.value})}
+                            onChange={(e) => setNewContact({ ...newContact, lastName: e.target.value })}
                             className="px-2 py-1 border rounded bg-card outline-none text-xs"
                           />
                         </div>
@@ -1512,7 +1512,7 @@ export const ClientsList: React.FC = () => {
                             type="email"
                             placeholder="john@doe.com"
                             value={newContact.email}
-                            onChange={(e) => setNewContact({...newContact, email: e.target.value})}
+                            onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
                             className="px-2 py-1 border rounded bg-card outline-none text-xs"
                           />
                         </div>
@@ -1576,7 +1576,7 @@ export const ClientsList: React.FC = () => {
                 {/* TAB 4: CUSTOM FIELDS */}
                 {activeFormTab === 'custom' && (
                   <div className="space-y-4 animate-fade-in">
-                    
+
                     <div className="flex items-center justify-between border-b pb-2">
                       <span className="text-[10px] font-extrabold uppercase text-slate-500">Dynamic Key-Value Attributes</span>
                       <button
@@ -1592,7 +1592,7 @@ export const ClientsList: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {customFields.map((cf) => (
                         <div key={cf.id} className="flex gap-2 items-center bg-slate-50/30 dark:bg-slate-900/10 p-2 border rounded-lg relative group">
-                          
+
                           <div className="flex-1">
                             <input
                               type="text"
@@ -1640,7 +1640,7 @@ export const ClientsList: React.FC = () => {
                       Internal Remarks & Relationship Notes
                     </span>
                     <p className="text-[10px] text-slate-400 font-normal">Add private notes regarding client preferences, onboarding timeline, or contract guidelines. These are never shown on customer invoices.</p>
-                    
+
                     <textarea
                       placeholder="Write specific business details here..."
                       rows={5}
