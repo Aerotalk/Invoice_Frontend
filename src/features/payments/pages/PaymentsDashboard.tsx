@@ -24,6 +24,7 @@ export const PaymentsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null);
+  const [isRefunding, setIsRefunding] = useState(false);
   const { currency } = usePreferencesStore();
 
   const loadPayments = async () => {
@@ -49,6 +50,7 @@ export const PaymentsDashboard: React.FC = () => {
 
   const handleConfirmRefund = async () => {
     if (!selectedPaymentId) return;
+    setIsRefunding(true);
     try {
       await apiService.refundPayment(selectedPaymentId);
       toast.success("Payment refunded successfully! Balances adjusted.");
@@ -56,6 +58,8 @@ export const PaymentsDashboard: React.FC = () => {
       loadPayments();
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsRefunding(false);
     }
   };
 
@@ -200,9 +204,17 @@ export const PaymentsDashboard: React.FC = () => {
             </button>
             <button
               onClick={handleConfirmRefund}
-              className="px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-all font-bold select-none active:scale-95 shadow-md shadow-rose-500/10"
+              disabled={isRefunding}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-all font-bold select-none active:scale-95 shadow-md shadow-rose-500/10 disabled:opacity-50"
             >
-              Confirm & Refund
+              {isRefunding ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                  Refunding...
+                </>
+              ) : (
+                "Confirm & Refund"
+              )}
             </button>
           </div>
         </div>
