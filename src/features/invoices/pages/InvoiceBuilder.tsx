@@ -22,6 +22,7 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { cn } from '../../../lib/utils';
 import { useAuthStore } from '../../../store/authStore';
+import toast from 'react-hot-toast';
 
 interface LineItemInput {
   description: string;
@@ -78,7 +79,7 @@ export const InvoiceBuilder: React.FC = () => {
           setInvoiceNumber(inv.invoiceNumber);
           setIssueDate(inv.issueDate);
           setDueDate(inv.dueDate);
-          setItems(inv.items.map(item => ({
+          setItems(inv.items.map((item: any) => ({
             description: item.description,
             quantity: item.quantity,
             rate: item.rate
@@ -181,11 +182,11 @@ export const InvoiceBuilder: React.FC = () => {
 
   const handleSaveInvoice = async (status: 'draft' | 'sent') => {
     if (!selectedClientId) {
-      alert("Please select a client first!");
+      toast.error("Please select a client first!");
       return;
     }
     if (items.some(i => !i.description.trim())) {
-      alert("Please ensure all line item descriptions are filled!");
+      toast.error("Please ensure all line item descriptions are filled!");
       return;
     }
 

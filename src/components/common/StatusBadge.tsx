@@ -14,7 +14,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   type = 'invoice', 
   className 
 }) => {
-  const norm = status.toLowerCase();
+  const safeStatus = status || 'active';
+  const norm = String(safeStatus).toLowerCase();
 
   // Color mappings
   let styles = "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700/60";

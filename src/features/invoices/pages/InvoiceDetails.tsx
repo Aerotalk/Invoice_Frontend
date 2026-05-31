@@ -20,6 +20,7 @@ import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const InvoiceDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,7 @@ export const InvoiceDetails: React.FC = () => {
     if (!id) return;
     try {
       await apiService.updateInvoice(id, { status: 'paid' });
-      alert("Invoice marked as Paid! Billing database recalculated.");
+      toast.success("Invoice marked as Paid! Billing database recalculated.");
       loadInvoice();
     } catch (e) {
       console.error(e);
@@ -60,7 +61,7 @@ export const InvoiceDetails: React.FC = () => {
     if (!id) return;
     try {
       const dup = await apiService.duplicateInvoice(id);
-      alert(`Invoice duplicated as draft: ${dup.invoiceNumber}`);
+      toast.success(`Invoice duplicated as draft: ${dup.invoiceNumber}`);
       navigate(`/dashboard/invoices/${dup.id}`);
     } catch (e) {
       console.error(e);
@@ -68,11 +69,11 @@ export const InvoiceDetails: React.FC = () => {
   };
 
   const handleDownloadPDF = () => {
-    alert(`Downloading PDF document for ${invoice.invoiceNumber}. Done!`);
+    toast.success(`Downloading PDF document for ${invoice.invoiceNumber}. Done!`);
   };
 
   const handleSendReminder = () => {
-    alert(`Billing payment reminder email dispatched to ${invoice.clientEmail} successfully!`);
+    toast.success(`Billing payment reminder email dispatched to ${invoice.clientEmail} successfully!`);
   };
 
   if (loading || !invoice) {

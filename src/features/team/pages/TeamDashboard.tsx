@@ -16,6 +16,7 @@ import { cn, formatDate } from '../../../lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
+import toast from 'react-hot-toast';
 
 const inviteSchema = zod.object({
   email: zod.string().email({ message: "Invalid email format" }),
@@ -69,7 +70,7 @@ export const TeamDashboard: React.FC = () => {
       };
 
       setMembers([...members, nextMember]);
-      alert(`Invitation link dispatched successfully to ${values.email}!`);
+      toast.success(`Invitation link dispatched successfully to ${values.email}!`);
       setDrawerOpen(false);
       reset();
     } catch (e) {

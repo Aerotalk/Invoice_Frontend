@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import toast from 'react-hot-toast';
 
 export const TimeTrackingDashboard: React.FC = () => {
   const [entries, setEntries] = useState<any[]>([]);
@@ -64,7 +65,7 @@ export const TimeTrackingDashboard: React.FC = () => {
 
   const handleStartTimer = (projId: string, task: string) => {
     if (!projId) {
-      alert("Please select a project mapping first!");
+      toast.error("Please select a project mapping first!");
       return;
     }
     const projName = projects.find(p => p.id === projId)?.name || "";
@@ -74,17 +75,17 @@ export const TimeTrackingDashboard: React.FC = () => {
   const handleStopAndLog = async () => {
     const success = await stopAndLogTimer();
     if (success) {
-      alert("Ticking timer session logged successfully!");
+      toast.success("Ticking timer session logged successfully!");
       loadTimeData();
     } else {
-      alert("Timer session too short (under 5 seconds) to create a record.");
+      toast.error("Timer session too short (under 5 seconds) to create a record.");
     }
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualProjId || !manualTask.trim() || !manualHours) {
-      alert("Please complete the required manual entries fields!");
+      toast.error("Please complete the required manual entries fields!");
       return;
     }
 
@@ -103,7 +104,7 @@ export const TimeTrackingDashboard: React.FC = () => {
         billingRate,
         description: manualDesc || "Manually logged spreadsheet entry."
       });
-      alert("Manual time entry logged!");
+      toast.success("Manual time entry logged!");
       setDrawerOpen(false);
       setManualTask("");
       setManualHours("");

@@ -37,18 +37,11 @@ export const Login: React.FC = () => {
     setLoading(true);
     setErrorMsg("");
     try {
-      const allowedEmails = ["alex@invoiceiq.app", "admin@invoiceiq.app", "accountant@invoiceiq.app"];
-      const isValidEmail = allowedEmails.includes(values.email.toLowerCase());
-      const isValidPassword = values.password === "password123";
-
-      if (isValidEmail && isValidPassword) {
-        const role = values.email.toLowerCase() === "accountant@invoiceiq.app" ? "accountant" : "admin";
-        const success = await login(values.email, role as any);
-        if (success) {
-          navigate("/dashboard");
-        }
+      const success = await login(values.email, values.password);
+      if (success) {
+        navigate("/dashboard");
       } else {
-        setErrorMsg("Invalid email or password. Use email 'alex@invoiceiq.app' and password 'password123'");
+        setErrorMsg("Invalid email or password.");
       }
     } catch (err: any) {
       setErrorMsg(err.message || "An authentication error occurred. Please try again.");
@@ -243,42 +236,7 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          {/* Social Sign In Mock UI */}
-          <div className="flex flex-col gap-3 select-none">
-            <div className="flex items-center gap-3 shrink-0 select-none">
-              <div className="h-px bg-border flex-1" />
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 select-none">
-                Demo Quick Links
-              </span>
-              <div className="h-px bg-border flex-1" />
-            </div>
-
-            {/* Simulated fast logs buttons */}
-            <div className="grid grid-cols-2 gap-2 text-xs font-semibold select-none">
-              <button
-                onClick={async () => {
-                  setLoading(true);
-                  await login("admin@invoiceiq.app", "admin");
-                  navigate("/dashboard");
-                  setLoading(false);
-                }}
-                className="py-1.5 px-3 border rounded-lg bg-card/40 hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-extrabold text-center select-none active:scale-95 transition-all"
-              >
-                🔑 Admin Dashboard
-              </button>
-              <button
-                onClick={async () => {
-                  setLoading(true);
-                  await login("accountant@invoiceiq.app", "accountant");
-                  navigate("/dashboard");
-                  setLoading(false);
-                }}
-                className="py-1.5 px-3 border rounded-lg bg-card/40 hover:bg-muted text-foreground/80 hover:text-foreground text-[10px] font-extrabold text-center select-none active:scale-95 transition-all"
-              >
-                📊 Accountant Portal
-              </button>
-            </div>
-          </div>
+          {/* Removed Social Sign In Mock UI */}
 
           {/* SignUp Switcher */}
           <p className="text-center text-xs text-muted-foreground select-none">

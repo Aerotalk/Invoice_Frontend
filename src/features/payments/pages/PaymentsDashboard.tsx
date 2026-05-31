@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const PaymentsDashboard: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
@@ -50,7 +51,7 @@ export const PaymentsDashboard: React.FC = () => {
     if (!selectedPaymentId) return;
     try {
       await apiService.refundPayment(selectedPaymentId);
-      alert("Payment refunded successfully! Balances adjusted.");
+      toast.success("Payment refunded successfully! Balances adjusted.");
       setRefundModalOpen(false);
       loadPayments();
     } catch (e) {

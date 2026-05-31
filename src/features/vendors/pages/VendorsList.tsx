@@ -34,6 +34,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 // Geographical datasets for premium select dropdowns
 const locationData: Record<string, Record<string, string[]>> = {
@@ -340,7 +341,7 @@ export const VendorsList: React.FC = () => {
   // Simulating document uploads
   const handleMockUpload = () => {
     if (uploadedDocuments.length >= 3) {
-      alert("Maximum of 3 files allowed.");
+      toast.error("Maximum of 3 files allowed.");
       return;
     }
     const files = ['vendor_licence.pdf', 'security_audit.pdf', 'terms_of_service.docx'];
@@ -412,7 +413,7 @@ export const VendorsList: React.FC = () => {
       };
 
       await apiService.createVendor(payload);
-      alert("Vendor profile added successfully!");
+      toast.success("Vendor profile added successfully!");
       setDrawerOpen(false);
       reset();
       setContactPersons([]);
@@ -420,7 +421,7 @@ export const VendorsList: React.FC = () => {
       loadVendors();
     } catch (e) {
       console.error(e);
-      alert("Failed to save vendor details.");
+      toast.error("Failed to save vendor details.");
     }
   };
 
@@ -533,11 +534,11 @@ export const VendorsList: React.FC = () => {
                       setActiveVendorMenu(null);
                       try {
                         await apiService.deleteVendor(row.id);
-                        alert("Vendor profile deleted successfully!");
+                        toast.success("Vendor profile deleted successfully!");
                         loadVendors();
                       } catch (err) {
                         console.error(err);
-                        alert("Failed to delete vendor.");
+                        toast.error("Failed to delete vendor.");
                       }
                     }
                   }}

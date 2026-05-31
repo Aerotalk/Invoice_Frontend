@@ -5,6 +5,7 @@ import { formatCurrency } from '../../../lib/utils';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { FileSpreadsheet, Download, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import toast from 'react-hot-toast';
 
 export const ReportsOverview: React.FC = () => {
   const { currency } = usePreferencesStore();
@@ -32,7 +33,7 @@ export const ReportsOverview: React.FC = () => {
   const handleExport = (type: string) => {
     setDownloading(type);
     setTimeout(() => {
-      alert(`Exporting ${type} document to downloads folder. Successful!`);
+      toast.success(`Exporting ${type} document to downloads folder. Successful!`);
       setDownloading(null);
     }, 1000);
   };

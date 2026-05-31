@@ -14,6 +14,7 @@ import {
   Download
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const SubscriptionBilling: React.FC = () => {
   const { currency } = usePreferencesStore();
@@ -60,7 +61,7 @@ export const SubscriptionBilling: React.FC = () => {
       header: "Action",
       cell: (row) => (
         <button
-          onClick={() => alert(`Downloading billing invoice receipt PDF file: ${row.id}...`)}
+          onClick={() => toast.success(`Downloading billing invoice receipt PDF file: ${row.id}...`)}
           className="p-1 rounded border hover:bg-muted text-muted-foreground hover:text-foreground transition-all select-none active:scale-95 shrink-0"
           title="Download Receipt PDF"
         >

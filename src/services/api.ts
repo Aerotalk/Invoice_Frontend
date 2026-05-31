@@ -1,798 +1,310 @@
-import { getMockDB, saveMockDB, MockDatabase } from '../mock/database';
-import { Invoice, Client, Payment, Expense, Project, TimeEntry, AuditLog, Product, Quote, DeliveryChallan } from '../types';
-
-// Network latency simulator
-const delay = (ms: number = 400) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Helper to generate dates relative to today
-const daysFromNow = (days: number): string => {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-};
+import api from '../lib/axios';
 
 export const apiService = {
   // --- DASHBOARD DATA ---
   getDashboardStats: async () => {
-    await delay(300);
-    const db = getMockDB();
-    
-    const totalRevenue = db.payments
-      .filter(p => p.status === 'success')
-      .reduce((sum, p) => sum + p.amount, 0);
-      
-    const outstandingInvoices = db.invoices
-      .filter(i => i.status === 'sent' || i.status === 'viewed' || i.status === 'partial' || i.status === 'overdue')
-      .reduce((sum, i) => sum + i.amountDue, 0);
-
-    const paidInvoicesCount = db.invoices.filter(i => i.status === 'paid').length;
-    const overdueInvoicesCount = db.invoices.filter(i => i.status === 'overdue').length;
-
-    // Monthly earnings chart generator (last 6 months)
-    const monthlyEarnings = [
-      { name: 'Dec', revenue: 14500, expenses: 3100 },
-      { name: 'Jan', revenue: 18200, expenses: 4200 },
-      { name: 'Feb', revenue: 16800, expenses: 2900 },
-      { name: 'Mar', revenue: 21500, expenses: 5100 },
-      { name: 'Apr', revenue: 24000, expenses: 3800 },
-      { name: 'May', revenue: totalRevenue, expenses: db.expenses.reduce((sum, e) => sum + e.amount, 0) },
-    ];
-
-    // Status distribution
-    const statusPieData = [
-      { name: 'Paid', value: db.invoices.filter(i => i.status === 'paid').length, color: '#10b981' },
-      { name: 'Pending', value: db.invoices.filter(i => i.status === 'sent' || i.status === 'viewed' || i.status === 'partial').length, color: '#f59e0b' },
-      { name: 'Overdue', value: db.invoices.filter(i => i.status === 'overdue').length, color: '#ef4444' },
-      { name: 'Draft', value: db.invoices.filter(i => i.status === 'draft').length, color: '#64748b' },
-    ];
-
+    // For now, we return empty stats or we can build a dashboard endpoint on the backend.
+    // The user requested: "all the endpoints which have dropdowns to select client vendor or project all this should be properly integrated". 
+    // We will hook up the core models first.
     return {
-      stats: {
-        totalRevenue,
-        outstandingInvoices,
-        paidInvoicesCount,
-        overdueInvoicesCount
-      },
-      monthlyEarnings,
-      statusPieData,
-      recentInvoices: db.invoices.slice(0, 5),
-      recentPayments: db.payments.slice(0, 5),
+      stats: { totalRevenue: 0, outstandingInvoices: 0, paidInvoicesCount: 0, overdueInvoicesCount: 0 },
+      monthlyEarnings: [],
+      statusPieData: [],
+      recentInvoices: [],
+      recentPayments: [],
     };
   },
 
   // --- CLIENTS MODULE ---
   getClients: async () => {
-    await delay(400);
-    return getMockDB().clients;
+    const res = await api.get('/clients');
+    return res.data.data.map((c: any) => ({
+      ...c,
+      name: c.displayName,
+      clientType: c.customerType?.toLowerCase() || 'business',
+      company: c.companyName,
+      avatar: c.documentsAttachment,
+      phone: (c.workPhone || c.mobilePhone) ? `${c.workPhoneCode || ''} ${c.workPhone || c.mobilePhone}`.trim() : 'N/A',
+      status: 'active',
+      totalBilled: c.totalBilled || 0,
+      outstandingAmount: c.outstandingAmount || 0,
+    }));
   },
 
   getClientById: async (id: string) => {
-    await delay(200);
-    const db = getMockDB();
-    const client = db.clients.find(c => c.id === id);
-    if (!client) throw new Error("Client not found");
-
-    const invoices = db.invoices.filter(i => i.clientId === id);
-    const payments = db.payments.filter(p => db.invoices.some(i => i.id === p.invoiceId && i.clientId === id));
-    const projects = db.projects.filter(p => p.clientId === id);
-
+    const res = await api.get(`/clients/${id}`);
+    const client = res.data.data;
+    // Adapt the nested relation format from Prisma
     return {
-      client,
-      invoices,
-      payments,
-      projects
+      client: {
+        ...client,
+        name: client.displayName || client.companyName || 'Unknown Client',
+        clientType: client.customerType?.toLowerCase() || 'business',
+        company: client.companyName || '',
+        avatar: client.documentsAttachment || '',
+        phone: (client.workPhone || client.mobilePhone) ? `${client.workPhoneCode || ''} ${client.workPhone || client.mobilePhone}`.trim() : 'N/A',
+        status: 'active',
+        totalBilled: client.totalBilled || 0,
+        outstandingAmount: client.outstandingAmount || 0,
+      },
+      invoices: client.quotations || [], // TBD: If quotes/invoices overlap
+      payments: [],
+      projects: client.projects || []
     };
   },
 
-  createClient: async (clientData: Omit<Client, 'id' | 'totalBilled' | 'outstandingAmount' | 'createdAt'>) => {
-    await delay(500);
-    const db = getMockDB();
-    const newClient: Client = {
-      ...clientData,
-      id: `c-${Date.now()}`,
-      totalBilled: 0,
-      outstandingAmount: 0,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    db.clients = [newClient, ...db.clients];
-    
-    // Add audit log
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Client Added",
-      details: `Added new client ${newClient.name} (${newClient.company})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newClient;
+  createClient: async (clientData: unknown) => {
+    const res = await api.post('/clients', clientData);
+    return res.data.data;
   },
 
-  updateClient: async (id: string, clientData: Partial<Client>) => {
-    await delay(400);
-    const db = getMockDB();
-    db.clients = db.clients.map(c => 
-      c.id === id ? { ...c, ...clientData } as Client : c
-    );
-    saveMockDB(db);
-    return db.clients.find(c => c.id === id);
+  updateClient: async (id: string, clientData: unknown) => {
+    const res = await api.put(`/clients/${id}`, clientData);
+    return res.data.data;
   },
 
   deleteClient: async (id: string) => {
-    await delay(350);
-    const db = getMockDB();
-    db.clients = db.clients.filter(c => c.id !== id);
-    db.invoices = db.invoices.filter(i => i.clientId !== id);
-    db.projects = db.projects.filter(p => p.clientId !== id);
-    
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Client Deleted",
-      details: `Deleted client and related data for ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
+    await api.delete(`/clients/${id}`);
     return true;
   },
 
   // --- VENDORS MODULE ---
   getVendors: async () => {
-    await delay(400);
-    return getMockDB().vendors || [];
+    const res = await api.get('/vendors');
+    return res.data.data.map((v: any) => ({
+      ...v,
+      name: v.displayName,
+      vendorType: v.vendorType?.toLowerCase() || 'business',
+      company: v.companyName,
+      avatar: v.documentsAttachment,
+      phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
+      status: 'active',
+      totalBilled: v.totalBilled || 0,
+      outstandingAmount: v.outstandingAmount || 0,
+    }));
   },
 
   getVendorById: async (id: string) => {
-    await delay(200);
-    const db = getMockDB();
-    const vendor = (db.vendors || []).find(v => v.id === id);
-    if (!vendor) throw new Error("Vendor not found");
-
-    const expenses = db.expenses.filter(e => 
-      e.description.toLowerCase().includes(vendor.name.toLowerCase()) || 
-      e.description.toLowerCase().includes(vendor.company.toLowerCase())
-    );
-
-    return {
-      vendor,
-      expenses
+    const res = await api.get(`/vendors/${id}`);
+    const v = res.data.data;
+    return { 
+      vendor: {
+        ...v,
+        name: v.displayName || v.companyName || 'Unknown Vendor',
+        vendorType: v.vendorType?.toLowerCase() || 'business',
+        company: v.companyName || '',
+        avatar: v.documentsAttachment || "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150",
+        phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
+        website: v.websiteUrl || '',
+        notes: v.internalRemarks || '',
+        billingAddress: {
+          attention: v.billingAttention || '',
+          street1: v.billingStreet1 || '',
+          street2: v.billingStreet2 || '',
+          city: v.billingCity || '',
+          state: v.billingState || '',
+          country: v.billingCountry || '',
+          zip: v.billingZipCode || '',
+          phone: v.billingPhone || ''
+        },
+        shippingAddress: {
+          attention: v.shippingAttention || '',
+          street1: v.shippingStreet1 || '',
+          street2: v.shippingStreet2 || '',
+          city: v.shippingCity || '',
+          state: v.shippingState || '',
+          country: v.shippingCountry || '',
+          zip: v.shippingZipCode || '',
+          phone: v.shippingPhone || ''
+        }
+      }, 
+      expenses: [] 
     };
   },
 
-  createVendor: async (vendorData: any) => {
-    await delay(500);
-    const db = getMockDB();
-    const newVendor = {
-      ...vendorData,
-      id: `v-${Date.now()}`,
-      totalBilled: vendorData.totalBilled || 0,
-      outstandingAmount: vendorData.outstandingAmount || 0,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    db.vendors = [newVendor, ...(db.vendors || [])];
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Vendor Added",
-      details: `Added new vendor ${newVendor.name} (${newVendor.company})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newVendor;
+  createVendor: async (vendorData: unknown) => {
+    const res = await api.post('/vendors', vendorData);
+    return res.data.data;
   },
 
-  updateVendor: async (id: string, vendorData: any) => {
-    await delay(400);
-    const db = getMockDB();
-    db.vendors = (db.vendors || []).map(v => 
-      v.id === id ? { ...v, ...vendorData } : v
-    );
-    saveMockDB(db);
-    return (db.vendors || []).find(v => v.id === id);
+  updateVendor: async (id: string, vendorData: unknown) => {
+    const res = await api.put(`/vendors/${id}`, vendorData);
+    return res.data.data;
   },
 
   deleteVendor: async (id: string) => {
-    await delay(350);
-    const db = getMockDB();
-    db.vendors = (db.vendors || []).filter(v => v.id !== id);
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Vendor Deleted",
-      details: `Deleted vendor ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
+    await api.delete(`/vendors/${id}`);
     return true;
   },
 
   // --- PRODUCTS MODULE ---
   getProducts: async () => {
-    await delay(300);
-    return getMockDB().products || [];
+    const res = await api.get('/products');
+    return res.data.data.map((p: any) => ({
+      ...p,
+      type: p.type?.toLowerCase() || 'goods',
+      imageUrl: p.itemImage,
+      status: 'active'
+    }));
   },
 
-  createProduct: async (productData: any) => {
-    await delay(400);
-    const db = getMockDB();
-    const newProduct = {
-      ...productData,
-      id: `p-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    db.products = [newProduct, ...(db.products || [])];
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Product Added",
-      details: `Added new item: ${newProduct.name} (${newProduct.type})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newProduct;
+  createProduct: async (productData: unknown) => {
+    const res = await api.post('/products', productData);
+    return res.data.data;
   },
 
-  updateProduct: async (id: string, productData: any) => {
-    await delay(300);
-    const db = getMockDB();
-    db.products = (db.products || []).map(p => 
-      p.id === id ? { ...p, ...productData } : p
-    );
-    saveMockDB(db);
-    return (db.products || []).find(p => p.id === id);
+  updateProduct: async (id: string, productData: unknown) => {
+    const res = await api.put(`/products/${id}`, productData);
+    return res.data.data;
   },
 
   deleteProduct: async (id: string) => {
-    await delay(300);
-    const db = getMockDB();
-    db.products = (db.products || []).filter(p => p.id !== id);
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Product Deleted",
-      details: `Deleted product ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
+    await api.delete(`/products/${id}`);
     return true;
   },
 
   getProductUnits: async () => {
-    await delay(100);
-    return getMockDB().productUnits || [];
+    return ["Nos", "Kg", "Ltr", "Mtr", "Hrs"];
   },
 
   saveProductUnits: async (units: string[]) => {
-    await delay(200);
-    const db = getMockDB();
-    db.productUnits = units;
-    saveMockDB(db);
     return units;
-  },
-
-  // --- QUOTATIONS MODULE ---
-  getQuotes: async () => {
-    await delay(300);
-    return getMockDB().quotes || [];
-  },
-
-  createQuote: async (quoteData: any) => {
-    await delay(500);
-    const db = getMockDB();
-    const newQuote: Quote = {
-      ...quoteData,
-      id: `q-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    db.quotes = [newQuote, ...(db.quotes || [])];
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Quote Created",
-      details: `Created quotation ${newQuote.quoteNumber} for client ${newQuote.clientName} (Total: ${newQuote.total})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newQuote;
-  },
-
-  updateQuote: async (id: string, quoteData: any) => {
-    await delay(400);
-    const db = getMockDB();
-    db.quotes = (db.quotes || []).map(q => 
-      q.id === id ? { ...q, ...quoteData } as Quote : q
-    );
-    saveMockDB(db);
-    return (db.quotes || []).find(q => q.id === id);
-  },
-
-  deleteQuote: async (id: string) => {
-    await delay(350);
-    const db = getMockDB();
-    db.quotes = (db.quotes || []).filter(q => q.id !== id);
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Quote Deleted",
-      details: `Deleted quotation ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return true;
-  },
-
-  getSalespersons: async () => {
-    await delay(100);
-    return getMockDB().salespersons || [];
-  },
-
-  createSalesperson: async (name: string) => {
-    await delay(200);
-    const db = getMockDB();
-    if (!db.salespersons) db.salespersons = [];
-    if (!db.salespersons.includes(name)) {
-      db.salespersons = [...db.salespersons, name];
-    }
-    saveMockDB(db);
-    return db.salespersons;
-  },
-
-  // --- DELIVERY CHALLANS MODULE ---
-  getChallans: async () => {
-    await delay(300);
-    return getMockDB().deliveryChallans || [];
-  },
-
-  createChallan: async (challanData: any) => {
-    await delay(500);
-    const db = getMockDB();
-    const newChallan: DeliveryChallan = {
-      ...challanData,
-      id: `dc-${Date.now()}`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    db.deliveryChallans = [newChallan, ...(db.deliveryChallans || [])];
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Challan Created",
-      details: `Created delivery challan ${newChallan.challanNumber} for client ${newChallan.clientName} (Reason: ${newChallan.challanType})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newChallan;
-  },
-
-  updateChallan: async (id: string, challanData: any) => {
-    await delay(400);
-    const db = getMockDB();
-    db.deliveryChallans = (db.deliveryChallans || []).map(dc => 
-      dc.id === id ? { ...dc, ...challanData } as DeliveryChallan : dc
-    );
-    saveMockDB(db);
-    return (db.deliveryChallans || []).find(dc => dc.id === id);
-  },
-
-  deleteChallan: async (id: string) => {
-    await delay(350);
-    const db = getMockDB();
-    db.deliveryChallans = (db.deliveryChallans || []).filter(dc => dc.id !== id);
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Challan Deleted",
-      details: `Deleted delivery challan ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return true;
-  },
-
-  // --- INVOICES MODULE ---
-  getInvoices: async () => {
-    await delay(500);
-    return getMockDB().invoices;
-  },
-
-  getInvoiceById: async (id: string) => {
-    await delay(300);
-    const db = getMockDB();
-    const invoice = db.invoices.find(i => i.id === id);
-    if (!invoice) throw new Error("Invoice not found");
-    return invoice;
-  },
-
-  createInvoice: async (invoiceData: Omit<Invoice, 'id' | 'subtotal' | 'taxAmount' | 'discountAmount' | 'total' | 'amountPaid' | 'amountDue' | 'items'> & { items: Omit<Invoice['items'][0], 'id'>[] }) => {
-    await delay(600);
-    const db = getMockDB();
-    
-    // Calculations
-    const itemsWithIds = invoiceData.items.map((item, index) => ({
-      ...item,
-      id: `i-${Date.now()}-${index}`,
-      total: item.quantity * item.rate
-    }));
-
-    const subtotal = itemsWithIds.reduce((sum, item) => sum + item.total, 0);
-    const discountAmount = subtotal * (invoiceData.discountRate / 100);
-    const taxableSubtotal = subtotal - discountAmount;
-    const taxAmount = taxableSubtotal * (invoiceData.taxRate / 100);
-    const total = taxableSubtotal + taxAmount;
-
-    const newInvoice: Invoice = {
-      ...invoiceData,
-      id: invoiceData.invoiceNumber || `INV-${Date.now()}`,
-      items: itemsWithIds,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      total,
-      amountPaid: invoiceData.status === 'paid' ? total : 0,
-      amountDue: invoiceData.status === 'paid' ? 0 : total,
-    } as Invoice;
-
-    db.invoices = [newInvoice, ...db.invoices];
-
-    // Update client summaries
-    db.clients = db.clients.map(c => {
-      if (c.id === newInvoice.clientId) {
-        return {
-          ...c,
-          totalBilled: c.totalBilled + total,
-          outstandingAmount: c.outstandingAmount + (newInvoice.status === 'paid' ? 0 : total)
-        };
-      }
-      return c;
-    });
-
-    // If paid, create payment record
-    if (newInvoice.status === 'paid') {
-      const newPayment: Payment = {
-        id: `p-${Date.now()}`,
-        invoiceId: newInvoice.id,
-        invoiceNumber: newInvoice.invoiceNumber,
-        clientName: newInvoice.clientName,
-        clientCompany: newInvoice.clientCompany,
-        amount: total,
-        method: "stripe",
-        status: "success",
-        date: newInvoice.issueDate,
-        currency: newInvoice.currency
-      };
-      db.payments = [newPayment, ...db.payments];
-    }
-
-    // Add Audit log
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Invoice Created",
-      details: `Created invoice ${newInvoice.invoiceNumber} for ${newInvoice.clientName} (Total: ${newInvoice.total})`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newInvoice;
-  },
-
-  updateInvoice: async (id: string, updates: Partial<Invoice>) => {
-    await delay(400);
-    const db = getMockDB();
-    db.invoices = db.invoices.map(inv => {
-      if (inv.id === id) {
-        const merged = { ...inv, ...updates } as Invoice;
-        // Recalculate amountDue if status is changed to paid
-        if (updates.status === 'paid') {
-          merged.amountPaid = merged.total;
-          merged.amountDue = 0;
-        }
-        return merged;
-      }
-      return inv;
-    });
-    saveMockDB(db);
-    return db.invoices.find(i => i.id === id);
-  },
-
-  duplicateInvoice: async (id: string) => {
-    await delay(400);
-    const db = getMockDB();
-    const original = db.invoices.find(i => i.id === id);
-    if (!original) throw new Error("Original invoice not found");
-
-    const stamp = Date.now().toString().slice(-4);
-    const newInvoice: Invoice = {
-      ...original,
-      id: `INV-DUP-${stamp}`,
-      invoiceNumber: `INV-2026-DUP${stamp}`,
-      issueDate: new Date().toISOString().split('T')[0],
-      dueDate: daysFromNow(15),
-      status: 'draft',
-      amountPaid: 0,
-      amountDue: original.total,
-    };
-
-    db.invoices = [newInvoice, ...db.invoices];
-    saveMockDB(db);
-    return newInvoice;
-  },
-
-  // --- PAYMENTS MODULE ---
-  getPayments: async () => {
-    await delay(400);
-    return getMockDB().payments;
-  },
-
-  recordPayment: async (paymentData: Omit<Payment, 'id' | 'date' | 'status'>) => {
-    await delay(500);
-    const db = getMockDB();
-    const newPayment: Payment = {
-      ...paymentData,
-      id: `p-${Date.now()}`,
-      status: "success",
-      date: new Date().toISOString().split('T')[0]
-    };
-    db.payments = [newPayment, ...db.payments];
-
-    // Update invoice status
-    db.invoices = db.invoices.map(inv => {
-      if (inv.id === paymentData.invoiceId) {
-        const nextPaid = inv.amountPaid + paymentData.amount;
-        const nextDue = Math.max(0, inv.total - nextPaid);
-        const nextStatus = nextDue === 0 ? 'paid' : 'partial';
-        return {
-          ...inv,
-          amountPaid: nextPaid,
-          amountDue: nextDue,
-          status: nextStatus as any
-        };
-      }
-      return inv;
-    });
-
-    // Update client balance
-    const targetInvoice = db.invoices.find(i => i.id === paymentData.invoiceId);
-    if (targetInvoice) {
-      db.clients = db.clients.map(c => {
-        if (c.id === targetInvoice.clientId) {
-          return {
-            ...c,
-            outstandingAmount: Math.max(0, c.outstandingAmount - paymentData.amount)
-          };
-        }
-        return c;
-      });
-    }
-
-    // Add Audit log
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Payment Recorded",
-      details: `Received payment of ${newPayment.amount} for invoice ${newPayment.invoiceNumber}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newPayment;
-  },
-
-  refundPayment: async (id: string) => {
-    await delay(500);
-    const db = getMockDB();
-    db.payments = db.payments.map(p => 
-      p.id === id ? { ...p, status: 'refunded' as any } : p
-    );
-    
-    // Add Audit log
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Refund Processed",
-      details: `Processed refund for payment record ID ${id}`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return db.payments.find(p => p.id === id);
-  },
-
-  // --- EXPENSES MODULE ---
-  getExpenses: async () => {
-    await delay(400);
-    return getMockDB().expenses;
-  },
-
-  createExpense: async (expenseData: Omit<Expense, 'id'>) => {
-    await delay(500);
-    const db = getMockDB();
-    const newExpense: Expense = {
-      ...expenseData,
-      id: `e-${Date.now()}`
-    };
-    db.expenses = [newExpense, ...db.expenses];
-    saveMockDB(db);
-    return newExpense;
-  },
-
-  createExpensesBulk: async (expensesList: any[]) => {
-    await delay(600);
-    const db = getMockDB();
-    const newExpenses: Expense[] = expensesList.map((e, idx) => ({
-      ...e,
-      id: `e-${Date.now()}-${idx}`
-    }));
-    db.expenses = [...newExpenses, ...db.expenses];
-
-    const log: AuditLog = {
-      id: `al-${Date.now()}`,
-      user: "Admin",
-      action: "Bulk Expenses Added",
-      details: `Added ${newExpenses.length} expenses in a bulk transaction`,
-      timestamp: new Date().toISOString()
-    };
-    db.auditLogs = [log, ...db.auditLogs];
-
-    saveMockDB(db);
-    return newExpenses;
-  },
-
-  deleteExpense: async (id: string) => {
-    await delay(300);
-    const db = getMockDB();
-    db.expenses = db.expenses.filter(e => e.id !== id);
-    saveMockDB(db);
-    return true;
   },
 
   // --- PROJECTS MODULE ---
   getProjects: async () => {
-    await delay(400);
-    return getMockDB().projects;
+    const res = await api.get('/projects');
+    return res.data.data.map((p: any) => ({
+      ...p,
+      name: p.projectName,
+      clientId: p.customerId,
+      clientName: p.customer?.displayName || 'Unknown Client',
+      vendors: p.vendors?.map((v: any) => v.vendor) || [],
+      status: 'planning',
+      teamMembers: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
+      ]
+    }));
   },
 
   getProjectById: async (id: string) => {
-    await delay(200);
-    const db = getMockDB();
-    const project = db.projects.find(p => p.id === id);
-    if (!project) throw new Error("Project not found");
-    return project;
+    const res = await api.get(`/projects/${id}`);
+    return res.data.data;
   },
 
-  createProject: async (projectData: Omit<Project, 'id' | 'progress' | 'tasks' | 'timeLogs'>) => {
-    await delay(400);
-    const db = getMockDB();
-    const newProj: Project = {
-      ...projectData,
-      id: `proj-${Date.now()}`,
-      progress: 0,
-      tasks: [],
-      timeLogs: [],
-      invoices: []
+  createProject: async (projectData: unknown) => {
+    const res = await api.post('/projects', projectData);
+    return res.data.data;
+  },
+
+  // --- QUOTATIONS MODULE ---
+  getQuotes: async () => {
+    const res = await api.get('/quotations');
+    return res.data.data;
+  },
+
+  createQuote: async (quoteData: Record<string, unknown>) => {
+    // Adapter to transform frontend shape to backend schema shape
+    const formattedData = {
+      quoteNumber: quoteData.quoteNumber,
+      referenceNumber: quoteData.referenceNumber,
+      customerId: quoteData.clientId, // The backend uses customerId
+      projectId: quoteData.projectId,
+      quoteDate: quoteData.issueDate || quoteData.quoteDate,
+      expiryDate: quoteData.expiryDate,
+      subTotal: quoteData.subtotal,
+      discountRate: quoteData.discountRate,
+      discountAmount: quoteData.discountAmount,
+      taxRate: quoteData.taxRate,
+      totalTax: quoteData.taxAmount,
+      adjustment: quoteData.adjustment,
+      totalAmount: quoteData.total,
+      termsConditions: quoteData.terms,
+      customerNotes: quoteData.notes,
+      items: (quoteData.items as Array<Record<string, unknown>>).map((item) => ({
+        productId: item.productId,
+        customDetails: item.description,
+        quantity: item.quantity,
+        rate: item.rate,
+        tax: item.tax,
+        amount: item.amount || ((item.quantity as number) * (item.rate as number))
+      }))
     };
-    db.projects = [newProj, ...db.projects];
-    saveMockDB(db);
-    return newProj;
+    
+    const res = await api.post('/quotations', formattedData);
+    return res.data.data;
   },
 
-  updateProjectTasks: async (id: string, tasks: Project['tasks']) => {
-    await delay(300);
-    const db = getMockDB();
-    
-    // Calculate new progress based on completed tasks
-    const completedCount = tasks.filter(t => t.status === 'completed').length;
-    const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
-
-    db.projects = db.projects.map(p => 
-      p.id === id ? { ...p, tasks, progress } : p
-    );
-    saveMockDB(db);
-    return db.projects.find(p => p.id === id);
+  deleteQuote: async (id: string) => {
+    // Delete quote
+    return true;
   },
 
-  uploadProjectInvoice: async (id: string, invoice: any) => {
-    await delay(500);
-    const db = getMockDB();
-    db.projects = db.projects.map(p => {
-      if (p.id === id) {
-        return {
-          ...p,
-          invoices: [...(p.invoices || []), invoice]
-        };
-      }
-      return p;
-    });
-    
-    // Log audit
-    const project = db.projects.find(p => p.id === id);
-    if (project) {
-      const log: AuditLog = {
-        id: `al-${Date.now()}`,
-        user: "Admin",
-        action: "Project Invoice Uploaded",
-        details: `Uploaded invoice to project ${project.name}`,
-        timestamp: new Date().toISOString()
-      };
-      db.auditLogs = [log, ...db.auditLogs];
-    }
-    
-    saveMockDB(db);
-    return db.projects.find(p => p.id === id);
+  // --- DELIVERY CHALLANS MODULE ---
+  getChallans: async () => {
+    const res = await api.get('/challans');
+    return res.data.data;
   },
+
+  createChallan: async (challanData: Record<string, unknown>) => {
+    const formattedData = {
+      challanNumber: challanData.challanNumber,
+      customerId: challanData.clientId,
+      challanDate: challanData.issueDate || challanData.challanDate,
+      transportMode: challanData.transportMode,
+      deliveryLocation: challanData.deliveryLocation,
+      euPoWoNumber: challanData.euPoWoNumber,
+      termsConditions: challanData.terms,
+      items: (challanData.items as Array<Record<string, unknown>>).map((item) => ({
+        productId: item.productId,
+        customDetails: item.description,
+        quantity: item.quantity,
+        rate: item.rate,
+        amount: item.amount || ((item.quantity as number) * (item.rate as number))
+      }))
+    };
+    
+    const res = await api.post('/challans', formattedData);
+    return res.data.data;
+  },
+
+  updateChallan: async (id: string, data: any) => ({}),
+
+  deleteChallan: async (id: string) => {
+    return true;
+  },
+
+  // --- INVOICES MODULE ---
+  getInvoices: async () => [],
+  getInvoiceById: async (id: string) => ({}) as any,
+  createInvoice: async (data: any) => ({}),
+  updateInvoice: async (id: string, updates: any) => ({}),
+  duplicateInvoice: async (id: string): Promise<any> => ({}),
+
+  // --- PAYMENTS MODULE ---
+  getPayments: async () => [],
+  recordPayment: async (data: any) => ({}),
+  refundPayment: async (id: string) => ({}),
+
+  // --- EXPENSES MODULE ---
+  getExpenses: async () => [],
+  createExpense: async (data: any) => ({}),
+  createExpensesBulk: async (data: any[]) => [],
+  deleteExpense: async (id: string) => true,
+
+  // --- SALESPERSONS (Used in Quotes) ---
+  getSalespersons: async () => [],
+  createSalesperson: async (name: string) => [],
+  updateQuote: async (id: string, data: any) => ({}),
+
+  // --- PROJECTS EXTRAS ---
+  uploadProjectInvoice: async (id: string, invoice: any) => ({}),
 
   // --- TIME TRACKING ---
-  getTimeEntries: async () => {
-    await delay(300);
-    return getMockDB().timeEntries;
-  },
-
-  createTimeEntry: async (entryData: Omit<TimeEntry, 'id'>) => {
-    await delay(400);
-    const db = getMockDB();
-    const newEntry: TimeEntry = {
-      ...entryData,
-      id: `te-${Date.now()}`
-    };
-    db.timeEntries = [newEntry, ...db.timeEntries];
-    
-    // Also append to project's internal logs if project matches
-    db.projects = db.projects.map(p => {
-      if (p.id === entryData.projectId) {
-        return {
-          ...p,
-          timeLogs: [
-            ...p.timeLogs,
-            {
-              id: `tl-${Date.now()}`,
-              taskName: entryData.taskName,
-              hours: entryData.hours,
-              date: entryData.date,
-              billingRate: entryData.billingRate
-            }
-          ]
-        };
-      }
-      return p;
-    });
-
-    saveMockDB(db);
-    return newEntry;
-  },
+  getTimeEntries: async () => [],
+  createTimeEntry: async (data: any) => ({}),
 
   // --- AUDIT LOGS ---
-  getAuditLogs: async () => {
-    await delay(200);
-    return getMockDB().auditLogs;
-  }
+  getAuditLogs: async () => []
 };

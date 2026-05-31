@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts';
+import toast from 'react-hot-toast';
 
 const expenseSchema = zod.object({
   description: zod.string().optional(),
@@ -132,7 +133,7 @@ export const ExpensesDashboard: React.FC = () => {
     if (!confirm("Are you sure you want to delete this expense record?")) return;
     try {
       await apiService.deleteExpense(id);
-      alert("Expense deleted successfully!");
+      toast.success("Expense deleted successfully!");
       loadData();
     } catch (e) {
       console.error(e);
@@ -159,7 +160,7 @@ export const ExpensesDashboard: React.FC = () => {
         vendorName: categoryVal === 'Purchase Order' ? activeVendor?.name : undefined,
         currency: currency
       });
-      alert("Expense logged successfully!");
+      toast.success("Expense logged successfully!");
       setDrawerOpen(false);
       setUploadedReceipt(null);
       setUploadProgress(0);
@@ -202,7 +203,7 @@ export const ExpensesDashboard: React.FC = () => {
   const handleSaveBulkExpenses = async () => {
     const activeRows = bulkRows.filter(r => r.amount > 0);
     if (activeRows.length === 0) {
-      alert("Please configure at least one bulk expense row with an amount greater than 0.");
+      toast.error("Please configure at least one bulk expense row with an amount greater than 0.");
       return;
     }
 
@@ -227,7 +228,7 @@ export const ExpensesDashboard: React.FC = () => {
       });
 
       await apiService.createExpensesBulk(payload);
-      alert(`${payload.length} expenses batch-saved successfully!`);
+      toast.success(`${payload.length} expenses batch-saved successfully!`);
       setDrawerOpen(false);
       setBulkRows([
         { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' },
@@ -237,7 +238,7 @@ export const ExpensesDashboard: React.FC = () => {
       loadData();
     } catch (e) {
       console.error(e);
-      alert("Failed to batch-save bulk expenses.");
+      toast.error("Failed to batch-save bulk expenses.");
     }
   };
 

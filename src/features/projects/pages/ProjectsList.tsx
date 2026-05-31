@@ -8,6 +8,7 @@ import { formatCurrency, formatDate } from '../../../lib/utils';
 import { Link } from 'react-router-dom';
 import { FolderGit, Plus, Briefcase, Calendar, Users, ChevronDown, Search } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import toast from 'react-hot-toast';
 
 export const ProjectsList: React.FC = () => {
   const [projects, setProjects] = useState<any[]>([]);
@@ -77,7 +78,7 @@ export const ProjectsList: React.FC = () => {
     e.preventDefault();
     if (!name || !clientId || vendorIds.length === 0 || !budget || !dueDate) {
       setShowVendorError(vendorIds.length === 0);
-      alert("Please fill all required fields.");
+      toast.error("Please fill all required fields.");
       return;
     }
 
@@ -115,7 +116,7 @@ export const ProjectsList: React.FC = () => {
       setDueDate('');
     } catch (error) {
       console.error(error);
-      alert("Failed to create project");
+      toast.error("Failed to create project");
     }
   };
 

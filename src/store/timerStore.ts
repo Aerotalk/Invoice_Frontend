@@ -10,7 +10,7 @@ interface TimerState {
   description: string;
   billingRate: number;
   isBillable: boolean;
-  intervalId: any | null;
+  intervalId: ReturnType<typeof setInterval> | null;
   startTimer: (projectId: string, projectName: string, taskName: string, rate?: number) => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
@@ -75,7 +75,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
   updateDescription: (description) => set({ description }),
 
   stopAndLogTimer: async () => {
-    const { isRunning, seconds, projectId, projectName, taskName, description, billingRate, isBillable, intervalId } = get();
+    const { seconds, projectId, projectName, taskName, description, billingRate, isBillable, intervalId } = get();
     if (intervalId) clearInterval(intervalId);
 
     if (seconds < 5) {

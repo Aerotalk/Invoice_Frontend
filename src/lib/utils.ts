@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Utility to format values as currency
-export function formatCurrency(amount: number, currency: string = 'INR'): string {
+export function formatCurrency(amount: number | undefined | null, currency: string = 'INR'): string {
   const symbols: Record<string, string> = {
     INR: '₹',
     USD: '$',
@@ -16,8 +16,9 @@ export function formatCurrency(amount: number, currency: string = 'INR'): string
   };
   const symbol = symbols[currency] || '₹';
   const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  const safeAmount = amount || 0;
   
-  return `${symbol}${amount.toLocaleString(locale, {
+  return `${symbol}${safeAmount.toLocaleString(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })}`;
