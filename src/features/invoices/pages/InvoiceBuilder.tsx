@@ -285,16 +285,24 @@ export const InvoiceBuilder: React.FC = () => {
             disabled={loading}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-extrabold active:scale-95 transition-all select-none disabled:opacity-40"
           >
-            <Save className="w-3.5 h-3.5" />
-            {isEditMode ? "Save Changes" : "Save Draft"}
+            {loading ? (
+              <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin shrink-0" />
+            ) : (
+              <Save className="w-3.5 h-3.5" />
+            )}
+            {loading ? "Saving..." : (isEditMode ? "Save Changes" : "Save Draft")}
           </button>
           <button
             onClick={() => handleSaveInvoice('sent')}
             disabled={loading}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 select-none disabled:opacity-40"
           >
-            {isScheduled ? <Calendar className="w-3.5 h-3.5 shrink-0" /> : <Send className="w-3.5 h-3.5 shrink-0" />}
-            {isScheduled ? "Schedule Send" : "Send Invoice"}
+            {loading ? (
+              <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+            ) : (
+              isScheduled ? <Calendar className="w-3.5 h-3.5 shrink-0" /> : <Send className="w-3.5 h-3.5 shrink-0" />
+            )}
+            {loading ? "Processing..." : (isScheduled ? "Schedule Send" : "Send Invoice")}
           </button>
         </div>
       </div>

@@ -66,7 +66,7 @@ export const ProductsList: React.FC = () => {
 
   const { currency } = usePreferencesStore();
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ProductFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: '',
@@ -773,9 +773,17 @@ export const ProductsList: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 disabled:opacity-50"
               >
-                Save Item
+                {isSubmitting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Item"
+                )}
               </button>
             </div>
           </div>

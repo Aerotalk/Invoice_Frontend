@@ -172,7 +172,7 @@ export const ClientsList: React.FC = () => {
   const { currency } = usePreferencesStore();
   const navigate = useNavigate();
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ClientFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
       clientType: 'business',
@@ -1166,14 +1166,6 @@ export const ClientsList: React.FC = () => {
                     <div className="space-y-2 mt-4">
                       <div className="flex items-center justify-between border-t pt-3">
                         <span className="text-[10px] font-extrabold uppercase text-muted-foreground">Documents Attachment</span>
-                        <button
-                          type="button"
-                          onClick={handleMockUpload}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold text-foreground border transition-all active:scale-95 cursor-pointer shrink-0"
-                        >
-                          <Upload className="w-3 h-3" />
-                          Simulate File Upload
-                        </button>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1667,9 +1659,17 @@ export const ClientsList: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer text-xs"
+              disabled={isSubmitting}
+              className="px-5 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/5 cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
             >
-              Create Client
+              {isSubmitting ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin shrink-0" />
+                  Creating...
+                </>
+              ) : (
+                "Create Client"
+              )}
             </button>
           </div>
 

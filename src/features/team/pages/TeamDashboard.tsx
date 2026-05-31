@@ -35,7 +35,7 @@ export const TeamDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<InviteFormValues>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
     defaultValues: { role: 'viewer' }
   });
@@ -208,9 +208,17 @@ export const TeamDashboard: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md flex items-center gap-1.5 disabled:opacity-50"
             >
-              Dispatch Link
+              {isSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                  Dispatching...
+                </>
+              ) : (
+                "Dispatch Link"
+              )}
             </button>
           </div>
 

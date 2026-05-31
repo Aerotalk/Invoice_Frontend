@@ -80,8 +80,9 @@ export const ExpensesDashboard: React.FC = () => {
   ]);
 
   const { currency } = usePreferencesStore();
+  const [bulkSaving, setBulkSaving] = useState(false);
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ExpenseFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
       category: 'Software',
@@ -207,6 +208,7 @@ export const ExpensesDashboard: React.FC = () => {
       return;
     }
 
+    setBulkSaving(true);
     try {
       const payload = activeRows.map(r => {
         const client = clients.find(c => c.id === r.clientId);
@@ -236,9 +238,11 @@ export const ExpensesDashboard: React.FC = () => {
         { date: new Date().toISOString().split('T')[0], category: 'Software', amount: 0, clientId: '', projectId: '', isBillable: false, currency: 'INR' }
       ]);
       loadData();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
       toast.error("Failed to batch-save bulk expenses.");
+    } finally {
+      setBulkSaving(false);
     }
   };
 
@@ -854,9 +858,17 @@ export const ExpensesDashboard: React.FC = () => {
               <div className="flex items-center gap-3 justify-start pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0 select-none bg-card relative z-50 mt-4">
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded hover:bg-blue-600 transition-colors select-none active:scale-95"
+                  disabled={isSubmitting}
+                  className="px-4 py-1.5 bg-blue-500 text-white text-xs font-bold rounded hover:bg-blue-600 transition-colors select-none active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  Save (Alt+S)
+                  {isSubmitting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save (Alt+S)"
+                  )}
                 </button>
                 <button
                   type="button"
@@ -1036,10 +1048,18 @@ export const ExpensesDashboard: React.FC = () => {
                 </button>
                 <button
                   type="button"
+                  disabled={bulkSaving}
                   onClick={handleSaveBulkExpenses}
-                  className="px-4 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/10 cursor-pointer"
+                  className="px-4 py-2 bg-primary text-primary-foreground font-extrabold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 shadow-md shadow-indigo-500/10 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  Save Bulk Expenses
+                  {bulkSaving ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin shrink-0 animate-pulse" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Bulk Expenses"
+                  )}
                 </button>
               </div>
 

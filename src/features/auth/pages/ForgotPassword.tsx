@@ -91,7 +91,14 @@ export const ForgotPassword: React.FC = () => {
               disabled={loading}
               className="w-full py-2 px-4 rounded-lg bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/95 transition-all duration-300 hover:shadow-premium select-none disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] mt-2 shrink-0 flex items-center justify-center gap-2"
             >
-              {loading ? "Sending..." : "Send Reset Code"}
+              {loading ? (
+                <>
+                  <span className="w-4.5 h-4.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                  Sending...
+                </>
+              ) : (
+                "Send Reset Code"
+              )}
             </button>
 
             <Link 

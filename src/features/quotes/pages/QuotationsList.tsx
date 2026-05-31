@@ -97,7 +97,7 @@ export const QuotationsList: React.FC = () => {
 
   const { currency } = usePreferencesStore();
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<QuoteFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
     defaultValues: {
       quoteNumber: '',
@@ -1090,15 +1090,24 @@ export const QuotationsList: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSaveAsDraft}
-                className="px-4 py-2 border rounded-lg bg-card hover:bg-muted text-foreground/90 text-xs font-extrabold transition-all active:scale-95 shadow-sm"
+                disabled={isSubmitting}
+                className="px-4 py-2 border rounded-lg bg-card hover:bg-muted text-foreground/90 text-xs font-extrabold transition-all active:scale-95 shadow-sm disabled:opacity-50"
               >
                 Save as Draft
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95"
+                disabled={isSubmitting}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 disabled:opacity-50"
               >
-                Save and Send
+                {isSubmitting ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save and Send"
+                )}
               </button>
             </div>
           </div>

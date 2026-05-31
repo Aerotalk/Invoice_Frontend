@@ -40,6 +40,7 @@ export const TimeTrackingDashboard: React.FC = () => {
   const [manualHours, setManualHours] = useState("");
   const [manualRate, setManualRate] = useState("100");
   const [manualDesc, setManualDesc] = useState("");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
 
   const loadTimeData = async () => {
     setLoading(true);
@@ -93,6 +94,7 @@ export const TimeTrackingDashboard: React.FC = () => {
     const hours = parseFloat(manualHours) || 0;
     const billingRate = parseFloat(manualRate) || 0;
 
+    setManualSubmitting(true);
     try {
       await apiService.createTimeEntry({
         projectId: manualProjId,
@@ -110,8 +112,10 @@ export const TimeTrackingDashboard: React.FC = () => {
       setManualHours("");
       setManualDesc("");
       loadTimeData();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setManualSubmitting(false);
     }
   };
 
@@ -441,9 +445,17 @@ export const TimeTrackingDashboard: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95"
+              disabled={manualSubmitting}
+              className="px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 transition-all select-none active:scale-95 flex items-center gap-1.5 disabled:opacity-50"
             >
-              Submit entry
+              {manualSubmitting ? (
+                <>
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit entry"
+              )}
             </button>
           </div>
 
