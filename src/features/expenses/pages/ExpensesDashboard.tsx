@@ -249,35 +249,50 @@ export const ExpensesDashboard: React.FC = () => {
 
   // Real Receipt capture
   const handleReceiptUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
+    const input = document.getElementById('receipt-upload-input');
+    if (input) {
+      input.click();
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size exceeds 10MB limit");
-        return;
-      }
-      setIsUploading(true);
-      setUploadProgress(30);
-      try {
-        const response = await apiService.uploadFile(file);
-        setUploadedReceipt(response.url || `/uploads/${response.filename}`);
-        setUploadProgress(100);
-        toast.success("Receipt uploaded successfully");
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to upload receipt");
-      } finally {
-        setTimeout(() => {
-          setIsUploading(false);
-          setUploadProgress(0);
-        }, 500);
-      }
+  const processFile = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds 10MB limit");
+      return;
     }
+    setIsUploading(true);
+    setUploadProgress(30);
+    try {
+      const response = await apiService.uploadFile(file);
+      setUploadedReceipt(response.url || `/uploads/${response.filename}`);
+      setUploadProgress(100);
+      toast.success("Receipt uploaded successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to upload receipt");
+    } finally {
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processFile(e.target.files[0]);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
   };
 
   // Recharts outflows distribution math
@@ -824,8 +839,8 @@ export const ExpensesDashboard: React.FC = () => {
                   {/* Right dropzone attachment column */}
                   <div className="lg:col-span-1 flex flex-col pt-2">
                     <input 
+                      id="receipt-upload-input"
                       type="file" 
-                      ref={fileInputRef} 
                       className="hidden" 
                       accept="image/*,.pdf" 
                       onChange={handleFileChange} 
@@ -833,6 +848,8 @@ export const ExpensesDashboard: React.FC = () => {
                     <div className="p-8 border border-slate-200 dark:border-slate-800 rounded-xl bg-card shadow-sm flex flex-col items-center justify-center text-center">
                       <div 
                         onClick={handleReceiptUploadClick}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
                         className={cn(
                           "w-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 select-none",
                           uploadedReceipt ? "" : ""
