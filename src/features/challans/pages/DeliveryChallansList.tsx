@@ -81,8 +81,9 @@ export const DeliveryChallansList: React.FC = () => {
   const [isCustomChallanCode, setIsCustomChallanCode] = useState(false);
 
   // File Upload states
-  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string }>>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ name: string; size: string; url?: string }>>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Dynamic row builder states
   const [itemRows, setItemRows] = useState<ChallanItemInput[]>([
@@ -189,20 +190,38 @@ export const DeliveryChallansList: React.FC = () => {
     setItemRows(nextRows);
   };
 
-  // Mock Upload attachments helper
-  const handleMockUploadFile = () => {
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     if (uploadedFiles.length >= 3) {
       toast.error("Maximum of 3 file attachments allowed.");
       return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds 10MB limit.");
+      return;
+    }
+
     setUploadingFile(true);
-    setTimeout(() => {
-      const files = ['delivery_gate_pass.pdf', 'packing_slip_v2.xlsx', 'waybill_declaration.pdf'];
-      const chosen = files[Math.floor(Math.random() * files.length)];
-      const size = `${(Math.random() * 3 + 1).toFixed(1)} MB`;
-      setUploadedFiles([...uploadedFiles, { name: chosen, size }]);
+    try {
+      const res = await apiService.uploadFile(file);
+      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      
+      const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+      
+      setUploadedFiles(prev => [...prev, { name: file.name, size: sizeStr, url: fileUrl }]);
+      toast.success("File uploaded successfully.");
+    } catch (error) {
+      toast.error("Failed to upload file.");
+      console.error(error);
+    } finally {
       setUploadingFile(false);
-    }, 600);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleRemoveFile = (index: number) => {
@@ -242,7 +261,8 @@ export const DeliveryChallansList: React.FC = () => {
         total,
         status: "issued" as const,
         customerNotes: values.customerNotes,
-        terms: values.terms
+        terms: values.terms,
+        signatureUrl: uploadedFiles.length > 0 ? uploadedFiles[0].url : undefined
       };
 
       await apiService.createChallan(payload);
@@ -293,7 +313,8 @@ export const DeliveryChallansList: React.FC = () => {
         total,
         status: "draft" as const,
         customerNotes: watch("customerNotes"),
-        terms: watch("terms")
+        terms: watch("terms"),
+        signatureUrl: uploadedFiles.length > 0 ? uploadedFiles[0].url : undefined
       };
 
       await apiService.createChallan(payload);
@@ -789,9 +810,15 @@ export const DeliveryChallansList: React.FC = () => {
                   
                   <div className="grid grid-cols-3 gap-2 items-center">
                     <div className="col-span-1">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleUploadFile} 
+                        className="hidden" 
+                      />
                       <button
                         type="button"
-                        onClick={handleMockUploadFile}
+                        onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingFile}
                         className="w-full border-2 border-dashed rounded-lg py-3 flex flex-col items-center justify-center cursor-pointer select-none bg-slate-50/20 dark:bg-slate-900/10 hover:bg-slate-50/50 hover:border-slate-300 transition-all border-slate-200 dark:border-slate-800 disabled:opacity-40"
                       >

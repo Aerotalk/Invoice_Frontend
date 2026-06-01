@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+import { apiService } from '../../../services/api';
 
 export const SettingsOverview: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
@@ -37,33 +38,49 @@ export const SettingsOverview: React.FC = () => {
   const [addresses, setAddresses] = useState<string[]>(user?.addresses || []);
   const [newAddress, setNewAddress] = useState("");
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 1024 * 1024) {
+        toast.error("File size too large! Please choose an image smaller than 1MB.");
+        return;
+      }
+      try {
+        const res = await apiService.uploadFile(file);
+        const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+        setAvatar(fileUrl);
+        toast.success("Profile picture uploaded successfully.");
+      } catch (error) {
+        toast.error("Failed to upload profile picture.");
+        console.error(error);
+      }
     }
     e.target.value = "";
   };
 
-  const handleAddLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (logos.length >= 5) {
       toast.success("You can only add up to 5 logos.");
       return;
     }
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      if (file.size > 1024 * 1024) {
+        toast.error("File size too large! Please choose an image smaller than 1MB.");
+        return;
+      }
+      try {
+        const res = await apiService.uploadFile(file);
+        const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
         setLogos((prev) => {
           if (prev.length >= 5) return prev;
-          return [...prev, reader.result as string];
+          return [...prev, fileUrl];
         });
-      };
-      reader.readAsDataURL(file);
+        toast.success("Logo uploaded successfully.");
+      } catch (error) {
+        toast.error("Failed to upload logo.");
+        console.error(error);
+      }
     }
     e.target.value = "";
   };

@@ -57,9 +57,10 @@ export const ProductsList: React.FC = () => {
   const [unitSearchQuery, setUnitSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock Upload image state
+  // Upload image state
   const [selectedMockImage, setSelectedMockImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Quick search input state
   const [globalSearch, setGlobalSearch] = useState("");
@@ -171,21 +172,30 @@ export const ProductsList: React.FC = () => {
     }
   };
 
-  // Mock upload action
-  const handleMockUploadImage = () => {
+  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size exceeds 5MB limit.");
+      return;
+    }
+
     setIsUploading(true);
-    setTimeout(() => {
-      const mockImages = [
-        "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=150", // Wooden shipping crate
-        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=150", // Modern white watch
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=150", // Headphones
-        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=150", // Red athletic sneakers
-        "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=150"  // Premium sunglasses
-      ];
-      const selected = mockImages[Math.floor(Math.random() * mockImages.length)];
-      setSelectedMockImage(selected);
+    try {
+      const res = await apiService.uploadFile(file);
+      const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+      setSelectedMockImage(fileUrl);
+      toast.success("Image uploaded successfully.");
+    } catch (error) {
+      toast.error("Failed to upload image.");
+      console.error(error);
+    } finally {
       setIsUploading(false);
-    }, 800);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const handleClearSelectedImage = (e: React.MouseEvent) => {
@@ -617,8 +627,15 @@ export const ProductsList: React.FC = () => {
               <div className="flex flex-col justify-start">
                 <span className="text-muted-foreground font-bold tracking-wide uppercase text-[10px] mb-1.5">Item Image</span>
                 
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleUploadImage} 
+                  accept="image/*"
+                  className="hidden" 
+                />
                 <div 
-                  onClick={handleMockUploadImage}
+                  onClick={() => fileInputRef.current?.click()}
                   className={cn(
                     "border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer select-none transition-all h-40 bg-slate-50/20 dark:bg-slate-900/10 hover:bg-slate-50/50 dark:hover:bg-slate-900/30",
                     selectedMockImage ? "border-primary/50 relative overflow-hidden" : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"

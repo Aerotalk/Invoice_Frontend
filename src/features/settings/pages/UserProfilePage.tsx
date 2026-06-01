@@ -5,6 +5,7 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { User, Mail, ShieldAlert, Key, Save, CheckCircle2, Globe, Image, Upload, Trash2, Plus, Link } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+import { apiService } from '../../../services/api';
 
 const presetStarlight = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40"><rect width="120" height="40" rx="8" fill="%23064e3b"/><circle cx="20" cy="20" r="12" fill="%2310b981"/><polygon points="20,13 22,18 27,18 23,21 25,26 20,23 15,26 17,21 13,18 18,18" fill="%23ffffff"/><text x="42" y="25" fill="%23ffffff" font-family="sans-serif" font-size="12" font-weight="bold">STARLIGHT</text></svg>`;
 
@@ -44,7 +45,7 @@ export const UserProfilePage: React.FC = () => {
     setLogos([...logos, presetUrl]);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (logos.length >= 5) {
@@ -56,17 +57,18 @@ export const UserProfilePage: React.FC = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setLogos([...logos, base64]);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const res = await apiService.uploadFile(file);
+      const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+      setLogos([...logos, fileUrl]);
+      toast.success("Logo uploaded successfully.");
+    } catch (error) {
+      toast.error("Failed to upload logo.");
+      console.error(error);
+    }
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 1024 * 1024) {
@@ -74,14 +76,15 @@ export const UserProfilePage: React.FC = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setAvatar(base64);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const res = await apiService.uploadFile(file);
+      const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+      setAvatar(fileUrl);
+      toast.success("Profile picture uploaded successfully.");
+    } catch (error) {
+      toast.error("Failed to upload profile picture.");
+      console.error(error);
+    }
   };
 
   const handleAddUrl = () => {
