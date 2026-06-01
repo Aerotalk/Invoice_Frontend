@@ -216,7 +216,7 @@ export const ClientsList: React.FC = () => {
   const shippingCountry = watch("shippingCountry");
   const shippingState = watch("shippingState");
   const gstTreatment = watch("gstTreatment");
-  const isNotRegisteredBusiness = gstTreatment === 'Overseas' || gstTreatment === 'Consumer' || gstTreatment === 'Unregistered Business';
+  const isNotRegisteredBusiness = gstTreatment === 'Overseas' || gstTreatment === 'Consumer' || gstTreatment === 'Unregistered Business' || gstTreatment === '';
 
   // Load clients
   const loadClients = async () => {
