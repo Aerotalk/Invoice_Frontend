@@ -94,7 +94,7 @@ export const DashboardLayout: React.FC = () => {
       <GlobalCommandPalette />
 
       {/* 5. AI ASSISTANT PANEL */}
-      <AICopilotDrawer />
+      {/* <AICopilotDrawer /> */}
     </div>
   );
 };

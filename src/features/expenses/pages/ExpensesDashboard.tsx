@@ -34,6 +34,7 @@ const expenseSchema = zod.object({
   expenseType: zod.enum(['goods', 'services']),
   sac: zod.string().optional(),
   gstTreatment: zod.string(),
+  gstNumber: zod.string().optional(),
   sourceOfSupply: zod.string(),
   destinationOfSupply: zod.string(),
   reverseCharge: zod.boolean().optional(),
@@ -91,6 +92,7 @@ export const ExpensesDashboard: React.FC = () => {
       expenseType: 'services',
       sac: '',
       gstTreatment: '',
+      gstNumber: '',
       sourceOfSupply: '',
       destinationOfSupply: '',
       reverseCharge: false,
@@ -106,6 +108,10 @@ export const ExpensesDashboard: React.FC = () => {
 
   const selectedClientId = watch("clientId");
   const categoryVal = watch("category");
+  const expenseTypeVal = watch("expenseType");
+  const amountIsVal = watch("amountIs");
+  const gstTreatment = watch("gstTreatment");
+  const isNotRegisteredBusiness = gstTreatment === 'Overseas' || gstTreatment === 'Consumer' || gstTreatment === 'Unregistered Business' || gstTreatment === '';
 
   // Load database metadata and assets
   const loadData = async () => {
@@ -655,11 +661,34 @@ export const ExpensesDashboard: React.FC = () => {
                     <div className="grid grid-cols-12 gap-4 items-center">
                       <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-rose-500">Expense Type*</label>
                       <div className="col-span-12 sm:col-span-8 flex items-center gap-4 text-[11px] font-medium text-foreground">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" value="goods" {...register("expenseType")} className="w-3.5 h-3.5 accent-primary" /> Goods
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                          <input type="radio" value="goods" {...register("expenseType")} className="sr-only" />
+                          <div className={cn(
+                            "w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                            expenseTypeVal === 'goods'
+                              ? "border-primary bg-card"
+                              : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                          )}>
+                            {expenseTypeVal === 'goods' && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span>Goods</span>
                         </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" value="services" {...register("expenseType")} className="w-3.5 h-3.5 accent-primary" /> Services
+
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                          <input type="radio" value="services" {...register("expenseType")} className="sr-only" />
+                          <div className={cn(
+                            "w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                            expenseTypeVal === 'services'
+                              ? "border-primary bg-card"
+                              : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                          )}>
+                            {expenseTypeVal === 'services' && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span>Services</span>
                         </label>
                       </div>
                     </div>
@@ -698,6 +727,21 @@ export const ExpensesDashboard: React.FC = () => {
                         </select>
                       </div>
                     </div>
+
+                    {/* GST Number — shown for Unregistered Business */}
+                    {!isNotRegisteredBusiness && (
+                      <div className="grid grid-cols-12 gap-4 items-center">
+                        <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">GST Number</label>
+                        <div className="col-span-12 sm:col-span-8">
+                          <input
+                            type="text"
+                            placeholder="e.g. 22AAAAA0000A1Z5"
+                            {...register("gstNumber")}
+                            className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary font-mono tracking-wider uppercase placeholder:normal-case placeholder:tracking-normal placeholder:font-sans"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Source of Supply */}
                     <div className="grid grid-cols-12 gap-4 items-center">
@@ -776,11 +820,34 @@ export const ExpensesDashboard: React.FC = () => {
                     <div className="grid grid-cols-12 gap-4 items-center">
                       <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Amount Is</label>
                       <div className="col-span-12 sm:col-span-8 flex items-center gap-4 text-[11px] font-medium text-foreground">
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" value="inclusive" {...register("amountIs")} className="w-3.5 h-3.5 accent-primary" /> Tax Inclusive
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                          <input type="radio" value="inclusive" {...register("amountIs")} className="sr-only" />
+                          <div className={cn(
+                            "w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                            amountIsVal === 'inclusive'
+                              ? "border-primary bg-card"
+                              : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                          )}>
+                            {amountIsVal === 'inclusive' && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span>Tax Inclusive</span>
                         </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input type="radio" value="exclusive" {...register("amountIs")} className="w-3.5 h-3.5 accent-primary" /> Tax Exclusive
+
+                        <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                          <input type="radio" value="exclusive" {...register("amountIs")} className="sr-only" />
+                          <div className={cn(
+                            "w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                            amountIsVal === 'exclusive'
+                              ? "border-primary bg-card"
+                              : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                          )}>
+                            {amountIsVal === 'exclusive' && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span>Tax Exclusive</span>
                         </label>
                       </div>
                     </div>

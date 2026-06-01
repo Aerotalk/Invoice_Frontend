@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Users,
@@ -85,6 +85,7 @@ const clientSchema = zod.object({
 
   // Tab 1: Other Details
   gstTreatment: zod.string().min(1, { message: "GST Treatment is required" }),
+  gstNumber: zod.string().optional(),
   placeOfSupply: zod.string().min(1, { message: "Place of Supply is required" }),
   taxPreference: zod.enum(['Taxable', 'Tax Exempt']),
   pan: zod.string(),
@@ -93,9 +94,6 @@ const clientSchema = zod.object({
   website: zod.string(),
   department: zod.string(),
   designation: zod.string(),
-  socialX: zod.string(),
-  skype: zod.string(),
-  socialFacebook: zod.string(),
 
   // Tab 2: Address (Billing)
   billingAttention: zod.string(),
@@ -156,6 +154,7 @@ export const ClientsList: React.FC = () => {
     { id: 'cf-2', label: 'Industry', value: 'Technology' }
   ]);
   const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Secondary Contact Form row state
   const [newContact, setNewContact] = useState({
@@ -189,6 +188,7 @@ export const ClientsList: React.FC = () => {
       mobile: '',
       language: 'English',
       gstTreatment: '',
+      gstNumber: '',
       placeOfSupply: '',
       taxPreference: 'Taxable',
       pan: '',
@@ -197,9 +197,6 @@ export const ClientsList: React.FC = () => {
       website: '',
       department: '',
       designation: '',
-      socialX: '',
-      skype: '',
-      socialFacebook: '',
       billingCountry: 'India',
       billingState: 'West Bengal',
       billingCity: 'Kolkata',
@@ -218,6 +215,8 @@ export const ClientsList: React.FC = () => {
   const billingState = watch("billingState");
   const shippingCountry = watch("shippingCountry");
   const shippingState = watch("shippingState");
+  const gstTreatment = watch("gstTreatment");
+  const isNotRegisteredBusiness = gstTreatment === 'Overseas' || gstTreatment === 'Consumer' || gstTreatment === 'Unregistered Business' || gstTreatment === '';
 
   // Load clients
   const loadClients = async () => {
@@ -343,16 +342,25 @@ export const ClientsList: React.FC = () => {
   };
 
   // Simulating document uploads
-  const handleMockUpload = () => {
-    if (uploadedDocuments.length >= 3) {
-      toast.error("Maximum of 3 files allowed.");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const remaining = 3 - uploadedDocuments.length;
+    if (files.length > remaining) {
+      toast.error(`You can only attach up to 3 files (max ${remaining} more).`);
       return;
     }
-    const files = ['nda_agreement_signed.pdf', 'invoice_guide.docx', 'client_onboarding.pdf', 'business_licence.png'];
-    const selected = files[Math.floor(Math.random() * files.length)];
-    const size = `${(Math.random() * 4 + 1).toFixed(1)} MB`;
-
-    setUploadedDocuments([...uploadedDocuments, { name: selected, size }]);
+    const newDocs: Array<{ name: string; size: string }> = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const size = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+      newDocs.push({ name: file.name, size });
+    }
+    setUploadedDocuments([...uploadedDocuments, ...newDocs]);
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveDocument = (index: number) => {
@@ -379,6 +387,7 @@ export const ClientsList: React.FC = () => {
         currency: values.currency,
         language: values.language,
         gstTreatment: values.gstTreatment,
+        gstNumber: values.gstNumber,
         placeOfSupply: values.placeOfSupply,
         taxPreference: values.taxPreference,
         pan: values.pan,
@@ -387,9 +396,6 @@ export const ClientsList: React.FC = () => {
         website: values.website,
         department: values.department,
         designation: values.designation,
-        socialX: values.socialX,
-        skype: values.skype,
-        socialFacebook: values.socialFacebook,
 
         // Addresses
         billingAddress: {
@@ -440,11 +446,11 @@ export const ClientsList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
-          <img
+          {/*<img
             src={row.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"}
             alt={row.name}
             className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0"
-          />
+          />*/}
           <div>
             <Link
               to={`/dashboard/clients/${row.id}`}
@@ -793,6 +799,28 @@ export const ClientsList: React.FC = () => {
                   {errors.email && <span className="text-[9px] text-rose-500 font-bold">{errors.email.message}</span>}
                 </div>
 
+                {/* Department */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Department</label>
+                        <input
+                          type="text"
+                          placeholder="Finance / Billing"
+                          {...register("department")}
+                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
+                        />
+                      </div>
+
+                      {/* Designation */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Designation</label>
+                        <input
+                          type="text"
+                          placeholder="VP Finance"
+                          {...register("designation")}
+                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
+                        />
+                      </div>
+
                 {/* Customer Language */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
@@ -978,6 +1006,25 @@ export const ClientsList: React.FC = () => {
                         {errors.gstTreatment && <span className="text-[9px] text-rose-500 font-bold">{errors.gstTreatment.message}</span>}
                       </div>
 
+                      {/* GST Number — only for Registered Business */}
+                      {!isNotRegisteredBusiness && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                            GST Number <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 29ABCDE1234F1Z5"
+                            {...register("gstNumber")}
+                            className={cn(
+                              "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium",
+                              errors.gstNumber ? "border-rose-500/70" : ""
+                            )}
+                          />
+                          {errors.gstNumber && <span className="text-[9px] text-rose-500 font-bold">{errors.gstNumber.message}</span>}
+                        </div>
+                      )}
+
                       {/* Place of Supply */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
@@ -1093,79 +1140,27 @@ export const ClientsList: React.FC = () => {
                           <Globe className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                         </div>
                       </div>
-
-                      {/* Department */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Department</label>
-                        <input
-                          type="text"
-                          placeholder="Finance / Billing"
-                          {...register("department")}
-                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                        />
-                      </div>
-
-                      {/* Designation */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Designation</label>
-                        <input
-                          type="text"
-                          placeholder="VP Finance"
-                          {...register("designation")}
-                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                        />
-                      </div>
-
-                      {/* Skype Name */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Skype Address/Number</label>
-                        <input
-                          type="text"
-                          placeholder="live:skype_client"
-                          {...register("skype")}
-                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                        />
-                      </div>
-
-                      {/* Social X */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">X Profile Link</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="https://x.com/client_handle"
-                            {...register("socialX")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Facebook */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Facebook Page</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="http://www.facebook.com/clientpage"
-                            {...register("socialFacebook")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                          </svg>
-                        </div>
-                      </div>
-
                     </div>
 
-                    {/* Document Uploads section (Interactive Mock Simulator) */}
+                    {/* Document Uploads section */}
                     <div className="space-y-2 mt-4">
                       <div className="flex items-center justify-between border-t pt-3">
                         <span className="text-[10px] font-extrabold uppercase text-muted-foreground">Documents Attachment</span>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-foreground border rounded transition-all active:scale-95 cursor-pointer shrink-0"
+                        >
+                          <Upload className="w-3.5 h-3.5" /> Attach File
+                        </button>
+                        <input
+                          type="file"
+                          multiple
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          style={{ display: 'none' }}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">

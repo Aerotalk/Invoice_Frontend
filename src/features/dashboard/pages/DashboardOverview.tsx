@@ -347,7 +347,7 @@ export const DashboardOverview: React.FC = () => {
       </div>
 
       {/* 5. Extra Premium Suggestions Widget */}
-      <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 select-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* <div className="p-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 select-none flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-lg shrink-0">
             <Bot className="w-5 h-5 shrink-0 animate-bounce-slow" />
@@ -366,7 +366,7 @@ export const DashboardOverview: React.FC = () => {
         >
           Activate Copilot
         </button>
-      </div>
+      </div> */}
 
     </div>
   );

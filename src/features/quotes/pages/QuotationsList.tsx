@@ -62,10 +62,12 @@ type QuoteFormValues = zod.infer<typeof quoteSchema>;
 interface QuoteItemInput {
   productId: string;
   name: string;
+  hsn: string;
   quantity: number;
   rate: number;
+  discount: number; // percentage per item
   taxRate: number;
-  total: number;
+  total: number; // after discount, before tax
 }
 
 export const QuotationsList: React.FC = () => {
@@ -90,7 +92,7 @@ export const QuotationsList: React.FC = () => {
 
   // Dynamic row builder states
   const [itemRows, setItemRows] = useState<QuoteItemInput[]>([
-    { productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }
+    { productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }
   ]);
 
   // Quick search filter input state
@@ -161,28 +163,58 @@ export const QuotationsList: React.FC = () => {
     ? allProjects.filter(p => p.clientId === selectedClientId) 
     : [];
 
+  // GST logic: compare client state vs org state
+  // Org default state is West Bengal. If client has a different state → IGST; same state → CGST+SGST
+  const ORG_STATE = 'West Bengal';
+  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const clientState = selectedClient?.billingState || selectedClient?.state || '';
+  const isInterState = clientState !== '' && clientState !== ORG_STATE;
+
+  // Per-item tax helpers
+  const getGstLabel = (rate: number) => {
+    if (rate === 0) return null;
+    return isInterState
+      ? { type: 'IGST', rate, amount: 0 }
+      : { type: 'CGST+SGST', cgst: rate / 2, sgst: rate / 2, rate, amount: 0 };
+  };
+
   // Recalculations hook for Grand Total summaries
+  // item.total already accounts for per-item discount
   const subtotal = itemRows.reduce((sum, item) => sum + item.total, 0);
-  const discountAmount = subtotal * (Number(discountRateVal || 0) / 100);
-  const taxableAmount = subtotal - discountAmount;
+  // Global discount removed (discount is now per-item)
+  const taxableAmount = subtotal;
+  // Aggregate GST from all rows
+  const totalIgst = isInterState
+    ? itemRows.reduce((sum, item) => sum + item.total * (item.taxRate / 100), 0)
+    : 0;
+  const totalCgst = !isInterState
+    ? itemRows.reduce((sum, item) => sum + item.total * ((item.taxRate / 2) / 100), 0)
+    : 0;
+  const totalSgst = totalCgst;
+  const totalGst = isInterState ? totalIgst : totalCgst + totalSgst;
   const taxAmount = taxableAmount * (Number(taxRateVal || 0) / 100);
   
-  // Tax subtraction for TDS, addition for TCS
+  // Tax subtraction for TDS, addition for TCS  
   const total = taxTypeVal === 'tds' 
-    ? taxableAmount - taxAmount + Number(adjustmentVal || 0) 
-    : taxableAmount + taxAmount + Number(adjustmentVal || 0);
+    ? taxableAmount + totalGst - taxAmount + Number(adjustmentVal || 0) 
+    : taxableAmount + totalGst + taxAmount + Number(adjustmentVal || 0);
 
   // Dynamic row builder methods
   const handleAddRow = () => {
-    setItemRows([...itemRows, { productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
+    setItemRows([...itemRows, { productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
   };
 
   const handleRemoveRow = (index: number) => {
     if (itemRows.length <= 1) {
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
       return;
     }
     setItemRows(itemRows.filter((_, idx) => idx !== index));
+  };
+
+  const calcRowTotal = (qty: number, rate: number, discount: number) => {
+    const gross = qty * rate;
+    return gross - (gross * (discount / 100));
   };
 
   const handleRowChange = (index: number, field: keyof QuoteItemInput, val: any) => {
@@ -194,26 +226,34 @@ export const QuotationsList: React.FC = () => {
       if (prod) {
         row.productId = prod.id;
         row.name = prod.name;
+        row.hsn = prod.hsn || '';
         row.rate = prod.sellingPrice;
-        row.total = row.quantity * prod.sellingPrice;
+        row.total = calcRowTotal(row.quantity, prod.sellingPrice, row.discount);
       } else {
         row.productId = "";
         row.name = "";
+        row.hsn = "";
         row.rate = 0;
         row.total = 0;
       }
     } else if (field === 'quantity') {
       const q = Math.max(0, Number(val));
       row.quantity = q;
-      row.total = q * row.rate;
+      row.total = calcRowTotal(q, row.rate, row.discount);
     } else if (field === 'rate') {
       const r = Math.max(0, Number(val));
       row.rate = r;
-      row.total = row.quantity * r;
+      row.total = calcRowTotal(row.quantity, r, row.discount);
+    } else if (field === 'discount') {
+      const d = Math.min(100, Math.max(0, Number(val)));
+      row.discount = d;
+      row.total = calcRowTotal(row.quantity, row.rate, d);
     } else if (field === 'taxRate') {
       row.taxRate = Number(val);
     } else if (field === 'name') {
       row.name = val;
+    } else if (field === 'hsn') {
+      row.hsn = val;
     }
 
     setItemRows(nextRows);
@@ -314,7 +354,6 @@ export const QuotationsList: React.FC = () => {
         })),
         subtotal,
         discountRate: Number(values.discountRate),
-        discountAmount,
         taxType: values.taxType,
         taxRate: Number(values.taxRate),
         taxAmount,
@@ -330,7 +369,7 @@ export const QuotationsList: React.FC = () => {
       toast.success("Quotation registered successfully!");
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -375,7 +414,6 @@ export const QuotationsList: React.FC = () => {
         })),
         subtotal,
         discountRate: Number(discountRateVal),
-        discountAmount,
         taxType: taxTypeVal,
         taxRate: Number(taxRateVal),
         taxAmount,
@@ -391,7 +429,7 @@ export const QuotationsList: React.FC = () => {
       toast.success("Quotation saved as draft successfully!");
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -585,7 +623,11 @@ export const QuotationsList: React.FC = () => {
               reset();
               const nextNum = `QT-${String((quotes.length || 0) + 1).padStart(6, '0')}`;
               setValue("quoteNumber", nextNum);
-              setItemRows([{ productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0 }]);
+              setItemRows([{
+                productId: "", name: "", quantity: 1, rate: 0, taxRate: 0, total: 0,
+                hsn: '',
+                discount: 0
+              }]);
               setUploadedFiles([]);
               setIsCustomQuoteCode(false);
               setDrawerOpen(true);
@@ -762,23 +804,48 @@ export const QuotationsList: React.FC = () => {
               </div>
               
               <div className="p-4 space-y-4">
+                {/* GST type indicator banner */}
+                {selectedClientId && (
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold border mb-2",
+                    isInterState
+                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400"
+                      : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400"
+                  )}>
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    {isInterState
+                      ? `Inter-state supply → IGST applies (Client: ${clientState} ≠ Org: ${ORG_STATE})`
+                      : `Intra-state supply → CGST + SGST applies (Both: ${ORG_STATE})`
+                    }
+                  </div>
+                )}
+
                 {/* Headers */}
                 <div className="grid grid-cols-12 gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider border-b pb-2 select-none hidden sm:grid">
-                  <div className="col-span-4">Item Details</div>
-                  <div className="col-span-2 text-center">Quantity</div>
+                  <div className="col-span-3">Item Details</div>
+                  <div className="col-span-1 text-center">HSN</div>
+                  <div className="col-span-1 text-center">Qty</div>
                   <div className="col-span-2 text-right flex items-center justify-end gap-1">Rate <Calculator className="w-3 h-3" /></div>
+                  <div className="col-span-1 text-center">Disc%</div>
                   <div className="col-span-2 text-center flex items-center justify-center gap-1">Tax <AlertCircle className="w-3 h-3 text-slate-400" /></div>
                   <div className="col-span-1 text-right">Amount</div>
-                  <div className="col-span-1 hidden"></div>
+                  <div className="col-span-1"></div>
                 </div>
 
                 {/* Rows */}
                 <div className="space-y-3.5">
-                  {itemRows.map((row, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-2 items-center border-b pb-3 sm:pb-0 sm:border-b-0">
+                  {itemRows.map((row, index) => {
+                    const gstAmt = row.total * (row.taxRate / 100);
+                    const gstLabel = row.taxRate > 0
+                      ? (isInterState
+                          ? `IGST ${row.taxRate}%`
+                          : `CGST ${row.taxRate / 2}% + SGST ${row.taxRate / 2}%`)
+                      : '';
+                    return (
+                    <div key={index} className="grid grid-cols-12 gap-2 items-start border-b pb-3 sm:pb-2">
                       
                       {/* Product select + description */}
-                      <div className="col-span-12 sm:col-span-4 flex flex-col gap-1">
+                      <div className="col-span-12 sm:col-span-3 flex flex-col gap-1">
                         <select
                           value={row.productId}
                           onChange={(e) => handleRowChange(index, "productId", e.target.value)}
@@ -791,22 +858,34 @@ export const QuotationsList: React.FC = () => {
                         </select>
                         <input
                           type="text"
-                          placeholder="Or type a custom service / supply item detail description..."
+                          placeholder="Custom description..."
                           value={row.name}
                           onChange={(e) => handleRowChange(index, "name", e.target.value)}
-                          className="w-full px-2 py-1 border rounded bg-slate-50/50 dark:bg-slate-900/25 outline-none text-[11px] font-medium focus:border-primary mt-1"
+                          className="w-full px-2 py-1 border rounded bg-slate-50/50 dark:bg-slate-900/25 outline-none text-[11px] font-medium focus:border-primary"
+                        />
+                      </div>
+
+                      {/* HSN */}
+                      <div className="col-span-6 sm:col-span-1">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">HSN</span>
+                        <input
+                          type="text"
+                          placeholder="HSN"
+                          value={row.hsn}
+                          onChange={(e) => handleRowChange(index, "hsn", e.target.value)}
+                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-[10px] font-mono font-semibold text-center focus:border-primary"
                         />
                       </div>
 
                       {/* Quantity */}
-                      <div className="col-span-6 sm:col-span-2">
-                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Quantity</span>
+                      <div className="col-span-6 sm:col-span-1">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Qty</span>
                         <input
                           type="number"
                           step="any"
                           value={row.quantity}
                           onChange={(e) => handleRowChange(index, "quantity", e.target.value)}
-                          className="w-full px-2.5 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-center focus:border-primary"
+                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-center focus:border-primary"
                         />
                       </div>
 
@@ -818,35 +897,74 @@ export const QuotationsList: React.FC = () => {
                           step="any"
                           value={row.rate}
                           onChange={(e) => handleRowChange(index, "rate", e.target.value)}
-                          className="w-full px-2.5 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-right focus:border-primary"
+                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-right focus:border-primary"
                         />
                       </div>
 
-                      {/* Tax */}
-                      <div className="col-span-6 sm:col-span-2">
+                      {/* Discount % */}
+                      <div className="col-span-6 sm:col-span-1">
+                        <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden text-center">Disc%</span>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="any"
+                            min="0"
+                            max="100"
+                            value={row.discount}
+                            onChange={(e) => handleRowChange(index, "discount", e.target.value)}
+                            className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold text-center focus:border-primary pr-5"
+                          />
+                          <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-bold">%</span>
+                        </div>
+                      </div>
+
+                      {/* Tax — dynamic GST label */}
+                      <div className="col-span-12 sm:col-span-2">
                         <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden text-center">Tax</span>
                         <select
                           value={row.taxRate}
                           onChange={(e) => handleRowChange(index, "taxRate", e.target.value)}
-                          className="w-full px-1 py-1.5 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary text-center appearance-none cursor-pointer"
+                          className="w-full px-1 py-1.5 border rounded-lg bg-card outline-none text-[10px] font-semibold focus:border-primary appearance-none cursor-pointer"
                         >
-                          <option value={0}>Select a Tax</option>
-                          <option value={5}>GST5 [5%]</option>
-                          <option value={12}>GST12 [12%]</option>
-                          <option value={18}>GST18 [18%]</option>
+                          <option value={0}>No Tax</option>
+                          {isInterState ? (
+                            <>
+                              <option value={5}>IGST 5%</option>
+                              <option value={12}>IGST 12%</option>
+                              <option value={18}>IGST 18%</option>
+                              <option value={28}>IGST 28%</option>
+                            </>
+                          ) : (
+                            <>
+                              <option value={5}>CGST 2.5% + SGST 2.5%</option>
+                              <option value={12}>CGST 6% + SGST 6%</option>
+                              <option value={18}>CGST 9% + SGST 9%</option>
+                              <option value={28}>CGST 14% + SGST 14%</option>
+                            </>
+                          )}
                         </select>
+                        {row.taxRate > 0 && (
+                          <span className="block text-[9px] text-indigo-500 font-bold mt-0.5 text-center">
+                            +{formatCurrency(gstAmt, currency)}
+                          </span>
+                        )}
                       </div>
 
                       {/* Amount */}
                       <div className="col-span-10 sm:col-span-1 text-right">
                         <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1 sm:hidden">Amount</span>
-                        <span className="text-xs font-bold text-foreground block pr-2 select-none mt-1 sm:mt-0">
+                        <span className="text-xs font-bold text-foreground block select-none">
                           {formatCurrency(row.total, currency)}
                         </span>
+                        {row.discount > 0 && (
+                          <span className="block text-[9px] text-emerald-500 font-bold">
+                            -{row.discount}% off
+                          </span>
+                        )}
                       </div>
 
                       {/* Delete */}
-                      <div className="col-span-2 sm:col-span-1 text-center mt-1 sm:mt-0">
+                      <div className="col-span-2 sm:col-span-1 text-center">
                         <button
                           type="button"
                           onClick={() => handleRemoveRow(index)}
@@ -857,7 +975,8 @@ export const QuotationsList: React.FC = () => {
                       </div>
 
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Item footer triggers */}
@@ -879,8 +998,10 @@ export const QuotationsList: React.FC = () => {
                         const bulk = products.slice(0, 3).map(p => ({
                           productId: p.id,
                           name: p.name,
+                          hsn: p.hsn || '',
                           quantity: 1,
                           rate: p.sellingPrice,
+                          discount: 0,
                           taxRate: 0,
                           total: p.sellingPrice
                         }));
@@ -971,27 +1092,34 @@ export const QuotationsList: React.FC = () => {
               {/* Calculations Block summary */}
               <div className="p-5 border rounded-xl bg-slate-50/30 dark:bg-slate-900/10 space-y-4 select-none">
                 
-                {/* Sub Total */}
+                {/* Sub Total (after per-item discounts) */}
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Sub Total</span>
                   <span className="font-extrabold text-foreground">{formatCurrency(subtotal, currency)}</span>
                 </div>
 
-                {/* Discount Percentage Rate */}
-                <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Discount</span>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder="0"
-                      {...register("discountRate")}
-                      className="w-16 px-2 py-1 border rounded bg-card outline-none text-right font-semibold focus:border-primary text-xs"
-                    />
-                    <span className="font-bold text-slate-400">%</span>
-                    <span className="font-bold text-foreground ml-2">-{formatCurrency(discountAmount, currency)}</span>
+                {/* GST Breakdown */}
+                {totalGst > 0 && (
+                  <div className="border-t pt-3 space-y-1.5">
+                    {isInterState ? (
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider text-[10px]">IGST</span>
+                        <span className="font-bold text-amber-600 dark:text-amber-400">+{formatCurrency(totalIgst, currency)}</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[10px]">CGST</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">+{formatCurrency(totalCgst, currency)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider text-[10px]">SGST</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">+{formatCurrency(totalSgst, currency)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
+                )}
 
                 {/* TDS / TCS selector */}
                 <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">

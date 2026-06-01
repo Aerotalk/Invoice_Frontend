@@ -86,9 +86,6 @@ export interface Vendor {
   website?: string;
   department?: string;
   designation?: string;
-  socialX?: string;
-  skype?: string;
-  socialFacebook?: string;
   billingAddress?: {
     attention?: string;
     street1?: string;

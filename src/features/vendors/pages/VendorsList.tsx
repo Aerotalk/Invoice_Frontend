@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
   Users, 
@@ -84,15 +84,14 @@ const vendorSchema = zod.object({
   language: zod.string().min(1, { message: "Language is required" }),
   
   // Tab 1: Other Details
+  gstTreatment: zod.string().min(1, { message: "GST Treatment is required" }),
+  gstNumber: zod.string().optional(),
   pan: zod.string(),
   paymentTerms: zod.string(),
   enablePortal: zod.boolean(),
   website: zod.string(),
   department: zod.string(),
   designation: zod.string(),
-  socialX: zod.string(),
-  skype: zod.string(),
-  socialFacebook: zod.string(),
 
   // Tab 2: Address (Billing)
   billingAttention: zod.string(),
@@ -152,7 +151,9 @@ export const VendorsList: React.FC = () => {
     { id: 'cf-1', label: 'GSTIN', value: '' },
     { id: 'cf-2', label: 'Category', value: 'Cloud / Tech' }
   ]);
-  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string }>>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<Array<{ name: string; size: string; url?: string }>>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Secondary Contact Form row state
   const [newContact, setNewContact] = useState({
@@ -185,15 +186,14 @@ export const VendorsList: React.FC = () => {
       mobileCode: '+91',
       mobile: '',
       language: 'English',
+      gstTreatment: '',
+      gstNumber: '',
       pan: '',
       paymentTerms: 'Due on Receipt',
       enablePortal: false,
       website: '',
       department: '',
       designation: '',
-      socialX: '',
-      skype: '',
-      socialFacebook: '',
       billingCountry: 'India',
       billingState: 'West Bengal',
       billingCity: 'Kolkata',
@@ -212,6 +212,8 @@ export const VendorsList: React.FC = () => {
   const billingState = watch("billingState");
   const shippingCountry = watch("shippingCountry");
   const shippingState = watch("shippingState");
+  const gstTreatmentVal = watch("gstTreatment");
+  const isNotRegisteredBusiness = gstTreatmentVal === 'Overseas' || gstTreatmentVal === 'Consumer' || gstTreatmentVal === 'Unregistered Business' || gstTreatmentVal === '';
 
   // Load vendors
   const loadVendors = async () => {
@@ -336,17 +338,35 @@ export const VendorsList: React.FC = () => {
     setCustomFields(customFields.filter(f => f.id !== id));
   };
 
-  // Simulating document uploads
-  const handleMockUpload = () => {
+  // Real file upload via apiService
+  const handleUploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     if (uploadedDocuments.length >= 3) {
       toast.error("Maximum of 3 files allowed.");
       return;
     }
-    const files = ['vendor_licence.pdf', 'security_audit.pdf', 'terms_of_service.docx'];
-    const selected = files[Math.floor(Math.random() * files.length)];
-    const size = `${(Math.random() * 4 + 1).toFixed(1)} MB`;
-    
-    setUploadedDocuments([...uploadedDocuments, { name: selected, size }]);
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds 10MB limit.");
+      return;
+    }
+
+    setUploadingFile(true);
+    try {
+      const res = await apiService.uploadFile(file);
+      const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+      setUploadedDocuments(prev => [...prev, { name: file.name, size: sizeStr, url: fileUrl }]);
+      toast.success("Document uploaded successfully.");
+    } catch (error) {
+      toast.error("Failed to upload document.");
+      console.error(error);
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleRemoveDocument = (index: number) => {
@@ -372,15 +392,14 @@ export const VendorsList: React.FC = () => {
         displayName: values.displayName,
         currency: values.currency,
         language: values.language,
+        gstTreatment: values.gstTreatment,
+        gstNumber: isNotRegisteredBusiness ? undefined : values.gstNumber,
         pan: values.pan,
         paymentTerms: values.paymentTerms,
         enablePortal: values.enablePortal,
         website: values.website,
         department: values.department,
         designation: values.designation,
-        socialX: values.socialX,
-        skype: values.skype,
-        socialFacebook: values.socialFacebook,
         
         // Addresses
         billingAddress: {
@@ -431,11 +450,11 @@ export const VendorsList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
-          <img 
+          {/* <img 
             src={row.avatar || "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150"} 
             alt={row.name} 
             className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0" 
-          />
+          /> */}
           <div>
             <Link 
               to={`/dashboard/vendors/${row.id}`} 
@@ -916,6 +935,54 @@ export const VendorsList: React.FC = () => {
                 {activeFormTab === 'other' && (
                   <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                      {/* GST Treatment */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                          GST Treatment <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          {...register("gstTreatment")}
+                          className={cn(
+                            "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-semibold cursor-pointer appearance-none",
+                            errors.gstTreatment ? "border-rose-500/70" : ""
+                          )}
+                        >
+                          <option value="" disabled>Select a GST treatment</option>
+                          <option value="Registered Business - Regular">Registered Business - Regular</option>
+                          <option value="Registered Business - Composition">Registered Business - Composition</option>
+                          <option value="Unregistered Business">Unregistered Business</option>
+                          <option value="Consumer">Consumer</option>
+                          <option value="Overseas">Overseas</option>
+                          <option value="Special Economic Zone">Special Economic Zone</option>
+                          <option value="Deemed Export">Deemed Export</option>
+                          <option value="Non-GST Supply">Non-GST Supply</option>
+                          <option value="Out Of Scope">Out Of Scope</option>
+                          <option value="Tax Deductor">Tax Deductor</option>
+                        </select>
+                        {errors.gstTreatment && <span className="text-[9px] text-rose-500 font-bold">{errors.gstTreatment.message}</span>}
+                      </div>
+
+                      {/* GST Number — only for Registered Business */}
+                      {!isNotRegisteredBusiness && (
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">
+                            GST Number <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 29ABCDE1234F1Z5"
+                            {...register("gstNumber")}
+                            className={cn(
+                              "w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium",
+                              errors.gstNumber ? "border-rose-500/70" : ""
+                            )}
+                          />
+                          {errors.gstNumber && <span className="text-[9px] text-rose-500 font-bold">{errors.gstNumber.message}</span>}
+                        </div>
+                      )}
+
+                      {/* PAN */}
                       <div className="flex flex-col gap-1.5">
                         <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">PAN (Tax Identification Number)</label>
                         <input
@@ -975,47 +1042,7 @@ export const VendorsList: React.FC = () => {
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
                       </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Skype Address/Number</label>
-                        <input
-                          type="text"
-                          placeholder="live:skype_vendor"
-                          {...register("skype")}
-                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">X Profile Link</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="https://x.com/vendor_handle"
-                            {...register("socialX")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Facebook Page</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="http://www.facebook.com/vendorpage"
-                            {...register("socialFacebook")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                          </svg>
-                        </div>
-                      </div>
+ 
                     </div>
 
                     <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border mt-2">
@@ -1034,6 +1061,24 @@ export const VendorsList: React.FC = () => {
                     <div className="space-y-2 mt-4">
                       <div className="flex items-center justify-between border-t pt-3">
                         <span className="text-[10px] font-extrabold uppercase text-muted-foreground">Documents Attachment</span>
+                        {uploadedDocuments.length < 3 && (
+                          <label className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 border rounded-lg text-[10px] font-bold cursor-pointer transition-all active:scale-95 shadow-sm",
+                            uploadingFile
+                              ? "text-slate-400 border-slate-200 bg-slate-50 pointer-events-none"
+                              : "text-primary border-primary/30 hover:bg-primary/5"
+                          )}>
+                            <Upload className="w-3 h-3 shrink-0" />
+                            {uploadingFile ? "Uploading..." : "Upload File"}
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleUploadFile}
+                              className="hidden"
+                              disabled={uploadingFile}
+                            />
+                          </label>
+                        )}
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -1054,7 +1099,7 @@ export const VendorsList: React.FC = () => {
                         ))}
                         {uploadedDocuments.length === 0 && (
                           <div className="col-span-3 py-6 border border-dashed rounded-lg text-center text-slate-400 text-[10px]">
-                            No documents attached. You can attach up to 3 files.
+                            No documents attached. You can attach up to 3 files (max 10 MB each).
                           </div>
                         )}
                       </div>
