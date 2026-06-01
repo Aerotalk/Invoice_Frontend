@@ -13,7 +13,8 @@ import {
   Package, 
   Layers, 
   AlertCircle,
-  Eye
+  Eye,
+  Edit2Icon
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
@@ -27,6 +28,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+import { Product } from '../../../types';
 
 // Zod schema designed to prevent input/output type conflicts
 const productSchema = zod.object({
@@ -51,7 +53,8 @@ export const ProductsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeProductMenu, setActiveProductMenu] = useState<string | null>(null);
-  
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
   // Custom unit dropdown state
   const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
   const [unitSearchQuery, setUnitSearchQuery] = useState("");
@@ -219,11 +222,17 @@ export const ProductsList: React.FC = () => {
         imageUrl: selectedMockImage || "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150" // default fallback
       };
 
-      await apiService.createProduct(payload);
-      toast.success("Product profile added successfully!");
+      if (editingProduct) {
+        await apiService.updateProduct(editingProduct.id, payload);
+        toast.success("Product profile updated successfully!");
+      } else {
+        await apiService.createProduct(payload);
+        toast.success("Product profile added successfully!");
+      }
       setDrawerOpen(false);
       reset();
       setSelectedMockImage(null);
+      setEditingProduct(null);
       loadData();
     } catch (e) {
       console.error(e);
@@ -246,11 +255,11 @@ export const ProductsList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
-          <img 
+          {/* <img 
             src={row.imageUrl || "https://images.unsplash.com/photo-1618401471353-b98aedd07871?w=150"} 
             alt={row.name} 
             className="w-10 h-10 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0" 
-          />
+          /> */}
           <div>
             <span className="block text-xs font-bold text-foreground hover:text-primary transition-colors">
               {row.name}
@@ -323,14 +332,27 @@ export const ProductsList: React.FC = () => {
               <div className="absolute right-full -top-8 mr-2 w-40 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={() => {
                     setActiveProductMenu(null);
-                    toast.success(`Product Details:\nName: ${row.name}\nType: ${row.type}\nUnit: ${row.unit}\nSelling Price: ${formatCurrency(row.sellingPrice, currency)}\nDescription: ${row.description || "N/A"}`);
+                    setEditingProduct(row);
+                    setSelectedMockImage(row.imageUrl || null);
+                    reset({
+                      name: row.name,
+                      type: row.type as 'goods' | 'service',
+                      unit: row.unit,
+                      hsnCode: row.hsnCode || '',
+                      taxPreference: row.taxPreference || 'Taxable',
+                      intraStateTaxRate: row.intraStateTaxRate || '',
+                      interStateTaxRate: row.interStateTaxRate || '',
+                      sellingPrice: String(row.sellingPrice),
+                      description: row.description || ''
+                    });
+                    setDrawerOpen(true);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
-                  <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  Quick View
+                  <Edit2Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Edit Item
                 </button>
                 <button
                   type="button"
@@ -393,7 +415,18 @@ export const ProductsList: React.FC = () => {
 
           <button
             onClick={() => {
-              reset();
+              setEditingProduct(null);
+              reset({
+                name: '',
+                type: 'goods',
+                unit: '',
+                hsnCode: '',
+                taxPreference: 'Taxable',
+                intraStateTaxRate: '',
+                interStateTaxRate: '',
+                sellingPrice: '0',
+                description: ''
+              });
               setSelectedMockImage(null);
               setDrawerOpen(true);
             }}
@@ -417,8 +450,11 @@ export const ProductsList: React.FC = () => {
       {/* Advanced High-Fidelity Add Item Drawer */}
       <Drawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title="New Item"
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditingProduct(null);
+        }}
+        title={editingProduct ? "Edit Item" : "New Item"}
         size="lg"
       >
         <form onSubmit={handleSubmit(onSubmitProduct)} className="flex flex-col h-[82vh] text-xs font-semibold select-none relative">
@@ -454,25 +490,45 @@ export const ProductsList: React.FC = () => {
                     Type
                   </label>
                   <div className="flex items-center gap-6">
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-foreground text-xs select-none">
+                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-foreground text-xs select-none group">
                       <input
                         type="radio"
                         value="goods"
                         checked={selectedType === 'goods'}
                         onChange={() => setValue("type", "goods")}
-                        className="w-4 h-4 text-primary bg-slate-100 border-slate-300 dark:border-slate-800 focus:ring-primary accent-primary"
+                        className="sr-only"
                       />
+                      <div className={cn(
+                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                        selectedType === 'goods'
+                          ? "border-primary bg-card"
+                          : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                      )}>
+                        {selectedType === 'goods' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
                       <span>Goods</span>
                     </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-foreground text-xs select-none">
+                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-foreground text-xs select-none group">
                       <input
                         type="radio"
                         value="service"
                         checked={selectedType === 'service'}
                         onChange={() => setValue("type", "service")}
-                        className="w-4 h-4 text-primary bg-slate-100 border-slate-300 dark:border-slate-800 focus:ring-primary accent-primary"
+                        className="sr-only"
                       />
+                      <div className={cn(
+                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all group-focus-within:ring-2 group-focus-within:ring-primary/20",
+                        selectedType === 'service'
+                          ? "border-primary bg-card"
+                          : "border-slate-300 dark:border-slate-800 bg-slate-100 dark:bg-slate-900"
+                      )}>
+                        {selectedType === 'service' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
                       <span>Service</span>
                     </label>
                   </div>
@@ -624,7 +680,7 @@ export const ProductsList: React.FC = () => {
               </div>
 
               {/* Image drag upload mockup box */}
-              <div className="flex flex-col justify-start">
+              {/* <div className="flex flex-col justify-start">
                 <span className="text-muted-foreground font-bold tracking-wide uppercase text-[10px] mb-1.5">Item Image</span>
                 
                 <input 
@@ -673,7 +729,7 @@ export const ProductsList: React.FC = () => {
                     </>
                   )}
                 </div>
-              </div>
+              </div> */}
 
             </div>
 
@@ -783,7 +839,10 @@ export const ProductsList: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setDrawerOpen(false)}
+                onClick={() => {
+                  setDrawerOpen(false);
+                  setEditingProduct(null);
+                }}
                 className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground/80 hover:text-foreground text-xs font-bold transition-all active:scale-95"
               >
                 Cancel
@@ -799,7 +858,7 @@ export const ProductsList: React.FC = () => {
                     Saving...
                   </>
                 ) : (
-                  "Save Item"
+                  editingProduct ? "Update Item" : "Save Item"
                 )}
               </button>
             </div>

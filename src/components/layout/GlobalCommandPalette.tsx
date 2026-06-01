@@ -104,20 +104,20 @@ export const GlobalCommandPalette: React.FC = () => {
       shortcut: ["T", "G"],
       action: () => { toggleTheme(); setOpen(false); }
     },
-    {
-      id: "set-curr-usd",
-      title: "Set Active Currency to USD ($)",
-      category: "Settings",
-      icon: DollarSign,
-      action: () => { setCurrency("USD"); setOpen(false); }
-    },
-    {
-      id: "set-curr-eur",
-      title: "Set Active Currency to EUR (€)",
-      category: "Settings",
-      icon: DollarSign,
-      action: () => { setCurrency("EUR"); setOpen(false); }
-    }
+    // {
+    //   id: "set-curr-usd",
+    //   title: "Set Active Currency to USD ($)",
+    //   category: "Settings",
+    //   icon: DollarSign,
+    //   action: () => { setCurrency("USD"); setOpen(false); }
+    // },
+    // {
+    //   id: "set-curr-eur",
+    //   title: "Set Active Currency to EUR (€)",
+    //   category: "Settings",
+    //   icon: DollarSign,
+    //   action: () => { setCurrency("EUR"); setOpen(false); }
+    // }
   ];
 
   // Filter commands by query

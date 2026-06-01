@@ -387,33 +387,6 @@ export const VendorDetails: React.FC = () => {
                 </div>
               </div>
 
-              {/* Social Channels */}
-              <div className="pt-2 border-t space-y-3">
-                <span className="block text-[10px] font-bold text-muted-foreground uppercase">Social Channels</span>
-                <div className="flex flex-col gap-2">
-                  {vendor.socialX && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded">X (Twitter)</span>
-                      <span className="text-xs font-semibold">{vendor.socialX}</span>
-                    </div>
-                  )}
-                  {vendor.socialFacebook && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded">Facebook</span>
-                      <span className="text-xs font-semibold">{vendor.socialFacebook}</span>
-                    </div>
-                  )}
-                  {vendor.skype && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded">Skype</span>
-                      <span className="text-xs font-semibold">{vendor.skype}</span>
-                    </div>
-                  )}
-                  {!vendor.socialX && !vendor.socialFacebook && !vendor.skype && (
-                    <span className="text-xs text-muted-foreground">No social channel configurations captured.</span>
-                  )}
-                </div>
-              </div>
             </div>
 
             {/* Geographical Address specifications */}

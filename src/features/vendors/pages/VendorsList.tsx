@@ -90,9 +90,6 @@ const vendorSchema = zod.object({
   website: zod.string(),
   department: zod.string(),
   designation: zod.string(),
-  socialX: zod.string(),
-  skype: zod.string(),
-  socialFacebook: zod.string(),
 
   // Tab 2: Address (Billing)
   billingAttention: zod.string(),
@@ -191,9 +188,6 @@ export const VendorsList: React.FC = () => {
       website: '',
       department: '',
       designation: '',
-      socialX: '',
-      skype: '',
-      socialFacebook: '',
       billingCountry: 'India',
       billingState: 'West Bengal',
       billingCity: 'Kolkata',
@@ -378,9 +372,6 @@ export const VendorsList: React.FC = () => {
         website: values.website,
         department: values.department,
         designation: values.designation,
-        socialX: values.socialX,
-        skype: values.skype,
-        socialFacebook: values.socialFacebook,
         
         // Addresses
         billingAddress: {
@@ -431,11 +422,11 @@ export const VendorsList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <div className="flex items-center gap-3 select-none">
-          <img 
+          {/* <img 
             src={row.avatar || "https://images.unsplash.com/photo-1523474253046-8cd2748b5fd2?w=150"} 
             alt={row.name} 
             className="w-8.5 h-8.5 rounded-lg object-cover border ring-1 ring-border shadow-sm shrink-0" 
-          />
+          /> */}
           <div>
             <Link 
               to={`/dashboard/vendors/${row.id}`} 
@@ -975,47 +966,7 @@ export const VendorsList: React.FC = () => {
                           className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                         />
                       </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Skype Address/Number</label>
-                        <input
-                          type="text"
-                          placeholder="live:skype_vendor"
-                          {...register("skype")}
-                          className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                        />
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">X Profile Link</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="https://x.com/vendor_handle"
-                            {...register("socialX")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-muted-foreground font-bold tracking-wide uppercase text-[9px]">Facebook Page</label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            placeholder="http://www.facebook.com/vendorpage"
-                            {...register("socialFacebook")}
-                            className="w-full pl-8 pr-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
-                          />
-                          <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-                          </svg>
-                        </div>
-                      </div>
+ 
                     </div>
 
                     <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg border mt-2">
