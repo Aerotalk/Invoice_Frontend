@@ -273,6 +273,16 @@ export interface ProjectInvoice {
   description: string;
   date: string;
   url: string;
+  amount?: number;
+  status?: 'pending' | 'sent' | 'paid';
+  vendorTag?: string;
+}
+
+export interface ProjectEntity {
+  id: string;
+  name: string;
+  tag: string;
+  remarks?: string;
 }
 
 export interface Project {
@@ -290,6 +300,9 @@ export interface Project {
   tasks: Task[];
   timeLogs: TimeLog[];
   invoices?: ProjectInvoice[];
+  entities?: ProjectEntity[];
+  notes?: string;
+  description?: string;
 }
 
 export interface TimeEntry {

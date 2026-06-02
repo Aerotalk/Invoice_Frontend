@@ -26,6 +26,8 @@ export const ProjectsList: React.FC = () => {
   const [budget, setBudget] = useState('');
   const [projectCurrency, setProjectCurrency] = useState(currency || 'INR');
   const [dueDate, setDueDate] = useState('');
+  const [description, setDescription] = useState('');
+  const [projectStatus, setProjectStatus] = useState<'planning' | 'in-progress' | 'on-hold'>('planning');
 
   // Custom multi-select states
   const [vendorDropdownOpen, setVendorDropdownOpen] = useState(false);
@@ -98,7 +100,8 @@ export const ProjectsList: React.FC = () => {
         budget: Number(budget),
         currency: projectCurrency,
         dueDate,
-        status: 'planning',
+        status: projectStatus,
+        description: description || undefined,
         teamMembers: [
           "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
           "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
@@ -116,6 +119,8 @@ export const ProjectsList: React.FC = () => {
       setBudget('');
       setProjectCurrency(currency || 'INR');
       setDueDate('');
+      setDescription('');
+      setProjectStatus('planning');
       toast.success("Project created successfully!");
     } catch (error) {
       console.error(error);
@@ -247,6 +252,17 @@ export const ProjectsList: React.FC = () => {
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700"
               placeholder="e.g. Website Redesign"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700"
+              placeholder="Brief project scope (optional)"
             />
           </div>
 
@@ -398,6 +414,19 @@ export const ProjectsList: React.FC = () => {
                 className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Initial Status</label>
+            <select
+              value={projectStatus}
+              onChange={(e) => setProjectStatus(e.target.value as any)}
+              className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary transition-colors text-sm border-slate-300 dark:border-slate-700 cursor-pointer"
+            >
+              <option value="planning">Planning</option>
+              <option value="in-progress">In Progress</option>
+              <option value="on-hold">On Hold</option>
+            </select>
           </div>
 
           <div className="flex justify-end gap-3 pt-6 border-t mt-6">
