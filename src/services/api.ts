@@ -26,8 +26,8 @@ export const apiService = {
       avatar: c.documentsAttachment,
       phone: (c.workPhone || c.mobilePhone) ? `${c.workPhoneCode || ''} ${c.workPhone || c.mobilePhone}`.trim() : 'N/A',
       status: 'active',
-      totalBilled: c.totalBilled || 0,
-      outstandingAmount: c.outstandingAmount || 0,
+      totalBilled: (c.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
+      outstandingAmount: (c.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
     }));
   },
 
@@ -44,12 +44,25 @@ export const apiService = {
         avatar: client.documentsAttachment || '',
         phone: (client.workPhone || client.mobilePhone) ? `${client.workPhoneCode || ''} ${client.workPhone || client.mobilePhone}`.trim() : 'N/A',
         status: 'active',
-        totalBilled: client.totalBilled || 0,
-        outstandingAmount: client.outstandingAmount || 0,
+        totalBilled: (client.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
+        outstandingAmount: (client.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0), // Assumes no payments logged yet
       },
-      invoices: client.quotations || [], // TBD: If quotes/invoices overlap
+      invoices: (client.quotations || []).map((q: any) => ({
+        ...q,
+        invoiceNumber: q.quoteNumber,
+        issueDate: q.quoteDate,
+        total: q.totalAmount,
+        amountPaid: 0,
+        status: q.status
+      })),
       payments: [],
-      projects: client.projects || []
+      projects: (client.projects || []).map((p: any) => ({
+        ...p,
+        name: p.projectName,
+        status: p.status || 'in-progress',
+        progress: p.progress || 0,
+        tasks: p.tasks || []
+      }))
     };
   },
 
@@ -79,8 +92,8 @@ export const apiService = {
       avatar: v.documentsAttachment,
       phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
       status: 'active',
-      totalBilled: v.totalBilled || 0,
-      outstandingAmount: v.outstandingAmount || 0,
+      totalBilled: (v.expenses || []).reduce((sum: number, e: any) => sum + (e.amount || 0), 0),
+      outstandingAmount: (v.expenses || []).reduce((sum: number, e: any) => sum + (e.amount || 0), 0), // Assuming no payments logged yet
     }));
   },
 
@@ -118,7 +131,7 @@ export const apiService = {
           phone: v.shippingPhone || ''
         }
       }, 
-      expenses: [] 
+      expenses: v.expenses || [] 
     };
   },
 
