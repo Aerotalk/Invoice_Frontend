@@ -137,7 +137,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             logos: userObj.settings?.brandLogoUrls || [],
             addresses: userObj.settings?.billingAddresses || []
           };
-          localStorage.setItem('invoiceiq_user_v2', JSON.stringify(updated));
+          localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(updated));
           return { user: updated };
         });
       }

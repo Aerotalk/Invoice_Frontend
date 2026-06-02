@@ -218,34 +218,8 @@ export const apiService = {
   },
 
   createQuote: async (quoteData: Record<string, unknown>) => {
-    // Adapter to transform frontend shape to backend schema shape
-    const formattedData = {
-      quoteNumber: quoteData.quoteNumber,
-      referenceNumber: quoteData.referenceNumber,
-      customerId: quoteData.clientId, // The backend uses customerId
-      projectId: quoteData.projectId,
-      quoteDate: quoteData.issueDate || quoteData.quoteDate,
-      expiryDate: quoteData.expiryDate,
-      subTotal: quoteData.subtotal,
-      discountRate: quoteData.discountRate,
-      discountAmount: quoteData.discountAmount,
-      taxRate: quoteData.taxRate,
-      totalTax: quoteData.taxAmount,
-      adjustment: quoteData.adjustment,
-      totalAmount: quoteData.total,
-      termsConditions: quoteData.terms,
-      customerNotes: quoteData.notes,
-      items: (quoteData.items as Array<Record<string, unknown>>).map((item) => ({
-        productId: item.productId,
-        customDetails: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-        tax: item.tax,
-        amount: item.amount || ((item.quantity as number) * (item.rate as number))
-      }))
-    };
-    
-    const res = await api.post('/quotations', formattedData);
+    // Send native frontend payload to perfectly match the backend mirrored schema
+    const res = await api.post('/quotations', quoteData);
     return res.data.data;
   },
 
