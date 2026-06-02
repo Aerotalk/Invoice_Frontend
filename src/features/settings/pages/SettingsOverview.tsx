@@ -23,6 +23,11 @@ import { cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
 import { apiService } from '../../../services/api';
 
+interface AdditionalField {
+  label: string;
+  value: string;
+}
+
 export const SettingsOverview: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
   const { currency, setCurrency, defaultTaxRate, setDefaultTaxRate } = usePreferencesStore();
