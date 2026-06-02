@@ -143,16 +143,30 @@ export const SettingsOverview: React.FC = () => {
   const pubKey = "pk_test_51MzSInvoiceIQSecretKey2026";
   const secKey = "sk_test_51MzSInvoiceIQSecretPrivateKeyUnbreakable2026";
 
-  const handleSaveProfile = () => {
-    updateProfile({
-      name: adminName,
-      email: email,
-      companyName: compName,
-      avatar: avatar,
-      logos: logos,
-      addresses: addresses,
-    });
-    toast.success("Workspace Settings Profile updated successfully!");
+  const handleSaveProfile = async () => {
+    try {
+      await apiService.updateSettings({
+        workspaceBrandName: compName,
+        adminProfileName: adminName,
+        billingEmailContact: email,
+        profileAvatarUrl: avatar,
+        brandLogoUrls: logos,
+        billingAddresses: addresses,
+      });
+
+      updateProfile({
+        name: adminName,
+        email: email,
+        companyName: compName,
+        avatar: avatar,
+        logos: logos,
+        addresses: addresses,
+      });
+      toast.success("Workspace Settings Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update settings to the server.");
+      console.error(error);
+    }
   };
 
   const handleCopy = (text: string) => {

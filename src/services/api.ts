@@ -376,5 +376,11 @@ export const apiService = {
       },
     });
     return res.data.data;
+  },
+
+  // --- SETTINGS MODULE ---
+  updateSettings: async (settingsData: any) => {
+    const res = await api.put('/settings', settingsData);
+    return res.data.data;
   }
 };

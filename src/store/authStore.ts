@@ -9,6 +9,7 @@ interface AuthState {
   register: (data: Record<string, unknown>) => Promise<boolean>;
   logout: () => void;
   updateProfile: (profile: Partial<UserProfile>) => void;
+  fetchMe: () => Promise<void>;
 }
 
 const getInitialUser = (): UserProfile | null => {
@@ -48,10 +49,10 @@ export const useAuthStore = create<AuthState>((set) => ({
             email: data.user.email,
             role: data.user.accountType,
             companyName: data.user.companyName,
-            avatar: "", 
+            avatar: data.user.avatar || "", 
             currency: "INR",
-            logos: [],
-            addresses: []
+            logos: data.user.logos || [],
+            addresses: data.user.addresses || []
         };
         
         localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(userProfile));
@@ -90,10 +91,10 @@ export const useAuthStore = create<AuthState>((set) => ({
             email: data.user.email,
             role: data.user.accountType,
             companyName: data.user.companyName,
-            avatar: "",
+            avatar: data.user.avatar || "",
             currency: "INR",
-            logos: [],
-            addresses: []
+            logos: data.user.logos || [],
+            addresses: data.user.addresses || []
         };
         
         localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(userProfile));
@@ -118,5 +119,30 @@ export const useAuthStore = create<AuthState>((set) => ({
     const updated = { ...state.user, ...profile };
     localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(updated));
     return { user: updated };
-  })
+  }),
+
+  fetchMe: async () => {
+    try {
+      if (!localStorage.getItem('token')) return;
+      
+      const res = await api.get('/auth/me');
+      const data = res.data;
+      if (data.success && data.data) {
+        set((state) => {
+          if (!state.user) return {};
+          const userObj = data.data;
+          const updated = {
+            ...state.user,
+            avatar: userObj.settings?.profileAvatarUrl || "",
+            logos: userObj.settings?.brandLogoUrls || [],
+            addresses: userObj.settings?.billingAddresses || []
+          };
+          localStorage.setItem('invoiceiq_user_v2', JSON.stringify(updated));
+          return { user: updated };
+        });
+      }
+    } catch (err) {
+      console.error('Failed to sync profile', err);
+    }
+  }
 }));
