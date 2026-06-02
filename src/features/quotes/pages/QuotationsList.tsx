@@ -79,6 +79,7 @@ export const QuotationsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeQuoteMenu, setActiveQuoteMenu] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Dynamic input controls
   const [isCustomQuoteCode, setIsCustomQuoteCode] = useState(false);
@@ -538,14 +539,15 @@ export const QuotationsList: React.FC = () => {
                   onClick={async () => {
                     setActiveQuoteMenu(null);
                     try {
-                      const toastId = toast.loading("Generating PDF...");
+                      setIsGeneratingPdf(true);
                       const blob = await apiService.downloadQuotationPdf(row.id);
                       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                       window.open(url, '_blank');
-                      toast.dismiss(toastId);
                     } catch (err) {
                       console.error(err);
                       toast.error("Failed to load PDF");
+                    } finally {
+                      setIsGeneratingPdf(false);
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
@@ -1262,6 +1264,22 @@ export const QuotationsList: React.FC = () => {
         </form>
       </Drawer>
 
+      {isGeneratingPdf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-full animate-pulse opacity-50" />
+              </div>
+            </div>
+            <h3 className="mt-6 text-xl font-bold tracking-tight">Generating PDF</h3>
+            <p className="text-muted-foreground mt-2 text-center text-sm">
+              Please wait while we render your beautiful quotation document...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
