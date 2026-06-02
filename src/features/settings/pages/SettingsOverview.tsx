@@ -86,6 +86,8 @@ export const SettingsOverview: React.FC = () => {
         const res = await apiService.uploadFile(file, 'AVATAR');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
         setAvatar(fileUrl);
+        updateProfile({ avatar: fileUrl });
+        await apiService.updateSettings({ profileAvatarUrl: fileUrl });
         toast.success("Profile picture uploaded successfully.");
       } catch (error) {
         toast.error("Failed to upload profile picture.");
@@ -109,10 +111,14 @@ export const SettingsOverview: React.FC = () => {
       try {
         const res = await apiService.uploadFile(file, 'BRANDLOGO');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
+        let updatedLogos = logos;
         setLogos((prev) => {
           if (prev.length >= 5) return prev;
-          return [...prev, fileUrl];
+          updatedLogos = [...prev, fileUrl];
+          return updatedLogos;
         });
+        updateProfile({ logos: updatedLogos });
+        await apiService.updateSettings({ brandLogoUrls: updatedLogos });
         toast.success("Logo uploaded successfully.");
       } catch (error) {
         toast.error("Failed to upload logo.");
