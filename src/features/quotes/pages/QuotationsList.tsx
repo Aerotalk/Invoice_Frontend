@@ -226,14 +226,28 @@ export const QuotationsList: React.FC = () => {
       if (prod) {
         row.productId = prod.id;
         row.name = prod.name;
-        row.hsn = prod.hsn || '';
+        row.hsn = prod.hsnCode || prod.hsn || '';
         row.rate = prod.sellingPrice;
+        
+        // Auto-populate taxRate based on product tax preference and client state
+        let taxPercent = 0;
+        if (prod.taxPreference === 'TAXABLE' || prod.taxPreference === 'Taxable') {
+          const rateStr = isInterState ? prod.interStateTaxRate : prod.intraStateTaxRate;
+          if (rateStr) {
+            const match = rateStr.match(/(\d+(?:\.\d+)?)\s*%/);
+            if (match) {
+              taxPercent = Number(match[1]);
+            }
+          }
+        }
+        row.taxRate = taxPercent;
         row.total = calcRowTotal(row.quantity, prod.sellingPrice, row.discount);
       } else {
         row.productId = "";
         row.name = "";
         row.hsn = "";
         row.rate = 0;
+        row.taxRate = 0;
         row.total = 0;
       }
     } else if (field === 'quantity') {
@@ -995,16 +1009,28 @@ export const QuotationsList: React.FC = () => {
                     onClick={() => {
                       // Bulk pre-fill mock
                       if (products.length > 0) {
-                        const bulk = products.slice(0, 3).map(p => ({
-                          productId: p.id,
-                          name: p.name,
-                          hsn: p.hsn || '',
-                          quantity: 1,
-                          rate: p.sellingPrice,
-                          discount: 0,
-                          taxRate: 0,
-                          total: p.sellingPrice
-                        }));
+                        const bulk = products.slice(0, 3).map(p => {
+                          let taxPercent = 0;
+                          if (p.taxPreference === 'TAXABLE' || p.taxPreference === 'Taxable') {
+                            const rateStr = isInterState ? p.interStateTaxRate : p.intraStateTaxRate;
+                            if (rateStr) {
+                              const match = rateStr.match(/(\d+(?:\.\d+)?)\s*%/);
+                              if (match) {
+                                taxPercent = Number(match[1]);
+                              }
+                            }
+                          }
+                          return {
+                            productId: p.id,
+                            name: p.name,
+                            hsn: p.hsnCode || p.hsn || '',
+                            quantity: 1,
+                            rate: p.sellingPrice,
+                            discount: 0,
+                            taxRate: taxPercent,
+                            total: p.sellingPrice
+                          };
+                        });
                         setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
                         toast.success("Added top products catalog in bulk!");
                       }
