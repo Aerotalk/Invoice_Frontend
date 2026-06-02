@@ -58,7 +58,7 @@ export const UserProfilePage: React.FC = () => {
     }
 
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'BRANDLOGO');
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
       setLogos([...logos, fileUrl]);
       toast.success("Logo uploaded successfully.");
@@ -77,7 +77,7 @@ export const UserProfilePage: React.FC = () => {
     }
 
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'AVATAR');
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
       setAvatar(fileUrl);
       toast.success("Profile picture uploaded successfully.");
@@ -110,7 +110,17 @@ export const UserProfilePage: React.FC = () => {
       avatar,
       logos
     });
-    toast.success("User Profile updated successfully!");
+
+    try {
+      await apiService.updateSettings({
+        profileAvatarUrl: avatar,
+        brandLogoUrls: logos
+      });
+      toast.success("User Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to sync profile settings with cloud.");
+      console.error(error);
+    }
     setIsSaving(false);
   };
 

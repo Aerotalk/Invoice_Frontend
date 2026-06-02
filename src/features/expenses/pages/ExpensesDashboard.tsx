@@ -272,8 +272,9 @@ export const ExpensesDashboard: React.FC = () => {
     setIsUploading(true);
     setUploadProgress(30);
     try {
-      const response = await apiService.uploadFile(file);
-      setUploadedReceipt(response.url || `/uploads/${response.filename}`);
+      const response = await apiService.uploadFile(file, 'Reciepts');
+      const fileUrl = typeof response === 'string' ? response : (response?.url || response?.path || '');
+      setUploadedReceipt(fileUrl);
       setUploadProgress(100);
       toast.success("Receipt uploaded successfully");
     } catch (error) {

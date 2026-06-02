@@ -311,7 +311,7 @@ export const QuotationsList: React.FC = () => {
 
     setUploadingFile(true);
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'Documents');
       const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');

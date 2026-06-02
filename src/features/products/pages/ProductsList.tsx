@@ -186,7 +186,7 @@ export const ProductsList: React.FC = () => {
 
     setIsUploading(true);
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'Documents');
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
       setSelectedMockImage(fileUrl);
       toast.success("Image uploaded successfully.");

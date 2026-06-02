@@ -78,7 +78,7 @@ export const SettingsOverview: React.FC = () => {
         return;
       }
       try {
-        const res = await apiService.uploadFile(file);
+        const res = await apiService.uploadFile(file, 'AVATAR');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
         setAvatar(fileUrl);
         toast.success("Profile picture uploaded successfully.");
@@ -102,7 +102,7 @@ export const SettingsOverview: React.FC = () => {
         return;
       }
       try {
-        const res = await apiService.uploadFile(file);
+        const res = await apiService.uploadFile(file, 'BRANDLOGO');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
         setLogos((prev) => {
           if (prev.length >= 5) return prev;

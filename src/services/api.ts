@@ -341,8 +341,11 @@ export const apiService = {
   getAuditLogs: async () => [],
 
   // --- UPLOAD MODULE ---
-  uploadFile: async (file: File) => {
+  uploadFile: async (file: File, folder?: string) => {
     const formData = new FormData();
+    if (folder) {
+      formData.append('folder', folder);
+    }
     formData.append('file', file);
     const res = await api.post('/upload', formData, {
       headers: {
