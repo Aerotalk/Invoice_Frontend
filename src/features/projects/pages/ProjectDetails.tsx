@@ -299,7 +299,7 @@ export const ProjectDetails: React.FC = () => {
     (inv: any) => inv && inv.invoiceId && inv.invoiceId.trim() !== ''
   );
 
-  const projectVendors: { id: string; name: string }[] = project?.vendors || [];
+  const projectVendors: any[] = (project?.vendors || []).map((pv: any) => pv.vendor || pv).filter(Boolean);
 
   // ─── Summary financials for close modal ──────────────────────────────────
   const totalInvoiced = validInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);
