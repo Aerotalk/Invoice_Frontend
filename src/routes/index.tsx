@@ -19,7 +19,7 @@ const LoadingScreen = () => (
         </svg>
       </div>
     </div>
-    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Loading InvoiceIQ workspace...</span>
+    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Loading GrivetyGlobal workspace...</span>
     <div className="h-1 w-32 bg-slate-800 rounded-full mt-3.5 overflow-hidden">
       <div className="h-full bg-indigo-500 rounded-full animate-shimmer w-1/2" />
     </div>

@@ -48,9 +48,9 @@ export const SettingsOverview: React.FC = () => {
   const { currency, setCurrency, defaultTaxRate, setDefaultTaxRate } = usePreferencesStore();
 
   // Company Profile states
-  const [compName, setCompName] = useState(user?.companyName || 'InvoiceIQ Inc.');
+  const [compName, setCompName] = useState(user?.companyName || 'GrivetyGlobal Inc.');
   const [adminName, setAdminName] = useState(user?.name || 'Alex Sterling');
-  const [email, setEmail] = useState(user?.email || 'alex@invoiceiq.app');
+  const [email, setEmail] = useState(user?.email || 'alex@grivetyglobal.app');
 
   // Company identity fields
   const [businessType, setBusinessType] = useState('');
@@ -160,8 +160,8 @@ export const SettingsOverview: React.FC = () => {
   const [showPubKey, setShowPubKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
 
-  const pubKey = 'pk_test_51MzSInvoiceIQSecretKey2026';
-  const secKey = 'sk_test_51MzSInvoiceIQSecretPrivateKeyUnbreakable2026';
+  const pubKey = 'pk_test_51MzSGrivetyGlobalSecretKey2026';
+  const secKey = 'sk_test_51MzSGrivetyGlobalSecretPrivateKeyUnbreakable2026';
 
   const handleSaveProfile = () => {
     updateProfile({
@@ -237,7 +237,7 @@ export const SettingsOverview: React.FC = () => {
           </div>
 
           {/* ─── Section 5: Brand Logos (Max 5) ─── */}
-          <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
+          {/* <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
             <div className="flex items-center justify-between border-b pb-3 shrink-0">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 select-none shrink-0">
                 <Palette className="w-4 h-4 text-primary shrink-0" />
@@ -250,16 +250,12 @@ export const SettingsOverview: React.FC = () => {
                 </label>
               )}
             </div>
-
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {logos.map((logo, index) => (
                 <div key={index} className="relative group rounded-xl border p-2 bg-slate-50/50 flex flex-col items-center justify-center aspect-square overflow-hidden hover:border-indigo-200 transition-colors">
                   <img src={logo} alt={`Brand Logo ${index + 1}`} className="max-w-full max-h-full object-contain" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={() => handleRemoveLogo(index)}
-                      className="p-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 hover:scale-110 active:scale-95 transition-all"
-                    >
+                    <button onClick={() => handleRemoveLogo(index)} className="p-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 hover:scale-110 active:scale-95 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -271,7 +267,8 @@ export const SettingsOverview: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> 
+          */}
 
           {/* ─── Section 1: Company Branding Settings ─── */}
           <div className="border rounded-xl bg-card p-6 shadow-premium space-y-5 select-none">

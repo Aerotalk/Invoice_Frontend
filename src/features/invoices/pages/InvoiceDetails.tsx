@@ -161,7 +161,7 @@ export const InvoiceDetails: React.FC = () => {
                       <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
                         <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
                       </div>
-                      <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">InvoiceIQ</span>
+                      <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">GrivetyGlobal</span>
                     </>
                   )}
                 </div>

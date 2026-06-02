@@ -27,7 +27,7 @@ type InviteFormValues = zod.infer<typeof inviteSchema>;
 
 export const TeamDashboard: React.FC = () => {
   const [members, setMembers] = useState<any[]>([
-    { id: "m-1", name: "Alex Sterling", email: "alex@invoiceiq.app", role: "admin", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", status: "active", activeDate: "Today" },
+    { id: "m-1", name: "Alex Sterling", email: "alex@grivetyglobal.app", role: "admin", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", status: "active", activeDate: "Today" },
     { id: "m-2", name: "Sarah Jenkins", email: "sarah@acme.com", role: "manager", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150", status: "active", activeDate: "1 hour ago" },
     { id: "m-3", name: "David Chen", email: "david@starlight.io", role: "accountant", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", status: "active", activeDate: "Yesterday" }
   ]);
@@ -164,7 +164,7 @@ export const TeamDashboard: React.FC = () => {
               <input
                 type="email"
                 required
-                placeholder="developer@invoiceiq.app"
+                placeholder="developer@GrivetyGlobal.app"
                 {...register("email")}
                 className={cn(
                   "w-full px-3 py-2 pl-8 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70",

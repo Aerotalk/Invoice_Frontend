@@ -55,7 +55,7 @@ export const ForgotPassword: React.FC = () => {
               <ShieldCheck className="w-6 h-6 shrink-0" />
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Check your inbox for a message from **InvoiceIQ Accounts**. Click the reset link within 1 hour to securely change your password.
+              Check your inbox for a message from **GrivetyGlobal Accounts**. Click the reset link within 1 hour to securely change your password.
             </p>
             <Link 
               to="/login"
@@ -74,7 +74,7 @@ export const ForgotPassword: React.FC = () => {
                 <Mail className="absolute left-3 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors mt-2.5" />
                 <input
                   type="email"
-                  placeholder="alex@invoiceiq.app"
+                  placeholder="alex@grivetyglobal.app"
                   {...register("email")}
                   className={cn(
                     "w-full pl-9 pr-4 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 dark:focus:border-indigo-500/50 transition-all text-sm font-medium",

@@ -26,7 +26,7 @@ export const UserProfilePage: React.FC = () => {
   const { language, setLanguage } = usePreferencesStore();
 
   const [name, setName] = useState(user?.name || "Alex Sterling");
-  const [email, setEmail] = useState(user?.email || "alex@invoiceiq.app");
+  const [email, setEmail] = useState(user?.email || "alex@grivetyglobal.app");
   const [role] = useState(user?.role || "admin");
   const [avatar, setAvatar] = useState(user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150");
 
@@ -252,7 +252,7 @@ export const UserProfilePage: React.FC = () => {
             </h3>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Upload or configure up to 5 custom branding logos. These logos will be selectable when creating new invoices, replacing the standard InvoiceIQ brand symbol.
+              Upload or configure up to 5 custom branding logos. These logos will be selectable when creating new invoices, replacing the standard GrivetyGlobal brand symbol.
             </p>
 
             {/* Grid of 5 logo slots */}
@@ -428,7 +428,7 @@ export const UserProfilePage: React.FC = () => {
 
           <div className="p-3.5 rounded-xl border bg-slate-50/50 dark:bg-[#0b101c]/15 text-[10px] font-semibold text-muted-foreground select-none shrink-0 space-y-1.5 leading-relaxed mt-4">
             <span className="block font-bold text-foreground flex items-center gap-1.5"><Key className="w-3.5 h-3.5 text-indigo-500 shrink-0" />Account Security</span>
-            <p>Email alerts map directly to your primary credentials alex@invoiceiq.app</p>
+            <p>Email alerts map directly to your primary credentials alex@grivetyglobal.app</p>
           </div>
         </div>
 

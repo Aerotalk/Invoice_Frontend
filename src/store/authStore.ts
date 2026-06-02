@@ -16,11 +16,11 @@ const getInitialUser = (): UserProfile | null => {
   
   if (window.location.pathname === '/') {
     localStorage.removeItem('token');
-    localStorage.removeItem('invoiceiq_user_v2');
+    localStorage.removeItem('GrivetyGlobal_user_v2');
     return null;
   }
   
-  const saved = localStorage.getItem('invoiceiq_user_v2');
+  const saved = localStorage.getItem('GrivetyGlobal_user_v2');
   if (saved) {
     try {
       return JSON.parse(saved);
@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             addresses: []
         };
         
-        localStorage.setItem('invoiceiq_user_v2', JSON.stringify(userProfile));
+        localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(userProfile));
         set({ user: userProfile as UserProfile, isAuthenticated: true });
         return true;
       }
@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthState>((set) => ({
             addresses: []
         };
         
-        localStorage.setItem('invoiceiq_user_v2', JSON.stringify(userProfile));
+        localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(userProfile));
         set({ user: userProfile as UserProfile, isAuthenticated: true });
         return true;
       }
@@ -109,14 +109,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('invoiceiq_user_v2');
+    localStorage.removeItem('GrivetyGlobal_user_v2');
     set({ user: null, isAuthenticated: false });
   },
 
   updateProfile: (profile) => set((state) => {
     if (!state.user) return {};
     const updated = { ...state.user, ...profile };
-    localStorage.setItem('invoiceiq_user_v2', JSON.stringify(updated));
+    localStorage.setItem('GrivetyGlobal_user_v2', JSON.stringify(updated));
     return { user: updated };
   })
 }));

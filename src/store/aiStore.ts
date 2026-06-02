@@ -19,7 +19,7 @@ interface AIState {
 
 const defaultMessage: ChatMessage = {
   sender: 'ai',
-  text: "Hello! I am your InvoiceIQ AI copilot. I can help you draft overdue payment reminders, review your billing statistics, analyze your outstanding cash flow, or answer questions about your clients. Try one of the quick suggestions below!",
+  text: "Hello! I am your GrivetyGlobal AI copilot. I can help you draft overdue payment reminders, review your billing statistics, analyze your outstanding cash flow, or answer questions about your clients. Try one of the quick suggestions below!",
   timestamp: new Date().toISOString()
 };
 

@@ -9,9 +9,9 @@ interface ThemeState {
 const getInitialTheme = (): 'light' | 'dark' => {
   if (typeof window === 'undefined') return 'light';
   
-  const saved = localStorage.getItem('invoiceiq_theme');
+  const saved = localStorage.getItem('GrivetyGlobal_theme');
   if (saved !== 'light') {
-    localStorage.setItem('invoiceiq_theme', 'light');
+    localStorage.setItem('GrivetyGlobal_theme', 'light');
     if (typeof document !== 'undefined') {
       document.documentElement.classList.remove('dark');
     }
@@ -23,7 +23,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   theme: getInitialTheme(),
   toggleTheme: () => set((state) => {
     const nextTheme = state.theme === 'light' ? 'dark' : 'light';
-    localStorage.setItem('invoiceiq_theme', nextTheme);
+    localStorage.setItem('GrivetyGlobal_theme', nextTheme);
     
     // Apply DOM updates directly
     if (nextTheme === 'dark') {
@@ -35,7 +35,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
     return { theme: nextTheme };
   }),
   setTheme: (theme) => set(() => {
-    localStorage.setItem('invoiceiq_theme', theme);
+    localStorage.setItem('GrivetyGlobal_theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

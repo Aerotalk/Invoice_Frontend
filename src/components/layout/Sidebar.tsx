@@ -59,18 +59,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     )}>
       {/* Sidebar Header Brand */}
       <div className="h-16 flex items-center px-5 border-b shrink-0 bg-slate-50/50 dark:bg-[#0b101c]/10 relative">
-        <Link to="/dashboard" className="flex items-center gap-2.5 overflow-hidden shrink-0 group">
-          {user?.logos && user.logos.length > 0 ? (
-            <img src={user.logos[0]} alt="Brand Logo" className="w-8 h-8 rounded-lg object-contain border bg-card shadow-sm group-hover:scale-105 transition-transform" />
+        <Link to="/dashboard" className="flex items-center overflow-hidden shrink-0 group">
+          {isCollapsed ? (
+            <img
+              src="/logo.png"
+              alt="GrivetyGlobal"
+              className="w-8 h-8 object-contain group-hover:scale-105 transition-transform duration-300"
+            />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform duration-300">
-              <Zap className="w-4 h-4 text-white fill-white/10" />
-            </div>
-          )}
-          {!isCollapsed && (
-            <span className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-indigo-500/90 dark:via-white transition-opacity duration-300">
-              Invoice<span className="text-primary-600">IQ</span>
-            </span>
+            <img
+              src="/logo.png"
+              alt="GrivetyGlobal"
+              className="h-28 max-w-[160px] object-contain group-hover:scale-105 transition-transform duration-300"
+            />
           )}
         </Link>
         
