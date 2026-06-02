@@ -337,14 +337,6 @@ export const apiService = {
   },
 
   // --- PROJECTS EXTRAS ---
-  uploadProjectInvoice: async (projectId: string, invoice: any) => {
-    const res = await api.get(`/projects/${projectId}`);
-    const project = res.data.data;
-    const existingInvoices: any[] = project.invoices || [];
-    const updatedInvoices = [...existingInvoices, invoice];
-    const updated = await api.put(`/projects/${projectId}`, { invoices: updatedInvoices });
-    return updated.data.data;
-  },
 
   getProjectExpenses: async (projectId: string) => {
     const res = await api.get('/expenses');
