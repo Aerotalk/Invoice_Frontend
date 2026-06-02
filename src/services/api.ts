@@ -209,7 +209,20 @@ export const apiService = {
 
   createProject: async (projectData: unknown) => {
     const res = await api.post('/projects', projectData);
-    return res.data.data;
+    const p = res.data.data;
+    return {
+      ...p,
+      name: p.projectName,
+      clientId: p.customerId,
+      clientName: p.customer?.displayName || 'Unknown Client',
+      vendors: p.vendors?.map((v: any) => v.vendor) || [],
+      status: p.status || 'planning',
+      description: p.description || '',
+      teamMembers: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
+      ]
+    };
   },
 
   updateProject: async (id: string, data: unknown) => {
