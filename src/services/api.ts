@@ -272,24 +272,40 @@ export const apiService = {
   },
 
   createChallan: async (challanData: Record<string, unknown>) => {
-    const formattedData = {
+    // Send payload directly - the backend validator expects these exact fields
+    const payload = {
       challanNumber: challanData.challanNumber,
-      customerId: challanData.clientId,
-      challanDate: challanData.issueDate || challanData.challanDate,
-      transportMode: challanData.transportMode,
-      deliveryLocation: challanData.deliveryLocation,
-      euPoWoNumber: challanData.euPoWoNumber,
-      termsConditions: challanData.terms,
+      referenceNumber: challanData.referenceNumber || null,
+      clientId: challanData.clientId,
+      clientName: challanData.clientName,
+      clientCompany: challanData.clientCompany,
+      challanDate: challanData.challanDate || challanData.issueDate,
+      challanType: challanData.challanType,
+      transportMode: challanData.transportMode || null,
+      deliveryLocation: challanData.deliveryLocation || null,
+      euPoWoNumber: challanData.euPoWoNumber || null,
       items: (challanData.items as Array<Record<string, unknown>>).map((item) => ({
-        productId: item.productId,
-        customDetails: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-        amount: item.amount || ((item.quantity as number) * (item.rate as number))
-      }))
+        productId: item.productId && item.productId !== 'custom' ? item.productId : null,
+        name: item.name,
+        quantity: Number(item.quantity),
+        rate: Number(item.rate),
+        tax: item.tax || null,
+        taxAmount: Number(item.taxAmount) || 0,
+        amount: Number(item.amount) || Number(item.total) || (Number(item.quantity) * Number(item.rate)),
+        total: Number(item.total) || Number(item.amount) || (Number(item.quantity) * Number(item.rate)),
+      })),
+      subtotal: Number(challanData.subtotal) || 0,
+      discountRate: challanData.discountRate !== undefined ? Number(challanData.discountRate) : null,
+      discountAmount: challanData.discountAmount !== undefined ? Number(challanData.discountAmount) : null,
+      adjustment: challanData.adjustment !== undefined ? Number(challanData.adjustment) : null,
+      total: Number(challanData.total) || 0,
+      status: challanData.status || 'draft',
+      customerNotes: challanData.customerNotes || null,
+      terms: challanData.terms || null,
+      signatureUrl: challanData.signatureUrl || null,
     };
-    
-    const res = await api.post('/challans', formattedData);
+
+    const res = await api.post('/challans', payload);
     return res.data.data;
   },
 
