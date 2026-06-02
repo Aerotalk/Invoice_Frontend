@@ -198,6 +198,11 @@ export const apiService = {
     return res.data.data;
   },
 
+  updateProject: async (id: string, data: unknown) => {
+    const res = await api.put(`/projects/${id}`, data);
+    return res.data.data;
+  },
+
   // --- QUOTATIONS MODULE ---
   getQuotes: async () => {
     const res = await api.get('/quotations');
@@ -339,7 +344,20 @@ export const apiService = {
   },
 
   // --- PROJECTS EXTRAS ---
-  uploadProjectInvoice: async (id: string, invoice: any) => ({}),
+  uploadProjectInvoice: async (projectId: string, invoice: any) => {
+    const res = await api.get(`/projects/${projectId}`);
+    const project = res.data.data;
+    const existingInvoices: any[] = project.invoices || [];
+    const updatedInvoices = [...existingInvoices, invoice];
+    const updated = await api.put(`/projects/${projectId}`, { invoices: updatedInvoices });
+    return updated.data.data;
+  },
+
+  getProjectExpenses: async (projectId: string) => {
+    const res = await api.get('/expenses');
+    const all: any[] = res.data.data || [];
+    return all.filter((e: any) => e.projectId === projectId);
+  },
 
   // --- TIME TRACKING ---
   getTimeEntries: async () => [],
