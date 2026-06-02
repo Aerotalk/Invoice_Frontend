@@ -3,9 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
-import { Eye, EyeOff, Lock, Mail, ShieldAlert, Sparkles, Zap } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldAlert } from 'lucide-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { useAuthStore } from '../../../store/authStore';
-import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 
 // Form schema
@@ -26,11 +26,6 @@ export const Login: React.FC = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "alex@invoiceiq.app",
-      password: "password123",
-      rememberMe: true
-    }
   });
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -62,61 +57,24 @@ export const Login: React.FC = () => {
 
         {/* Brand logo */}
         <div className="flex items-center gap-3 relative z-10 select-none">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Zap className="w-5 h-5 text-white fill-white/10" />
-          </div>
-          <span className="text-xl font-extrabold tracking-tight text-white select-none">
-            Invoice<span className="text-primary-500">IQ</span>
-          </span>
+          <img src="/logo.png" alt="GrivetyGlobal" className="h-36 w-36 object-cover" />
         </div>
 
-        {/* Visual Mock Card Centerpieces */}
-        <div className="relative z-10 my-auto flex flex-col gap-6 max-w-md select-none">
-          <motion.div 
-            initial={{ opacity: 0, x: -24 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-4"
-          >
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/5 text-indigo-400 text-xs font-semibold select-none">
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              SaaS Business Management Platform
-            </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Enterprise invoicing, built for high-performance scale.
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Consolidate your client balances, track background projects billables, and log expenses with one unified premium Stripe-ready workflow dashboard.
-            </p>
-          </motion.div>
-
-          {/* Floating graphic box */}
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="p-5 rounded-2xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-md shadow-2xl relative select-none"
-          >
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Succeeded</span>
-              </div>
-              <span className="text-xs font-semibold text-slate-400">INV-2026-001</span>
-            </div>
-            <div className="mt-4 flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-white font-mono">$9,350.00</span>
-              <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Acme Corporation</span>
-            </div>
-          </motion.div>
+        {/* Lottie Illustration */}
+        <div className="relative z-10 my-auto flex items-center justify-center select-none px-6">
+          <DotLottieReact
+            src="/invoicing.lottie"
+            loop
+            autoplay
+            className="w-full max-w-md h-full"
+          />
         </div>
 
         {/* Footer */}
         <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 select-none">
-          <span>© 2026 InvoiceIQ Inc.</span>
+          <span>© 2026 GrivetyGlobal Inc.</span>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-slate-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-slate-400 transition-colors">Terms of Service</a>
+            <a href="https://grivetyglobal.com/terms-conditions-2/" target='_blank' rel='noopener noreferrer' className="hover:text-slate-400 transition-colors">Terms of Service</a>
           </div>
         </div>
       </div>
@@ -129,7 +87,7 @@ export const Login: React.FC = () => {
         <div className="w-full max-w-[420px] select-none z-10 flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground select-none">
-              Sign In to InvoiceIQ
+              Sign In to GrivetyGlobal
             </h2>
             <p className="text-sm text-muted-foreground">
               Welcome back! Please enter your details below.
@@ -156,7 +114,7 @@ export const Login: React.FC = () => {
                 <input
                   id="email"
                   type="email"
-                  placeholder="alex@invoiceiq.app"
+                  placeholder="alex@grivetyglobal.app"
                   {...register("email")}
                   className={cn(
                     "w-full pl-9 pr-4 py-2 border rounded-lg bg-card/60 outline-none focus:bg-card focus:border-indigo-500/70 dark:focus:border-indigo-500/50 transition-all text-sm font-medium",

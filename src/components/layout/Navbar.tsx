@@ -94,7 +94,7 @@ export const Navbar: React.FC = () => {
             {user?.logos && user.logos.length > 0 ? (
               <img src={user.logos[0]} alt="Brand Logo" className="h-5 max-w-[80px] object-contain rounded shrink-0" />
             ) : (
-              <span>InvoiceIQ</span>
+              <span>GrivetyGlobal</span>
             )}
           </Link>
           {breadcrumbs.map((crumb, index) => (

@@ -9,16 +9,14 @@ import {
   Lock, 
   Mail, 
   ShieldAlert, 
-  Sparkles, 
   User, 
-  Zap, 
   Building2, 
   Phone, 
   MapPin, 
   Globe 
 } from 'lucide-react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { useAuthStore } from '../../../store/authStore';
-import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
 
@@ -113,7 +111,7 @@ export const Register: React.FC = () => {
     try {
       const success = await authRegister(values);
       if (success) {
-        toast.success("Account created successfully! Welcome to your InvoiceIQ workspace.");
+        toast.success("Account created successfully! Welcome to your GrivetyGlobal workspace.");
         navigate("/dashboard");
       }
     } catch (err: any) {
@@ -136,31 +134,21 @@ export const Register: React.FC = () => {
         <div className="absolute top-[-100px] left-[-100px] w-[500px] h-[500px] rounded-full bg-primary-600/5 blur-[120px] pointer-events-none" />
 
         <div className="flex items-center gap-3 relative z-10 select-none">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Zap className="w-5 h-5 text-white fill-white/10" />
-          </div>
-          <span className="text-xl font-extrabold tracking-tight text-white select-none">
-            Invoice<span className="text-primary-500">IQ</span>
-          </span>
+          <img src="/logo.png" alt="GrivetyGlobal" className="h-36 w-36 object-cover" />
         </div>
 
-        <div className="relative z-10 my-auto flex flex-col gap-6 max-w-md select-none">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-primary-500/30 bg-primary-500/5 text-primary-400 text-xs font-semibold select-none">
-              <Sparkles className="w-3.5 h-3.5" />
-              Professional Invoicing Suite
-            </div>
-            <h2 className="text-3xl font-extrabold text-white tracking-tight leading-tight">
-              Start billing in seconds. Corporate ready.
-            </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Activate your workspace and start designing invoices, logging time spent on contracts, and running advanced financial reports.
-            </p>
-          </div>
+        {/* Lottie Illustration */}
+        <div className="relative z-10 my-auto flex items-center justify-center select-none px-6">
+          <DotLottieReact
+            src="/invoicing.lottie"
+            loop
+            autoplay
+            className="w-full max-w-md h-full"
+          />
         </div>
 
         <div className="relative z-10 text-xs text-slate-500 select-none">
-          <span>© 2026 InvoiceIQ Inc.</span>
+          <span>© 2026 GrivetyGlobal Inc.</span>
         </div>
       </div>
 
@@ -169,7 +157,7 @@ export const Register: React.FC = () => {
         <div className="w-full max-w-[440px] select-none z-10 flex flex-col gap-5 py-8">
           <div className="flex flex-col gap-1.5">
             <h2 className="text-2xl font-extrabold tracking-tight text-foreground select-none">
-              Create InvoiceIQ Account
+              Create GrivetyGlobal Account
             </h2>
             <p className="text-xs text-muted-foreground">
               Sign up today and streamline your invoicing workflows.

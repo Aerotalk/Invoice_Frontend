@@ -18,6 +18,10 @@ import {
   Trash2,
   UserPlus,
   UploadCloud,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  X,
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -81,6 +85,7 @@ export const ProjectDetails: React.FC = () => {
   const [invoiceDrawerOpen, setInvoiceDrawerOpen] = useState(false);
   const [entityDrawerOpen, setEntityDrawerOpen] = useState(false);
   const [expenseDrawerOpen, setExpenseDrawerOpen] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
 
   // Invoice Form State
   const [invId, setInvId] = useState('');
@@ -270,12 +275,17 @@ export const ProjectDetails: React.FC = () => {
   };
 
   // ─── Close Project ────────────────────────────────────────────────────────
-  const handleCloseProject = async () => {
-    if (!project || !confirm('Are you sure you want to close this project?')) return;
+  const handleCloseProject = () => {
+    if (project?.status === 'completed') return;
+    setCloseModalOpen(true);
+  };
+
+  const confirmCloseProject = async () => {
     setIsClosing(true);
     try {
       await apiService.updateProject(project.id, { status: 'completed' });
-      toast.success('Project closed!');
+      toast.success('Project closed successfully!');
+      setCloseModalOpen(false);
       loadAll();
     } catch (e) {
       toast.error('Failed to close project');
@@ -290,6 +300,15 @@ export const ProjectDetails: React.FC = () => {
   );
 
   const projectVendors: { id: string; name: string }[] = project?.vendors || [];
+
+  // ─── Summary financials for close modal ──────────────────────────────────
+  const totalInvoiced = validInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);
+  const poExpenses = expenses.filter((e: any) => e.category === 'Purchase Order');
+  const otherExpenses = expenses.filter((e: any) => e.category !== 'Purchase Order');
+  const totalPOs = poExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0);
+  const totalOtherExpenses = otherExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0);
+  const totalOutflow = totalPOs + totalOtherExpenses;
+  const netProfit = totalInvoiced - totalOutflow;
 
   if (loading || !project) {
     return (
@@ -663,6 +682,191 @@ export const ProjectDetails: React.FC = () => {
           {project.status === 'completed' ? 'Project Closed' : isClosing ? 'Closing...' : 'Close Project'}
         </button>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          CLOSE PROJECT SUMMARY MODAL
+      ═══════════════════════════════════════════════════════════ */}
+      {closeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-3xl bg-card rounded-2xl border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b flex items-start justify-between shrink-0">
+              <div>
+                <h2 className="text-base font-extrabold text-foreground tracking-tight">
+                  {project.name || project.projectName}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Review this project's financial summary before closing.</p>
+              </div>
+              <button
+                onClick={() => setCloseModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 3-Column Summary */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                {/* Column 1: Quotations / Transactions */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Quotations</span>
+                  </div>
+                  <div className="flex flex-col gap-2 min-h-[120px]">
+                    {validInvoices.length > 0 ? validInvoices.map((inv) => (
+                      <div key={inv.id} className="p-3 rounded-xl border bg-indigo-500/5 border-indigo-500/10 flex flex-col gap-0.5">
+                        <span className="text-xs font-bold text-foreground">{inv.invoiceId}</span>
+                        <span className="text-[10px] text-muted-foreground truncate">{inv.description}</span>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className={cn(
+                            'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
+                            inv.status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' :
+                            inv.status === 'sent' ? 'bg-blue-500/10 text-blue-500' :
+                            'bg-amber-500/10 text-amber-600'
+                          )}>{inv.status}</span>
+                          <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                            {inv.amount != null ? formatCurrency(inv.amount, currency) : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
+                        No transactions
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
+                    <span className="block text-sm font-extrabold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                  </div>
+                </div>
+
+                {/* Column 2: Purchase Orders */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-violet-500 shrink-0" />
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">POs</span>
+                  </div>
+                  <div className="flex flex-col gap-2 min-h-[120px]">
+                    {poExpenses.length > 0 ? poExpenses.map((exp: any) => (
+                      <div key={exp.id} className="p-3 rounded-xl border bg-violet-500/5 border-violet-500/10 flex flex-col gap-0.5">
+                        <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
+                        <span className="text-[10px] text-muted-foreground">{exp.vendorName || '—'}</span>
+                        <span className="text-xs font-bold font-mono text-violet-600 dark:text-violet-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                      </div>
+                    )) : (
+                      <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
+                        No purchase orders
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
+                    <span className="block text-sm font-extrabold font-mono text-violet-600 dark:text-violet-400">{formatCurrency(totalPOs, currency)}</span>
+                  </div>
+                </div>
+
+                {/* Column 3: Other Expenses */}
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Ex. Expenses</span>
+                  </div>
+                  <div className="flex flex-col gap-2 min-h-[120px]">
+                    {otherExpenses.length > 0 ? otherExpenses.map((exp: any) => (
+                      <div key={exp.id} className="p-3 rounded-xl border bg-rose-500/5 border-rose-500/10 flex flex-col gap-0.5">
+                        <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
+                        <span className="text-[10px] text-muted-foreground">{exp.category}</span>
+                        <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                      </div>
+                    )) : (
+                      <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
+                        No other expenses
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-2 border-t">
+                    <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
+                    <span className="block text-sm font-extrabold font-mono text-rose-500">{formatCurrency(totalOtherExpenses, currency)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Summary */}
+              <div className="mt-6 p-4 rounded-xl border bg-slate-50/80 dark:bg-slate-900/50 space-y-3">
+                <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Summary</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-semibold">Total Invoiced (In)</span>
+                    <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-semibold">Purchase Orders</span>
+                    <span className="font-bold font-mono text-violet-600 dark:text-violet-400">−{formatCurrency(totalPOs, currency)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-semibold">Other Expenses</span>
+                    <span className="font-bold font-mono text-rose-500">−{formatCurrency(totalOtherExpenses, currency)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-semibold">Total Outflow</span>
+                    <span className="font-bold font-mono text-foreground">−{formatCurrency(totalOutflow, currency)}</span>
+                  </div>
+                </div>
+                <div className="pt-3 border-t flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    {netProfit >= 0
+                      ? <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      : <TrendingDown className="w-4 h-4 text-rose-500" />
+                    }
+                    <span className="text-sm font-extrabold text-foreground">
+                      {netProfit >= 0 ? 'Net Profit' : 'Net Loss'}
+                    </span>
+                  </div>
+                  <span className={cn(
+                    'text-lg font-extrabold font-mono',
+                    netProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                  )}>
+                    {netProfit >= 0 ? '+' : ''}{formatCurrency(netProfit, currency)}
+                  </span>
+                </div>
+              </div>
+
+              {netProfit < 0 && (
+                <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="text-xs font-semibold">This project ran at a net loss. Review expenses before confirming closure.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer Buttons */}
+            <div className="p-5 border-t flex items-center justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setCloseModalOpen(false)}
+                className="px-4 py-2 border rounded-lg hover:bg-muted font-semibold text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmCloseProject}
+                disabled={isClosing}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isClosing
+                  ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  : <XCircle className="w-4 h-4" />
+                }
+                {isClosing ? 'Closing...' : 'Confirm & Close Project'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════
           DRAWER 1: Upload Invoice / Transaction

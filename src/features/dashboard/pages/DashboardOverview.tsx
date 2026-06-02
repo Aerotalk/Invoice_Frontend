@@ -354,7 +354,7 @@ export const DashboardOverview: React.FC = () => {
           </div>
           <div>
             <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              InvoiceIQ AI Copilot Assistant Ready
+              GrivetyGlobal AI Copilot Assistant Ready
               <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-500 text-[8px] font-extrabold select-none uppercase tracking-wider">New</span>
             </h4>
             <p className="text-[11px] text-muted-foreground mt-0.5">Let the AI copilot audit your outstanding ledger or auto-draft email follow-ups.</p>

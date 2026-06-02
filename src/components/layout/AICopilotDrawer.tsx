@@ -45,7 +45,7 @@ export const AICopilotDrawer: React.FC = () => {
           `Please process payment at your earliest convenience.\n\n` +
           `Let me know if you need any billing adjustments or payment options.\n\n` +
           `Best regards,\n` +
-          `InvoiceIQ Admin`;
+          `GrivetyGlobal Admin`;
     } else if (query.includes("revenue") || query.includes("earnings") || query.includes("financial")) {
       reply = `According to your active database:\n\n` +
         `- **Total Revenue Received:** Available in Dashboard\n` +
@@ -54,7 +54,7 @@ export const AICopilotDrawer: React.FC = () => {
       reply = `You have multiple clients registered.\n\n` +
         `Navigate to the Clients tab to see who has an outstanding balance.\n\n`;
     } else if (query.includes("tax") || query.includes("advisory")) {
-      reply = `**InvoiceIQ Tax Advisory Tip:**\n\n` +
+      reply = `**GrivetyGlobal Tax Advisory Tip:**\n\n` +
         `1. Track your tax-deductible expense records in the Expenses tab.\n` +
         `2. Remember to upload PDF receipts to justify write-offs.\n` +
         `3. Consult an accountant regarding quarterly Tax reporting schedules.`;

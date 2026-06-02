@@ -42,7 +42,7 @@ api.interceptors.response.use(
       if (!isAuthRoute) {
         // Clear local storage and redirect to login if token is invalid/expired
         localStorage.removeItem('token');
-        localStorage.removeItem('invoiceiq_user_v2'); // Keep naming consistent with authStore
+        localStorage.removeItem('GrivetyGlobal_user_v2'); // Keep naming consistent with authStore
         window.location.href = '/login';
       }
     }

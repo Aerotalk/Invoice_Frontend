@@ -44,6 +44,7 @@ const expenseSchema = zod.object({
   invoiceNumber: zod.string(),
   notes: zod.string().optional(),
   clientId: zod.string().optional(),
+  projectId: zod.string().optional(),
   vendorId: zod.string().optional()
 });
 
@@ -102,6 +103,7 @@ export const ExpensesDashboard: React.FC = () => {
       invoiceNumber: '',
       notes: '',
       clientId: '',
+      projectId: '',
       vendorId: ''
     }
   });
@@ -150,9 +152,8 @@ export const ExpensesDashboard: React.FC = () => {
 
   // Single Record submit
   const onSubmitExpense = async (values: ExpenseFormValues) => {
-    const activeClient = clients.find(c => c.id === values.clientId);
-    const activeVendor = vendors.find(v => v.id === values.vendorId);
-    try {
+      try{
+        const activeProject = allProjects.find(p => p.id === values.projectId);
       await apiService.createExpense({
         category: values.category,
         amount: values.amount,
@@ -162,10 +163,12 @@ export const ExpensesDashboard: React.FC = () => {
         isTaxDeductible: values.isTaxDeductible || false,
         invoiceNumber: values.invoiceNumber || undefined,
         notes: values.notes || undefined,
-        clientId: values.clientId || undefined,
-        clientName: activeClient?.name || undefined,
+        projectId: values.projectId || undefined,
+        projectName: activeProject?.name || undefined,
+        clientId: activeProject?.clientId || undefined,
+        clientName: activeProject?.clientName || undefined,
         vendorId: categoryVal === 'Purchase Order' ? values.vendorId : undefined,
-        vendorName: categoryVal === 'Purchase Order' ? activeVendor?.name : undefined,
+        vendorName: categoryVal === 'Purchase Order' ? vendors.find(v => v.id === values.vendorId)?.name : undefined,
         currency: currency
       });
       toast.success("Expense logged successfully!");
@@ -882,22 +885,19 @@ export const ExpensesDashboard: React.FC = () => {
 
                     <div className="my-6 border-b border-dashed border-slate-200 dark:border-slate-800" />
 
-                    {/* Customer Name */}
+                    {/* Project Name */}
                     <div className="grid grid-cols-12 gap-4 items-center">
-                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Customer Name</label>
-                      <div className="col-span-12 sm:col-span-8 flex gap-0">
+                      <label className="col-span-12 sm:col-span-4 text-[11px] font-medium text-foreground/80">Project Name</label>
+                      <div className="col-span-12 sm:col-span-8">
                         <select
-                          {...register("clientId")}
-                          className="w-full px-3 py-2 border border-r-0 rounded-l border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
+                          {...register("projectId")}
+                          className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-[11px] focus:border-primary appearance-none cursor-pointer text-slate-500"
                         >
-                          <option value="">Select or add a customer</option>
-                          {clients.map(c => (
-                            <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                          <option value="">Select a project</option>
+                          {allProjects.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
-                        <button type="button" className="px-3 bg-blue-500 hover:bg-blue-600 text-white rounded-r flex items-center justify-center shrink-0 border border-blue-500 transition-colors">
-                          <Info className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </div>
 

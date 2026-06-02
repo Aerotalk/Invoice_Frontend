@@ -28,9 +28,41 @@ export const SettingsOverview: React.FC = () => {
   const { currency, setCurrency, defaultTaxRate, setDefaultTaxRate } = usePreferencesStore();
 
   // Company Profile states
-  const [compName, setCompName] = useState(user?.companyName || "InvoiceIQ Inc.");
-  const [adminName, setAdminName] = useState(user?.name || "Alex Sterling");
-  const [email, setEmail] = useState(user?.email || "alex@invoiceiq.app");
+  const [compName, setCompName] = useState(user?.companyName || 'GrivetyGlobal Inc.');
+  const [adminName, setAdminName] = useState(user?.name || 'Alex Sterling');
+  const [email, setEmail] = useState(user?.email || 'alex@grivetyglobal.app');
+
+  // Company identity fields
+  const [businessType, setBusinessType] = useState('');
+  const [industry, setIndustry] = useState('Consulting');
+  const [orgLocation, setOrgLocation] = useState('India');
+
+  // Locale / preferences fields
+  const [fiscalYear, setFiscalYear] = useState('April - March');
+  const [orgLanguage, setOrgLanguage] = useState('English');
+  const [commLanguage, setCommLanguage] = useState('English');
+  const [timeZone, setTimeZone] = useState('(GMT 5:30) India Standard Time (Asia/Calcutta)');
+  const [dateFormat, setDateFormat] = useState('dd/MM/yyyy');
+  const [dateSeparator, setDateSeparator] = useState('/');
+  const [companyIdType, setCompanyIdType] = useState('Company ID');
+  const [companyIdValue, setCompanyIdValue] = useState('');
+
+  // Additional Fields
+  const [additionalFields, setAdditionalFields] = useState<AdditionalField[]>([{ label: '', value: '' }]);
+
+  const handleAddField = () => {
+    setAdditionalFields([...additionalFields, { label: '', value: '' }]);
+  };
+
+  const handleFieldChange = (index: number, key: 'label' | 'value', val: string) => {
+    const next = [...additionalFields];
+    next[index][key] = val;
+    setAdditionalFields(next);
+  };
+
+  const handleRemoveField = (index: number) => {
+    setAdditionalFields(additionalFields.filter((_, i) => i !== index));
+  };
 
   // Brand & Profile enhancements
   const [avatar, setAvatar] = useState(user?.avatar || "");
@@ -255,8 +287,8 @@ export const SettingsOverview: React.FC = () => {
             </div>
           </div>
 
-          {/* Section 4: Brand Logos (Max 5) */}
-          <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
+          {/* ─── Section 5: Brand Logos (Max 5) ─── */}
+          {/* <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
             <div className="flex items-center justify-between border-b pb-3 shrink-0">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 select-none shrink-0">
                 <Palette className="w-4 h-4 text-indigo-500 shrink-0" />
@@ -274,16 +306,12 @@ export const SettingsOverview: React.FC = () => {
                 </label>
               )}
             </div>
-
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {logos.map((logo, index) => (
                 <div key={index} className="relative group rounded-xl border p-2 bg-slate-50/50 flex flex-col items-center justify-center aspect-square overflow-hidden hover:border-indigo-200 transition-colors">
                   <img src={logo} alt={`Brand Logo ${index + 1}`} className="max-w-full max-h-full object-contain" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      onClick={() => handleRemoveLogo(index)}
-                      className="p-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 hover:scale-110 active:scale-95 transition-all"
-                    >
+                    <button onClick={() => handleRemoveLogo(index)} className="p-2 bg-white text-red-500 rounded-full shadow hover:bg-red-50 hover:scale-110 active:scale-95 transition-all">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -295,7 +323,8 @@ export const SettingsOverview: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> 
+          */}
 
           {/* Section 5: Billing Addresses (Max 5) */}
           <div className="border rounded-xl bg-card p-6 shadow-premium space-y-4 select-none">
