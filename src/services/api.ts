@@ -217,6 +217,11 @@ export const apiService = {
     return res.data.data;
   },
 
+  uploadProjectInvoice: async (id: string, invoiceData: unknown) => {
+    const res = await api.post(`/projects/${id}/invoices`, invoiceData);
+    return res.data.data;
+  },
+
   // --- QUOTATIONS MODULE ---
   getQuotes: async () => {
     const res = await api.get('/quotations');
