@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { useAuthStore } from '../../../store/authStore';
 import { usePreferencesStore } from '../../../store/preferencesStore';
@@ -104,6 +104,53 @@ export const SettingsOverview: React.FC = () => {
   const handleBillingChange = (field: keyof BillingAddress, val: string) => {
     setBillingAddress(prev => ({ ...prev, [field]: val }));
   };
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await apiService.getSettings();
+        if (data) {
+          if (data.workspaceBrandName) setCompName(data.workspaceBrandName);
+          if (data.adminProfileName) setAdminName(data.adminProfileName);
+          if (data.billingEmailContact) setEmail(data.billingEmailContact);
+          
+          if (data.businessType) setBusinessType(data.businessType);
+          if (data.industry) setIndustry(data.industry);
+          if (data.orgLocation) setOrgLocation(data.orgLocation);
+          
+          if (data.fiscalYear) setFiscalYear(data.fiscalYear);
+          if (data.orgLanguage) setOrgLanguage(data.orgLanguage);
+          if (data.commLanguage) setCommLanguage(data.commLanguage);
+          if (data.timeZone) setTimeZone(data.timeZone);
+          if (data.dateFormat) setDateFormat(data.dateFormat);
+          if (data.dateSeparator) setDateSeparator(data.dateSeparator);
+          if (data.companyIdType) setCompanyIdType(data.companyIdType);
+          if (data.companyIdValue) setCompanyIdValue(data.companyIdValue);
+          
+          if (data.additionalFields && data.additionalFields.length > 0) {
+            setAdditionalFields(data.additionalFields);
+          }
+          
+          if (data.profileAvatarUrl) setAvatar(data.profileAvatarUrl);
+          if (data.brandLogoUrls && data.brandLogoUrls.length > 0) setLogos(data.brandLogoUrls);
+          
+          if (data.billingAddresses && data.billingAddresses.length > 0) {
+            setBillingAddress(data.billingAddresses[0]);
+          }
+
+          if (data.standardTaxGst !== undefined) setDefaultTaxRate(data.standardTaxGst);
+          if (data.standardBaseCurrency) setCurrency(data.standardBaseCurrency);
+        }
+      } catch (err) {
+        console.error("Failed to fetch settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, [setCurrency, setDefaultTaxRate]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -221,6 +268,14 @@ export const SettingsOverview: React.FC = () => {
   const rowCls = 'grid grid-cols-12 gap-4 items-center';
   const labelCls = 'col-span-12 sm:col-span-4 text-[11px] font-semibold text-foreground/70 flex items-center gap-1';
   const fieldCls = 'col-span-12 sm:col-span-8';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground animate-pulse font-semibold">
+        Loading settings...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 select-none animate-fade-in pb-12">

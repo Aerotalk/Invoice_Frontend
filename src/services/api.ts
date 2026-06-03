@@ -428,6 +428,10 @@ export const apiService = {
   },
 
   // --- SETTINGS MODULE ---
+  getSettings: async () => {
+    const res = await api.get('/settings');
+    return res.data.data;
+  },
   updateSettings: async (settingsData: any) => {
     const res = await api.put('/settings', settingsData);
     return res.data.data;
