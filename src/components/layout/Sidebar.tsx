@@ -20,7 +20,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Zap
+  Zap,
+  Box
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarStore } from '../../store/sidebarStore';
@@ -45,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     { name: "Delivery Challans", path: "/dashboard/challans", icon: Truck },
     // { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
     { name: "Expenses", path: "/dashboard/expenses", icon: Receipt },
+    { name: "Purchase Orders", path: "/dashboard/purchase-orders", icon: Box },
     { name: "Projects", path: "/dashboard/projects", icon: FolderGit },
     // { name: "Reports", path: "/dashboard/reports", icon: BarChart3 },
     // { name: "Team", path: "/dashboard/team", icon: UserSquare2 },

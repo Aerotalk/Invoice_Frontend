@@ -366,6 +366,32 @@ export const apiService = {
   // --- AUDIT LOGS ---
   getAuditLogs: async () => [],
 
+  // --- PURCHASE ORDERS MODULE ---
+  getPurchaseOrders: async () => {
+    const res = await api.get('/purchase-orders');
+    return res.data.data;
+  },
+  getPurchaseOrderById: async (id: string) => {
+    const res = await api.get(`/purchase-orders/${id}`);
+    return res.data.data;
+  },
+  createPurchaseOrder: async (data: any) => {
+    const res = await api.post('/purchase-orders', data);
+    return res.data.data;
+  },
+  updatePurchaseOrder: async (id: string, data: any) => {
+    const res = await api.put(`/purchase-orders/${id}`, data);
+    return res.data.data;
+  },
+  deletePurchaseOrder: async (id: string) => {
+    await api.delete(`/purchase-orders/${id}`);
+    return true;
+  },
+  downloadPurchaseOrderPdf: async (id: string) => {
+    const res = await api.get(`/purchase-orders/${id}/pdf`, { responseType: 'blob' });
+    return res.data;
+  },
+
   // --- UPLOAD MODULE ---
   uploadFile: async (file: File) => {
     const formData = new FormData();
