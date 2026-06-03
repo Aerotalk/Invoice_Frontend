@@ -46,7 +46,7 @@ export const PurchaseOrderDetails: React.FC = () => {
     );
   }
 
-  const { po } = data;
+  const po = data;
 
   return (
     <div className="space-y-6 select-none animate-fade-in pb-12">
