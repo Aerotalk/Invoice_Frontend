@@ -52,6 +52,7 @@ export const PurchaseOrderList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const [isCustomPoCode, setIsCustomPoCode] = useState(false);
   const [itemRows, setItemRows] = useState<PoItemInput[]>([
@@ -171,20 +172,68 @@ export const PurchaseOrderList: React.FC = () => {
         status: "sent",
         items: filteredItems.map((r, index) => ({
           ...r,
-          id: `poi-${Date.now()}-${index}`,
+          id: r.productId ? undefined : `poi-${Date.now()}-${index}`, // Optional: adjust ID generation based on your backend
         }))
       };
 
-      await apiService.createPurchaseOrder(payload);
-      toast.success("Purchase Order created successfully!");
+      if (editId) {
+        await apiService.updatePurchaseOrder(editId, payload);
+        toast.success("Purchase Order updated successfully!");
+      } else {
+        await apiService.createPurchaseOrder(payload);
+        toast.success("Purchase Order created successfully!");
+      }
+      
       setDrawerOpen(false);
+      setEditId(null);
       reset();
       setItemRows([{ productId: "", name: "", hsnSac: "", quantity: 1, unit: "Nos", price: 0, taxableAmount: 0, gstRate: 18, gstAmount: 0, total: 0 }]);
       loadData();
     } catch (e) {
       console.error(e);
-      toast.error("Failed to save Purchase Order.");
+      toast.error(editId ? "Failed to update Purchase Order." : "Failed to save Purchase Order.");
     }
+  };
+
+  const openEditDrawer = (po: any) => {
+    setEditId(po.id);
+    setIsCustomPoCode(true);
+    
+    // Reset form values
+    reset({
+      purchaseOrderId: po.purchaseOrderId || '',
+      vendorId: po.vendorId || po.vendor?.id || '',
+      date: po.date ? new Date(po.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      dueDate: po.dueDate ? new Date(po.dueDate).toISOString().split('T')[0] : '',
+      placeOfSupply: po.placeOfSupply || '',
+      transportMode: po.transportMode || '',
+      deliveryLocation: po.deliveryLocation || '',
+      euPoWoNumber: po.euPoWoNumber || '',
+      projectId: po.projectId || po.project?.id || '',
+      termsAndConditions: po.termsAndConditions || '',
+    });
+
+    // Populate line items
+    if (po.items && po.items.length > 0) {
+      const formattedItems = po.items.map((item: any) => ({
+        productId: item.productId || "",
+        name: item.name || "",
+        hsnSac: item.hsnSac || "",
+        quantity: item.quantity || 1,
+        unit: item.unit || "Nos",
+        price: item.rate || item.price || 0,
+        taxableAmount: item.taxableAmount || 0,
+        gstRate: item.gstRate || 18,
+        gstAmount: item.gstAmount || 0,
+        total: item.total || 0,
+      }));
+      setItemRows(formattedItems);
+    } else {
+      setItemRows([{ productId: "", name: "", hsnSac: "", quantity: 1, unit: "Nos", price: 0, taxableAmount: 0, gstRate: 18, gstAmount: 0, total: 0 }]);
+    }
+    
+    setDrawerOpen(true);
+    setActiveMenu(null);
   };
 
   const filteredPOs = purchaseOrders.filter(po => 
@@ -248,6 +297,14 @@ export const PurchaseOrderList: React.FC = () => {
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   View Details & PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openEditDrawer(row)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
+                >
+                  <Settings className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Edit Purchase Order
                 </button>
                 <button
                   type="button"

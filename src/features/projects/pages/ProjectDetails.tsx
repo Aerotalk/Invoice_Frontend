@@ -295,8 +295,34 @@ export const ProjectDetails: React.FC = () => {
   };
 
   // ─── Filtered invoices (non-empty) ───────────────────────────────────────
-  const validInvoices: ProjectInvoice[] = (project?.invoices || []).filter(
+  const manualInvoices = (project?.invoices || []).filter(
     (inv: any) => inv && inv.invoiceId && inv.invoiceId.trim() !== ''
+  );
+
+  const mappedQuotations = (project?.quotations || []).map((q: any) => ({
+    id: q.id,
+    invoiceId: q.quoteNumber,
+    description: '[Quotation] ' + (q.estimateDetails || ''),
+    date: q.date,
+    url: `api-call:quote:${q.id}`,
+    amount: q.totalAmount,
+    status: q.status === 'sent' ? 'sent' : q.status === 'accepted' ? 'paid' : 'pending',
+    vendorTag: q.clientName,
+  }));
+
+  const mappedPOs = (project?.purchaseOrders || []).map((po: any) => ({
+    id: po.id,
+    invoiceId: po.purchaseOrderId,
+    description: '[Purchase Order]',
+    date: po.date,
+    url: `api-call:po:${po.id}`,
+    amount: po.totalAmount,
+    status: 'sent', // Or po.status if available
+    vendorTag: po.vendorName,
+  }));
+
+  const validInvoices: ProjectInvoice[] = [...manualInvoices, ...mappedQuotations, ...mappedPOs].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   const projectVendors: any[] = (project?.vendors || []).map((pv: any) => pv.vendor || pv).filter(Boolean);
@@ -451,15 +477,38 @@ export const ProjectDetails: React.FC = () => {
                           </span>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          <a
-                            href={inv.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
-                          >
-                            <Eye className="w-3 h-3" />
-                            View
-                          </a>
+                          {inv.url.startsWith('api-call:') ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  let blob;
+                                  if (inv.url.startsWith('api-call:quote:')) {
+                                    blob = await apiService.downloadQuotePdf(inv.id);
+                                  } else {
+                                    blob = await apiService.downloadPurchaseOrderPdf(inv.id);
+                                  }
+                                  const url = window.URL.createObjectURL(blob);
+                                  window.open(url);
+                                } catch (error) {
+                                  toast.error('Failed to view PDF');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </button>
+                          ) : (
+                            <a
+                              href={inv.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </a>
+                          )}
                         </td>
                       </tr>
                     );
