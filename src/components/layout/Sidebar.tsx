@@ -20,10 +20,12 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  Zap
+  Zap,
+  Box
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useSidebarStore } from '../../store/sidebarStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface SidebarProps {
   className?: string;
@@ -31,6 +33,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const { isCollapsed, toggleCollapse } = useSidebarStore();
+  const { user } = useAuthStore();
   const location = useLocation();
 
   const menuItems = [
@@ -41,11 +44,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     // { name: "Invoices", path: "/dashboard/invoices", icon: FileText },
     { name: "Quotations", path: "/dashboard/quotes", icon: ClipboardList },
     { name: "Delivery Challans", path: "/dashboard/challans", icon: Truck },
-    { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
+    // { name: "Payments", path: "/dashboard/payments", icon: CreditCard },
     { name: "Expenses", path: "/dashboard/expenses", icon: Receipt },
+    { name: "Purchase Orders", path: "/dashboard/purchase-orders", icon: Box },
     { name: "Projects", path: "/dashboard/projects", icon: FolderGit },
-    { name: "Reports", path: "/dashboard/reports", icon: BarChart3 },
-    { name: "Team", path: "/dashboard/team", icon: UserSquare2 },
+    // { name: "Reports", path: "/dashboard/reports", icon: BarChart3 },
+    // { name: "Team", path: "/dashboard/team", icon: UserSquare2 },
     { name: "Settings", path: "/dashboard/settings", icon: Settings },
   ];
 

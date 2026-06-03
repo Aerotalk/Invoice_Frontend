@@ -52,6 +52,9 @@ const InvoiceDetails = lazy(() => import('../features/invoices/pages/InvoiceDeta
 const PaymentsDashboard = lazy(() => import('../features/payments/pages/PaymentsDashboard').then(m => ({ default: m.PaymentsDashboard })));
 const ExpensesDashboard = lazy(() => import('../features/expenses/pages/ExpensesDashboard').then(m => ({ default: m.ExpensesDashboard })));
 
+const PurchaseOrderList = lazy(() => import('../features/purchase-orders/pages/PurchaseOrderList').then(m => ({ default: m.PurchaseOrderList })));
+const PurchaseOrderDetails = lazy(() => import('../features/purchase-orders/pages/PurchaseOrderDetails').then(m => ({ default: m.PurchaseOrderDetails })));
+
 const ProjectsList = lazy(() => import('../features/projects/pages/ProjectsList').then(m => ({ default: m.ProjectsList })));
 const ProjectDetails = lazy(() => import('../features/projects/pages/ProjectDetails').then(m => ({ default: m.ProjectDetails })));
 
@@ -102,6 +105,10 @@ export const AppRoutes: React.FC = () => {
           {/* Payments & Expenditures */}
           <Route path="payments" element={<PaymentsDashboard />} />
           <Route path="expenses" element={<ExpensesDashboard />} />
+
+          {/* Purchase Orders */}
+          <Route path="purchase-orders" element={<PurchaseOrderList />} />
+          <Route path="purchase-orders/:id" element={<PurchaseOrderDetails />} />
 
           {/* Sprints Projects & Kanban */}
           <Route path="projects" element={<ProjectsList />} />

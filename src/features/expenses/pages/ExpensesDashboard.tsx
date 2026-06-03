@@ -976,14 +976,8 @@ export const ExpensesDashboard: React.FC = () => {
                       Saving...
                     </>
                   ) : (
-                    "Save (Alt+S)"
+                    "Save"
                   )}
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-foreground text-xs font-bold rounded hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors select-none active:scale-95"
-                >
-                  Save and New <span className="text-[10px] text-muted-foreground ml-0.5">(Alt+N)</span>
                 </button>
                 <button
                   type="button"

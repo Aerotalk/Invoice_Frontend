@@ -16,7 +16,8 @@ import {
   MapPin,
   Building2,
   Bookmark,
-  ExternalLink
+  ExternalLink,
+  Files
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -31,7 +32,7 @@ export const VendorDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'details'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'expenses' | 'details' | 'documents'>('overview');
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const { currency } = usePreferencesStore();
@@ -158,8 +159,8 @@ export const VendorDetails: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  {vendor.company || "Business Vendor"}
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  {[vendor.primaryContactTitle, vendor.primaryContactFirstName, vendor.primaryContactLastName].filter(Boolean).join(' ') || vendor.company || 'Business Vendor'}
                 </>
               )}
             </div>
@@ -224,7 +225,8 @@ export const VendorDetails: React.FC = () => {
         {[
           { id: 'overview', label: 'Relationship Overview' },
           { id: 'expenses', label: `Expenses Mapped (${expenses.length})` },
-          { id: 'details', label: 'Advanced Specifications' }
+          { id: 'details', label: 'Advanced Specifications' },
+          { id: 'documents', label: `Uploaded Documents ${(vendor.documentsAttachment && !vendor.documentsAttachment.includes('unsplash')) ? '(1)' : '(0)'}` }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -346,7 +348,7 @@ export const VendorDetails: React.FC = () => {
             {/* Core & Corporate Metadata */}
             <div className="p-5 border rounded-xl bg-card shadow-premium space-y-4">
               <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 border-b pb-2 select-none">
-                <Building2 className="w-4 h-4 text-indigo-500" />
+                <User className="w-4 h-4 text-indigo-500" />
                 Corporate Metadata & Settings
               </h3>
               
@@ -479,6 +481,44 @@ export const VendorDetails: React.FC = () => {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* TAB 4: UPLOADED DOCUMENTS */}
+        {activeTab === 'documents' && (
+          <div className="animate-fade-in select-none">
+            {vendor.documentsAttachment && !vendor.documentsAttachment.includes('unsplash') ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-xl bg-card shadow-premium flex items-center gap-3 hover:-translate-y-0.5 transition-transform">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
+                    <Files className="w-5 h-5 text-indigo-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-xs font-bold text-foreground truncate">Vendor Attachment</span>
+                    <a
+                      href={vendor.documentsAttachment?.match(/^(https?:\/\/|\/)/i) ? vendor.documentsAttachment : '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary hover:underline truncate block mt-0.5"
+                    >
+                      View / Download
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="border rounded-xl bg-card py-20 flex flex-col items-center justify-center gap-3 text-center shadow-premium">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Files className="w-7 h-7 text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">No documents uploaded</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                    Documents attached via the Edit Vendor form will appear here for download and review.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

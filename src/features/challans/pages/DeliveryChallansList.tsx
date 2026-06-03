@@ -632,12 +632,12 @@ export const DeliveryChallansList: React.FC = () => {
                   {errors.challanNumber && <span className="text-[9px] text-rose-500 font-bold">{errors.challanNumber.message}</span>}
                 </div>
 
-                {/* Reference Number */}
+                {/* PO Number */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Reference#</label>
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">PO#</label>
                   <input
                     type="text"
-                    placeholder="Enter reference number"
+                    placeholder="Enter PO number"
                     {...register("referenceNumber")}
                     className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium"
                   />
