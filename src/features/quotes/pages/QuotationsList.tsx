@@ -79,6 +79,7 @@ export const QuotationsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeQuoteMenu, setActiveQuoteMenu] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Dynamic input controls
   const [isCustomQuoteCode, setIsCustomQuoteCode] = useState(false);
@@ -226,14 +227,28 @@ export const QuotationsList: React.FC = () => {
       if (prod) {
         row.productId = prod.id;
         row.name = prod.name;
-        row.hsn = prod.hsn || '';
+        row.hsn = prod.hsnCode || prod.hsn || '';
         row.rate = prod.sellingPrice;
+        
+        // Auto-populate taxRate based on product tax preference and client state
+        let taxPercent = 0;
+        if (prod.taxPreference === 'TAXABLE' || prod.taxPreference === 'Taxable') {
+          const rateStr = isInterState ? prod.interStateTaxRate : prod.intraStateTaxRate;
+          if (rateStr) {
+            const match = rateStr.match(/(\d+(?:\.\d+)?)\s*%/);
+            if (match) {
+              taxPercent = Number(match[1]);
+            }
+          }
+        }
+        row.taxRate = taxPercent;
         row.total = calcRowTotal(row.quantity, prod.sellingPrice, row.discount);
       } else {
         row.productId = "";
         row.name = "";
         row.hsn = "";
         row.rate = 0;
+        row.taxRate = 0;
         row.total = 0;
       }
     } else if (field === 'quantity') {
@@ -297,7 +312,7 @@ export const QuotationsList: React.FC = () => {
 
     setUploadingFile(true);
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'Documents');
       const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
@@ -524,14 +539,15 @@ export const QuotationsList: React.FC = () => {
                   onClick={async () => {
                     setActiveQuoteMenu(null);
                     try {
-                      const toastId = toast.loading("Generating PDF...");
+                      setIsGeneratingPdf(true);
                       const blob = await apiService.downloadQuotationPdf(row.id);
                       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                       window.open(url, '_blank');
-                      toast.dismiss(toastId);
                     } catch (err) {
                       console.error(err);
                       toast.error("Failed to load PDF");
+                    } finally {
+                      setIsGeneratingPdf(false);
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
@@ -979,16 +995,28 @@ export const QuotationsList: React.FC = () => {
                     onClick={() => {
                       // Bulk pre-fill mock
                       if (products.length > 0) {
-                        const bulk = products.slice(0, 3).map(p => ({
-                          productId: p.id,
-                          name: p.name,
-                          hsn: p.hsn || '',
-                          quantity: 1,
-                          rate: p.sellingPrice,
-                          discount: 0,
-                          taxRate: 0,
-                          total: p.sellingPrice
-                        }));
+                        const bulk = products.slice(0, 3).map(p => {
+                          let taxPercent = 0;
+                          if (p.taxPreference === 'TAXABLE' || p.taxPreference === 'Taxable') {
+                            const rateStr = isInterState ? p.interStateTaxRate : p.intraStateTaxRate;
+                            if (rateStr) {
+                              const match = rateStr.match(/(\d+(?:\.\d+)?)\s*%/);
+                              if (match) {
+                                taxPercent = Number(match[1]);
+                              }
+                            }
+                          }
+                          return {
+                            productId: p.id,
+                            name: p.name,
+                            hsn: p.hsnCode || p.hsn || '',
+                            quantity: 1,
+                            rate: p.sellingPrice,
+                            discount: 0,
+                            taxRate: taxPercent,
+                            total: p.sellingPrice
+                          };
+                        });
                         setItemRows([...itemRows.filter(r => r.productId), ...bulk]);
                         toast.success("Added top products catalog in bulk!");
                       }
@@ -1220,6 +1248,22 @@ export const QuotationsList: React.FC = () => {
         </form>
       </Drawer>
 
+      {isGeneratingPdf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-full animate-pulse opacity-50" />
+              </div>
+            </div>
+            <h3 className="mt-6 text-xl font-bold tracking-tight">Generating PDF</h3>
+            <p className="text-muted-foreground mt-2 text-center text-sm">
+              Please wait while we render your beautiful quotation document...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

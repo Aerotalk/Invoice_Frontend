@@ -76,6 +76,7 @@ export const DeliveryChallansList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeChallanMenu, setActiveChallanMenu] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Dynamic input controls
   const [isCustomChallanCode, setIsCustomChallanCode] = useState(false);
@@ -206,7 +207,7 @@ export const DeliveryChallansList: React.FC = () => {
 
     setUploadingFile(true);
     try {
-      const res = await apiService.uploadFile(file);
+      const res = await apiService.uploadFile(file, 'Documents');
       const sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       
       const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
@@ -416,14 +417,15 @@ export const DeliveryChallansList: React.FC = () => {
                   onClick={async () => {
                     setActiveChallanMenu(null);
                     try {
-                      const toastId = toast.loading("Generating PDF...");
+                      setIsGeneratingPdf(true);
                       const blob = await apiService.downloadChallanPdf(row.id);
                       const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                       window.open(url, '_blank');
-                      toast.dismiss(toastId);
                     } catch (err) {
                       console.error(err);
                       toast.error("Failed to load PDF");
+                    } finally {
+                      setIsGeneratingPdf(false);
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
@@ -945,6 +947,22 @@ export const DeliveryChallansList: React.FC = () => {
         </form>
       </Drawer>
 
+      {isGeneratingPdf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4 border animate-in zoom-in-95 duration-200">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-full animate-pulse opacity-50" />
+              </div>
+            </div>
+            <h3 className="mt-6 text-xl font-bold tracking-tight">Generating PDF</h3>
+            <p className="text-muted-foreground mt-2 text-center text-sm">
+              Please wait while we render your document securely...
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

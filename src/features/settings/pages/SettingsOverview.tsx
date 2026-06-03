@@ -31,18 +31,6 @@ interface AdditionalField {
   value: string;
 }
 
-interface BillingAddress {
-  attention: string;
-  street1: string;
-  street2: string;
-  city: string;
-  pinCode: string;
-  state: string;
-  phone: string;
-  fax: string;
-  website: string;
-}
-
 export const SettingsOverview: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
   const { currency, setCurrency, defaultTaxRate, setDefaultTaxRate } = usePreferencesStore();
@@ -113,10 +101,12 @@ export const SettingsOverview: React.FC = () => {
         return;
       }
       try {
-        const res = await apiService.uploadFile(file);
+        const res = await apiService.uploadFile(file, 'AVATAR');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
         setAvatar(fileUrl);
-        toast.success('Profile picture uploaded successfully.');
+        updateProfile({ avatar: fileUrl });
+        await apiService.updateSettings({ profileAvatarUrl: fileUrl });
+        toast.success("Profile picture uploaded successfully.");
       } catch (error) {
         toast.error('Failed to upload profile picture.');
         console.error(error);
@@ -137,13 +127,17 @@ export const SettingsOverview: React.FC = () => {
         return;
       }
       try {
-        const res = await apiService.uploadFile(file);
+        const res = await apiService.uploadFile(file, 'BRANDLOGO');
         const fileUrl = typeof res === 'string' ? res : (res?.url || res?.path || '');
-        setLogos(prev => {
+        let updatedLogos = logos;
+        setLogos((prev) => {
           if (prev.length >= 5) return prev;
-          return [...prev, fileUrl];
+          updatedLogos = [...prev, fileUrl];
+          return updatedLogos;
         });
-        toast.success('Logo uploaded successfully.');
+        updateProfile({ logos: updatedLogos });
+        await apiService.updateSettings({ brandLogoUrls: updatedLogos });
+        toast.success("Logo uploaded successfully.");
       } catch (error) {
         toast.error('Failed to upload logo.');
         console.error(error);
@@ -163,15 +157,30 @@ export const SettingsOverview: React.FC = () => {
   const pubKey = 'pk_test_51MzSGrivetyGlobalSecretKey2026';
   const secKey = 'sk_test_51MzSGrivetyGlobalSecretPrivateKeyUnbreakable2026';
 
-  const handleSaveProfile = () => {
-    updateProfile({
-      name: adminName,
-      email: email,
-      companyName: compName,
-      avatar: avatar,
-      logos: logos,
-    });
-    toast.success('Workspace Settings Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    try {
+      await apiService.updateSettings({
+        workspaceBrandName: compName,
+        adminProfileName: adminName,
+        billingEmailContact: email,
+        profileAvatarUrl: avatar,
+        brandLogoUrls: logos,
+        billingAddresses: addresses,
+      });
+
+      updateProfile({
+        name: adminName,
+        email: email,
+        companyName: compName,
+        avatar: avatar,
+        logos: logos,
+        addresses: addresses,
+      });
+      toast.success("Workspace Settings Profile updated successfully!");
+    } catch (error) {
+      toast.error("Failed to update settings to the server.");
+      console.error(error);
+    }
   };
 
   const handleCopy = (text: string) => {

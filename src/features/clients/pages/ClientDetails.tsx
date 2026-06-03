@@ -164,11 +164,9 @@ export const ClientDetails: React.FC = () => {
       {/* 2. Client Profile Summary Card */}
       <div className="p-6 rounded-xl border bg-card text-card-foreground shadow-premium flex flex-col md:flex-row md:items-center justify-between gap-6 relative select-none">
         <div className="flex items-center gap-4">
-          <img 
-            src={client.avatar} 
-            alt={client.displayName} 
-            className="w-14 h-14 rounded-xl object-cover border ring-1 ring-border shadow-md shrink-0" 
-          />
+          <div className="w-14 h-14 rounded-xl bg-primary/10 border ring-1 ring-border shadow-md shrink-0 flex items-center justify-center text-primary font-bold text-lg select-none">
+            {client.name?.substring(0, 2).toUpperCase() || 'NA'}
+          </div>
           <div>
             <h2 className="text-xl font-extrabold text-foreground leading-tight">{client.displayName}</h2>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground font-semibold uppercase">

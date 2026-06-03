@@ -159,8 +159,8 @@ export const ProjectDetails: React.FC = () => {
     try {
       let fileUrl = '';
       if (file) {
-        const uploaded = await apiService.uploadFile(file);
-        fileUrl = uploaded.url || `/uploads/${uploaded.filename}`;
+        const uploaded = await apiService.uploadFile(file, 'Invoices');
+        fileUrl = typeof uploaded === 'string' ? uploaded : (uploaded?.url || uploaded?.path || '');
       } else {
         fileUrl = `https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=300&random=${Date.now()}`;
       }
@@ -299,7 +299,7 @@ export const ProjectDetails: React.FC = () => {
     (inv: any) => inv && inv.invoiceId && inv.invoiceId.trim() !== ''
   );
 
-  const projectVendors: { id: string; name: string }[] = project?.vendors || [];
+  const projectVendors: any[] = (project?.vendors || []).map((pv: any) => pv.vendor || pv).filter(Boolean);
 
   // ─── Summary financials for close modal ──────────────────────────────────
   const totalInvoiced = validInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);

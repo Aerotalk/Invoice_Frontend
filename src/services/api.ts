@@ -26,8 +26,8 @@ export const apiService = {
       avatar: c.documentsAttachment,
       phone: (c.workPhone || c.mobilePhone) ? `${c.workPhoneCode || ''} ${c.workPhone || c.mobilePhone}`.trim() : 'N/A',
       status: 'active',
-      totalBilled: c.totalBilled || 0,
-      outstandingAmount: c.outstandingAmount || 0,
+      totalBilled: (c.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
+      outstandingAmount: (c.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
     }));
   },
 
@@ -44,12 +44,25 @@ export const apiService = {
         avatar: client.documentsAttachment || '',
         phone: (client.workPhone || client.mobilePhone) ? `${client.workPhoneCode || ''} ${client.workPhone || client.mobilePhone}`.trim() : 'N/A',
         status: 'active',
-        totalBilled: client.totalBilled || 0,
-        outstandingAmount: client.outstandingAmount || 0,
+        totalBilled: (client.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0),
+        outstandingAmount: (client.quotations || []).reduce((sum: number, q: any) => sum + (q.totalAmount || 0), 0), // Assumes no payments logged yet
       },
-      invoices: client.quotations || [], // TBD: If quotes/invoices overlap
+      invoices: (client.quotations || []).map((q: any) => ({
+        ...q,
+        invoiceNumber: q.quoteNumber,
+        issueDate: q.quoteDate,
+        total: q.totalAmount,
+        amountPaid: 0,
+        status: q.status
+      })),
       payments: [],
-      projects: client.projects || []
+      projects: (client.projects || []).map((p: any) => ({
+        ...p,
+        name: p.projectName,
+        status: p.status || 'in-progress',
+        progress: p.progress || 0,
+        tasks: p.tasks || []
+      }))
     };
   },
 
@@ -79,8 +92,8 @@ export const apiService = {
       avatar: v.documentsAttachment,
       phone: (v.workPhone || v.mobilePhone) ? `${v.workPhoneCode || ''} ${v.workPhone || v.mobilePhone}`.trim() : 'N/A',
       status: 'active',
-      totalBilled: v.totalBilled || 0,
-      outstandingAmount: v.outstandingAmount || 0,
+      totalBilled: (v.expenses || []).reduce((sum: number, e: any) => sum + (e.amount || 0), 0),
+      outstandingAmount: (v.expenses || []).reduce((sum: number, e: any) => sum + (e.amount || 0), 0), // Assuming no payments logged yet
     }));
   },
 
@@ -118,7 +131,7 @@ export const apiService = {
           phone: v.shippingPhone || ''
         }
       }, 
-      expenses: [] 
+      expenses: v.expenses || [] 
     };
   },
 
@@ -180,7 +193,8 @@ export const apiService = {
       clientId: p.customerId,
       clientName: p.customer?.displayName || 'Unknown Client',
       vendors: p.vendors?.map((v: any) => v.vendor) || [],
-      status: 'planning',
+      status: p.status || 'planning',
+      description: p.description || '',
       teamMembers: [
           "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
           "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
@@ -195,11 +209,29 @@ export const apiService = {
 
   createProject: async (projectData: unknown) => {
     const res = await api.post('/projects', projectData);
-    return res.data.data;
+    const p = res.data.data;
+    return {
+      ...p,
+      name: p.projectName,
+      clientId: p.customerId,
+      clientName: p.customer?.displayName || 'Unknown Client',
+      vendors: p.vendors?.map((v: any) => v.vendor) || [],
+      status: p.status || 'planning',
+      description: p.description || '',
+      teamMembers: [
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100"
+      ]
+    };
   },
 
   updateProject: async (id: string, data: unknown) => {
     const res = await api.put(`/projects/${id}`, data);
+    return res.data.data;
+  },
+
+  uploadProjectInvoice: async (id: string, invoiceData: unknown) => {
+    const res = await api.post(`/projects/${id}/invoices`, invoiceData);
     return res.data.data;
   },
 
@@ -218,34 +250,8 @@ export const apiService = {
   },
 
   createQuote: async (quoteData: Record<string, unknown>) => {
-    // Adapter to transform frontend shape to backend schema shape
-    const formattedData = {
-      quoteNumber: quoteData.quoteNumber,
-      referenceNumber: quoteData.referenceNumber,
-      customerId: quoteData.clientId, // The backend uses customerId
-      projectId: quoteData.projectId,
-      quoteDate: quoteData.issueDate || quoteData.quoteDate,
-      expiryDate: quoteData.expiryDate,
-      subTotal: quoteData.subtotal,
-      discountRate: quoteData.discountRate,
-      discountAmount: quoteData.discountAmount,
-      taxRate: quoteData.taxRate,
-      totalTax: quoteData.taxAmount,
-      adjustment: quoteData.adjustment,
-      totalAmount: quoteData.total,
-      termsConditions: quoteData.terms,
-      customerNotes: quoteData.notes,
-      items: (quoteData.items as Array<Record<string, unknown>>).map((item) => ({
-        productId: item.productId,
-        customDetails: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-        tax: item.tax,
-        amount: item.amount || ((item.quantity as number) * (item.rate as number))
-      }))
-    };
-    
-    const res = await api.post('/quotations', formattedData);
+    // Send native frontend payload to perfectly match the backend mirrored schema
+    const res = await api.post('/quotations', quoteData);
     return res.data.data;
   },
 
@@ -266,24 +272,40 @@ export const apiService = {
   },
 
   createChallan: async (challanData: Record<string, unknown>) => {
-    const formattedData = {
+    // Send payload directly - the backend validator expects these exact fields
+    const payload = {
       challanNumber: challanData.challanNumber,
-      customerId: challanData.clientId,
-      challanDate: challanData.issueDate || challanData.challanDate,
-      transportMode: challanData.transportMode,
-      deliveryLocation: challanData.deliveryLocation,
-      euPoWoNumber: challanData.euPoWoNumber,
-      termsConditions: challanData.terms,
+      referenceNumber: challanData.referenceNumber || null,
+      clientId: challanData.clientId,
+      clientName: challanData.clientName,
+      clientCompany: challanData.clientCompany,
+      challanDate: challanData.challanDate || challanData.issueDate,
+      challanType: challanData.challanType,
+      transportMode: challanData.transportMode || null,
+      deliveryLocation: challanData.deliveryLocation || null,
+      euPoWoNumber: challanData.euPoWoNumber || null,
       items: (challanData.items as Array<Record<string, unknown>>).map((item) => ({
-        productId: item.productId,
-        customDetails: item.description,
-        quantity: item.quantity,
-        rate: item.rate,
-        amount: item.amount || ((item.quantity as number) * (item.rate as number))
-      }))
+        productId: item.productId && item.productId !== 'custom' ? item.productId : null,
+        name: item.name,
+        quantity: Number(item.quantity),
+        rate: Number(item.rate),
+        tax: item.tax || null,
+        taxAmount: Number(item.taxAmount) || 0,
+        amount: Number(item.amount) || Number(item.total) || (Number(item.quantity) * Number(item.rate)),
+        total: Number(item.total) || Number(item.amount) || (Number(item.quantity) * Number(item.rate)),
+      })),
+      subtotal: Number(challanData.subtotal) || 0,
+      discountRate: challanData.discountRate !== undefined ? Number(challanData.discountRate) : null,
+      discountAmount: challanData.discountAmount !== undefined ? Number(challanData.discountAmount) : null,
+      adjustment: challanData.adjustment !== undefined ? Number(challanData.adjustment) : null,
+      total: Number(challanData.total) || 0,
+      status: challanData.status || 'draft',
+      customerNotes: challanData.customerNotes || null,
+      terms: challanData.terms || null,
+      signatureUrl: challanData.signatureUrl || null,
     };
-    
-    const res = await api.post('/challans', formattedData);
+
+    const res = await api.post('/challans', payload);
     return res.data.data;
   },
 
@@ -344,14 +366,6 @@ export const apiService = {
   },
 
   // --- PROJECTS EXTRAS ---
-  uploadProjectInvoice: async (projectId: string, invoice: any) => {
-    const res = await api.get(`/projects/${projectId}`);
-    const project = res.data.data;
-    const existingInvoices: any[] = project.invoices || [];
-    const updatedInvoices = [...existingInvoices, invoice];
-    const updated = await api.put(`/projects/${projectId}`, { invoices: updatedInvoices });
-    return updated.data.data;
-  },
 
   getProjectExpenses: async (projectId: string) => {
     const res = await api.get('/expenses');
@@ -393,14 +407,23 @@ export const apiService = {
   },
 
   // --- UPLOAD MODULE ---
-  uploadFile: async (file: File) => {
+  uploadFile: async (file: File, folder?: string) => {
     const formData = new FormData();
+    if (folder) {
+      formData.append('folder', folder);
+    }
     formData.append('file', file);
     const res = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return res.data.data;
+  },
+
+  // --- SETTINGS MODULE ---
+  updateSettings: async (settingsData: any) => {
+    const res = await api.put('/settings', settingsData);
     return res.data.data;
   }
 };
