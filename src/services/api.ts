@@ -255,6 +255,11 @@ export const apiService = {
     return res.data.data;
   },
 
+  updateQuote: async (id: string, quoteData: Record<string, unknown>) => {
+    const res = await api.put(`/quotations/${id}`, quoteData);
+    return res.data.data;
+  },
+
   deleteQuote: async (id: string) => {
     await api.delete(`/quotations/${id}`);
     return true;
@@ -338,6 +343,10 @@ export const apiService = {
   },
   createExpense: async (data: any) => {
     const res = await api.post('/expenses', data);
+    return res.data.data;
+  },
+  updateExpense: async (id: string, data: any) => {
+    const res = await api.put(`/expenses/${id}`, data);
     return res.data.data;
   },
   createExpensesBulk: async (data: any[]) => {

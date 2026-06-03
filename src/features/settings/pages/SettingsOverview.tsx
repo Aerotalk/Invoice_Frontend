@@ -178,6 +178,20 @@ export const SettingsOverview: React.FC = () => {
         profileAvatarUrl: avatar,
         brandLogoUrls: logos,
         billingAddresses: [billingAddress],
+        businessType,
+        industry,
+        orgLocation,
+        fiscalYear,
+        orgLanguage,
+        commLanguage,
+        timeZone,
+        dateFormat,
+        dateSeparator,
+        companyIdType,
+        companyIdValue,
+        additionalFields: additionalFields,
+        standardTaxGst: defaultTaxRate,
+        standardBaseCurrency: currency
       });
 
       updateProfile({
