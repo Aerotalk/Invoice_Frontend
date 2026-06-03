@@ -361,10 +361,7 @@ export const apiService = {
   // --- SALESPERSONS (Used in Quotes) ---
   getSalespersons: async () => [],
   createSalesperson: async (name: string) => [],
-  updateQuote: async (id: string, data: any) => {
-    const res = await api.put(`/quotations/${id}`, data);
-    return res.data.data;
-  },
+
   downloadQuotationPdf: async (id: string) => {
     const res = await api.get(`/quotations/${id}/pdf`, { responseType: 'blob' });
     return res.data;
