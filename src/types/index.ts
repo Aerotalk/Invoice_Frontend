@@ -345,6 +345,6 @@ export interface UserProfile {
   companyName: string;
   currency: string;
   logos?: string[];
-  addresses?: string[];
+  addresses?: any[];
 }
 

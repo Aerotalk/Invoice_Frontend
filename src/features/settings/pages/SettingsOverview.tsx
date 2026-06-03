@@ -31,6 +31,18 @@ interface AdditionalField {
   value: string;
 }
 
+interface BillingAddress {
+  attention: string;
+  street1: string;
+  street2: string;
+  city: string;
+  pinCode: string;
+  state: string;
+  phone: string;
+  fax: string;
+  website: string;
+}
+
 export const SettingsOverview: React.FC = () => {
   const { user, updateProfile } = useAuthStore();
   const { currency, setCurrency, defaultTaxRate, setDefaultTaxRate } = usePreferencesStore();
@@ -165,7 +177,7 @@ export const SettingsOverview: React.FC = () => {
         billingEmailContact: email,
         profileAvatarUrl: avatar,
         brandLogoUrls: logos,
-        billingAddresses: addresses,
+        billingAddresses: [billingAddress],
       });
 
       updateProfile({
@@ -174,7 +186,7 @@ export const SettingsOverview: React.FC = () => {
         companyName: compName,
         avatar: avatar,
         logos: logos,
-        addresses: addresses,
+        addresses: [billingAddress],
       });
       toast.success("Workspace Settings Profile updated successfully!");
     } catch (error) {
