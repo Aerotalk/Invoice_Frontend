@@ -333,6 +333,10 @@ export const PurchaseOrderList: React.FC = () => {
     }
   ];
 
+  const filteredProjects = selectedVendorId 
+    ? projects.filter(p => (p.vendors || []).some((pv: any) => pv.vendorId === selectedVendorId || pv.vendor?.id === selectedVendorId || pv.id === selectedVendorId))
+    : projects;
+
   return (
     <div className="space-y-6 select-none animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -419,8 +423,8 @@ export const PurchaseOrderList: React.FC = () => {
                     className="w-full px-3 py-2 border rounded-lg bg-card outline-none text-xs font-semibold focus:border-primary appearance-none"
                   >
                     <option value="">Direct Purchase</option>
-                    {projects.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                    {filteredProjects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name || p.projectName}</option>
                     ))}
                   </select>
                 </div>
