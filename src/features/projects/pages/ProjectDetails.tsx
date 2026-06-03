@@ -667,7 +667,16 @@ export const ProjectDetails: React.FC = () => {
       </div>
 
       {/* ── Close Project ── */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-3">
+        {project.status === 'completed' && (
+          <button
+            onClick={() => setCloseModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 text-xs font-bold transition-all active:scale-95"
+          >
+            <FileText className="w-4 h-4 shrink-0" />
+            View Summary
+          </button>
+        )}
         <button
           onClick={handleCloseProject}
           disabled={isClosing || project.status === 'completed'}
@@ -846,23 +855,34 @@ export const ProjectDetails: React.FC = () => {
 
             {/* Modal Footer Buttons */}
             <div className="p-5 border-t flex items-center justify-end gap-3 shrink-0">
-              <button
-                onClick={() => setCloseModalOpen(false)}
-                className="px-4 py-2 border rounded-lg hover:bg-muted font-semibold text-sm transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmCloseProject}
-                disabled={isClosing}
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
-              >
-                {isClosing
-                  ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <XCircle className="w-4 h-4" />
-                }
-                {isClosing ? 'Closing...' : 'Confirm & Close Project'}
-              </button>
+              {project.status === 'completed' ? (
+                <button
+                  onClick={() => setCloseModalOpen(false)}
+                  className="px-5 py-2 border rounded-lg bg-card text-foreground font-bold text-sm transition-colors hover:bg-muted active:scale-95"
+                >
+                  Close
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setCloseModalOpen(false)}
+                    className="px-4 py-2 border rounded-lg hover:bg-muted font-semibold text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmCloseProject}
+                    disabled={isClosing}
+                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    {isClosing
+                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <XCircle className="w-4 h-4" />
+                    }
+                    {isClosing ? 'Closing...' : 'Confirm & Close Project'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

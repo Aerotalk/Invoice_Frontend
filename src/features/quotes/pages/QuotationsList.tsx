@@ -804,22 +804,6 @@ export const QuotationsList: React.FC = () => {
               </div>
               
               <div className="p-4 space-y-4">
-                {/* GST type indicator banner */}
-                {selectedClientId && (
-                  <div className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold border mb-2",
-                    isInterState
-                      ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-700 dark:text-amber-400"
-                      : "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-700 dark:text-emerald-400"
-                  )}>
-                    <AlertCircle className="w-3 h-3 shrink-0" />
-                    {isInterState
-                      ? `Inter-state supply → IGST applies (Client: ${clientState} ≠ Org: ${ORG_STATE})`
-                      : `Intra-state supply → CGST + SGST applies (Both: ${ORG_STATE})`
-                    }
-                  </div>
-                )}
-
                 {/* Headers */}
                 <div className="grid grid-cols-12 gap-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider border-b pb-2 select-none hidden sm:grid">
                   <div className="col-span-3">Item Details</div>

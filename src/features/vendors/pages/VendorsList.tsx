@@ -20,7 +20,8 @@ import {
   Upload,
   BookOpen,
   Layers,
-  MapPin
+  MapPin,
+  Pencil
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
@@ -141,6 +142,8 @@ export const VendorsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeVendorMenu, setActiveVendorMenu] = useState<string | null>(null);
+  // Edit mode: null = create, string id = edit
+  const [editingVendorId, setEditingVendorId] = useState<string | null>(null);
   
   // Interactive form tab control
   const [activeFormTab, setActiveFormTab] = useState<'other' | 'address' | 'contacts' | 'custom' | 'remarks'>('other');
@@ -233,11 +236,14 @@ export const VendorsList: React.FC = () => {
   }, []);
 
   // Auto derivation of vendor display name
+  // - Individual: always derived from first+last name
+  // - Business: only seeded from company name when displayName is blank
+  const watchDisplayName = watch("displayName");
   useEffect(() => {
     if (vendorType === 'individual') {
       const derived = `${watchFirstName || ''} ${watchLastName || ''}`.trim();
       setValue("displayName", derived);
-    } else {
+    } else if (!watchDisplayName) {
       setValue("displayName", watchCompany || '');
     }
   }, [vendorType, watchFirstName, watchLastName, watchCompany, setValue]);
@@ -373,7 +379,86 @@ export const VendorsList: React.FC = () => {
     setUploadedDocuments(uploadedDocuments.filter((_, idx) => idx !== index));
   };
 
-  // Form submission
+  // Open edit drawer: fetch fresh data and pre-populate the form
+  const handleOpenEditDrawer = async (row: any) => {
+    setActiveVendorMenu(null);
+    setEditingVendorId(row.id);
+    setActiveFormTab('other');
+    try {
+      const res = await apiService.getVendorById(row.id);
+      const v = res.vendor;
+
+      reset({
+        vendorType: (v.vendorType?.toLowerCase() || 'business') as 'business' | 'individual',
+        salutation: v.primaryContactTitle || 'Mr.',
+        firstName: v.primaryContactFirstName || '',
+        lastName: v.primaryContactLastName || '',
+        company: v.companyName || '',
+        displayName: v.displayName || '',
+        currency: v.currency || 'INR',
+        email: v.email || '',
+        workPhoneCode: v.workPhoneCode || '+91',
+        workPhone: v.workPhone || '',
+        mobileCode: v.mobilePhoneCode || '+91',
+        mobile: v.mobilePhone || '',
+        language: v.vendorLanguage || 'English',
+        gstTreatment: v.gstTreatment || '',
+        gstNumber: v.gstNumber || '',
+        pan: v.pan || '',
+        paymentTerms: v.paymentTerms || 'Due on Receipt',
+        enablePortal: v.allowPortalAccess || false,
+        website: v.websiteUrl || '',
+        department: v.department || '',
+        designation: v.designation || '',
+        billingAttention: v.billingAttention || '',
+        billingStreet1: v.billingStreet1 || '',
+        billingStreet2: v.billingStreet2 || '',
+        billingCountry: v.billingCountry || 'India',
+        billingState: v.billingState || 'West Bengal',
+        billingCity: v.billingCity || 'Kolkata',
+        billingZip: v.billingZipCode || '',
+        billingPhone: v.billingPhone || '',
+        billingFax: v.billingFax || '',
+        shippingAttention: v.shippingAttention || '',
+        shippingStreet1: v.shippingStreet1 || '',
+        shippingStreet2: v.shippingStreet2 || '',
+        shippingCountry: v.shippingCountry || 'India',
+        shippingState: v.shippingState || 'West Bengal',
+        shippingCity: v.shippingCity || 'Kolkata',
+        shippingZip: v.shippingZipCode || '',
+        shippingPhone: v.shippingPhone || '',
+        shippingFax: v.shippingFax || '',
+        remarks: v.internalRemarks || ''
+      });
+
+      setContactPersons(
+        (v.contactPersons || []).map((cp: any) => ({
+          id: cp.id || `cp-${Date.now()}-${Math.random()}`,
+          salutation: cp.salutation || 'Mr.',
+          firstName: cp.firstName || '',
+          lastName: cp.lastName || '',
+          email: cp.email || '',
+          phone: cp.phone || ''
+        }))
+      );
+      setCustomFields(
+        (v.customFields || []).length > 0
+          ? (v.customFields || []).map((cf: any) => ({
+              id: cf.id || `cf-${Date.now()}-${Math.random()}`,
+              label: cf.key || '',
+              value: cf.value || ''
+            }))
+          : [{ id: 'cf-1', label: 'GSTIN', value: '' }, { id: 'cf-2', label: 'Category', value: 'Cloud / Tech' }]
+      );
+      setUploadedDocuments([]);
+      setDrawerOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to load vendor data for editing.');
+    }
+  };
+
+  // Form submission (create or update)
   const onSubmitVendor = async (values: VendorFormValues) => {
     try {
       const fullName = `${values.salutation ? values.salutation + ' ' : ''}${values.firstName} ${values.lastName}`.trim();
@@ -388,10 +473,17 @@ export const VendorsList: React.FC = () => {
         status: "active" as const,
         notes: values.remarks || "",
         
-        // Advanced Custom details mapping
+        // Advanced Custom details
         displayName: values.displayName,
+        salutation: values.salutation,
+        firstName: values.firstName,
+        lastName: values.lastName,
         currency: values.currency,
         language: values.language,
+        workPhoneCode: values.workPhoneCode,
+        workPhone: values.workPhone,
+        mobileCode: values.mobileCode,
+        mobile: values.mobile,
         gstTreatment: values.gstTreatment,
         gstNumber: isNotRegisteredBusiness ? undefined : values.gstNumber,
         pan: values.pan,
@@ -400,6 +492,7 @@ export const VendorsList: React.FC = () => {
         website: values.website,
         department: values.department,
         designation: values.designation,
+        remarks: values.remarks,
         
         // Addresses
         billingAddress: {
@@ -429,11 +522,19 @@ export const VendorsList: React.FC = () => {
         documentsCount: uploadedDocuments.length
       };
 
-      await apiService.createVendor(payload);
-      toast.success("Vendor profile added successfully!");
+      if (editingVendorId) {
+        await apiService.updateVendor(editingVendorId, payload);
+        toast.success("Vendor profile updated successfully!");
+      } else {
+        await apiService.createVendor(payload);
+        toast.success("Vendor profile added successfully!");
+      }
+
       setDrawerOpen(false);
+      setEditingVendorId(null);
       reset();
       setContactPersons([]);
+      setCustomFields([{ id: 'cf-1', label: 'GSTIN', value: '' }, { id: 'cf-2', label: 'Category', value: 'Cloud / Tech' }]);
       setUploadedDocuments([]);
       loadVendors();
     } catch (e) {
@@ -535,7 +636,7 @@ export const VendorsList: React.FC = () => {
                 onClick={() => setActiveVendorMenu(null)}
                 className="fixed inset-0 z-40 select-none" 
               />
-              <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
+              <div className="absolute right-full -top-8 mr-2 w-48 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <Link
                   to={`/dashboard/vendors/${row.id}`}
                   onClick={() => setActiveVendorMenu(null)}
@@ -544,6 +645,14 @@ export const VendorsList: React.FC = () => {
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   View Profile
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditDrawer(row)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-950/20 text-slate-600 dark:text-slate-400 transition-colors text-left font-semibold cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Edit Vendor
+                </button>
                 <button
                   type="button"
                   onClick={async () => {
@@ -613,12 +722,12 @@ export const VendorsList: React.FC = () => {
         loading={loading}
       />
 
-      {/* Advanced High-Fidelity Add Vendor Drawer */}
+      {/* Advanced High-Fidelity Add / Edit Vendor Drawer */}
       <Drawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title="Create Vendor Profile"
-        size="xl" // Spacious layout to fit all details beautifully
+        onClose={() => { setDrawerOpen(false); setEditingVendorId(null); }}
+        title={editingVendorId ? "Edit Vendor Profile" : "Create Vendor Profile"}
+        size="xl"
       >
         <form onSubmit={handleSubmit(onSubmitVendor)} className="flex flex-col h-[82vh] text-xs font-semibold select-none">
           
@@ -1542,7 +1651,7 @@ export const VendorsList: React.FC = () => {
           <div className="flex items-center gap-3 justify-end pt-4 border-t mt-auto shrink-0 select-none bg-card">
             <button
               type="button"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => { setDrawerOpen(false); setEditingVendorId(null); }}
               className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95 cursor-pointer font-bold text-xs"
             >
               Cancel
@@ -1555,10 +1664,10 @@ export const VendorsList: React.FC = () => {
               {isSubmitting ? (
                 <>
                   <span className="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin shrink-0" />
-                  Creating...
+                  {editingVendorId ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
-                "Create Vendor"
+                editingVendorId ? 'Update Vendor' : 'Create Vendor'
               )}
             </button>
           </div>

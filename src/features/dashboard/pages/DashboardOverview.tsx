@@ -112,14 +112,6 @@ export const DashboardOverview: React.FC = () => {
                 ))}
               </div>
             </div>
-            {/* Quick Create */}
-            <Link 
-              to="/dashboard/invoices/create"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md shadow-indigo-500/10 active:scale-95 select-none"
-            >
-              <Plus className="w-4 h-4" />
-              New Invoice
-            </Link>
           </div>
         }
       />

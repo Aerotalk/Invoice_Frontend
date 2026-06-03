@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Mail, 
@@ -13,7 +13,9 @@ import {
   FilePlus,
   Activity,
   User,
-  Briefcase
+  Briefcase,
+  Pencil,
+  Files
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { StatusBadge } from '../../../components/common/StatusBadge';
@@ -26,9 +28,10 @@ import toast from 'react-hot-toast';
 
 export const ClientDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payments' | 'projects'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'payments' | 'projects' | 'documents'>('overview');
   const [noteText, setNoteText] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const { currency } = usePreferencesStore();
@@ -163,23 +166,14 @@ export const ClientDetails: React.FC = () => {
         <div className="flex items-center gap-4">
           <img 
             src={client.avatar} 
-            alt={client.name} 
+            alt={client.displayName} 
             className="w-14 h-14 rounded-xl object-cover border ring-1 ring-border shadow-md shrink-0" 
           />
           <div>
-            <h2 className="text-xl font-extrabold text-foreground leading-tight">{client.name}</h2>
+            <h2 className="text-xl font-extrabold text-foreground leading-tight">{client.displayName}</h2>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground font-semibold uppercase">
-              {client.clientType === 'individual' ? (
-                <>
-                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  Individual Client
-                </>
-              ) : (
-                <>
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  {client.company}
-                </>
-              )}
+              <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              {[client.primaryContactTitle, client.primaryContactFirstName, client.primaryContactLastName].filter(Boolean).join(' ') || client.displayName}
             </div>
             <div className="flex flex-wrap items-center gap-4 mt-2 select-none text-[11px] font-semibold text-muted-foreground">
               <span className="flex items-center gap-1">
@@ -231,7 +225,8 @@ export const ClientDetails: React.FC = () => {
           { id: 'overview', label: 'Relationship Overview' },
           { id: 'invoices', label: `Invoices Ledger (${invoices.length})` },
           { id: 'payments', label: `Payments Logs (${payments.length})` },
-          { id: 'projects', label: `Projects Mapped (${projects.length})` }
+          { id: 'projects', label: `Projects Mapped (${projects.length})` },
+          { id: 'documents', label: `Uploaded Documents (${client.documentsCount || 0})` }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -273,7 +268,6 @@ export const ClientDetails: React.FC = () => {
               />
               
               <div className="border-t pt-4 mt-4 flex items-center justify-between shrink-0 select-none">
-                <span className="text-[10px] text-muted-foreground font-semibold">Changes are saved to local database</span>
                 <button
                   onClick={handleSaveNote}
                   disabled={savingNote}
@@ -405,6 +399,44 @@ export const ClientDetails: React.FC = () => {
             {projects.length === 0 && (
               <div className="col-span-full border rounded-xl py-12 text-center text-sm text-muted-foreground bg-card select-none">
                 No active projects mapped to this account.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 5: UPLOADED DOCUMENTS */}
+        {activeTab === 'documents' && (
+          <div className="animate-fade-in select-none">
+            {client.avatar && !client.avatar.includes('unsplash') && !client.avatar.includes('placeholder') ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-xl bg-card shadow-premium flex items-center gap-3 hover:-translate-y-0.5 transition-transform">
+                  <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
+                    <Files className="w-5 h-5 text-indigo-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-xs font-bold text-foreground truncate">Client Attachment</span>
+                    <a
+                      href={client.avatar}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-primary hover:underline truncate block mt-0.5"
+                    >
+                      View / Download
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="border rounded-xl bg-card py-20 flex flex-col items-center justify-center gap-3 text-center shadow-premium">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Files className="w-7 h-7 text-slate-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">No documents uploaded</p>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                    Documents attached via the Edit Client form will appear here for download and review.
+                  </p>
+                </div>
               </div>
             )}
           </div>

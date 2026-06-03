@@ -20,7 +20,8 @@ import {
   Upload,
   BookOpen,
   Layers,
-  MapPin
+  MapPin,
+  Pencil
 } from 'lucide-react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
@@ -29,7 +30,7 @@ import { Drawer } from '../../../components/common/Drawer';
 import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
@@ -143,6 +144,8 @@ export const ClientsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeClientMenu, setActiveClientMenu] = useState<string | null>(null);
+  // Edit mode: holds the client id being edited (null = create mode)
+  const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
   // Interactive form tab control
   const [activeFormTab, setActiveFormTab] = useState<'other' | 'address' | 'contacts' | 'custom' | 'remarks'>('other');
@@ -170,6 +173,7 @@ export const ClientsList: React.FC = () => {
 
   const { currency } = usePreferencesStore();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -236,14 +240,19 @@ export const ClientsList: React.FC = () => {
   }, []);
 
   // Auto derivation of client display name
+  // - Individual: always derived from first + last name
+  // - Business: only seeded from company name when displayName is currently blank
+  const watchDisplayName = watch("displayName");
   useEffect(() => {
     if (clientType === 'individual') {
       const derived = `${watchFirstName || ''} ${watchLastName || ''}`.trim();
       setValue("displayName", derived);
-    } else {
+    } else if (!watchDisplayName) {
+      // Only seed when the field is empty (new client or cleared)
       setValue("displayName", watchCompany || '');
     }
   }, [clientType, watchFirstName, watchLastName, watchCompany, setValue]);
+
 
   // Billing address dependents
   useEffect(() => {
@@ -367,7 +376,103 @@ export const ClientsList: React.FC = () => {
     setUploadedDocuments(uploadedDocuments.filter((_, idx) => idx !== index));
   };
 
-  // Form submission
+  // Open edit drawer: fetch fresh data and pre-populate the form
+  const handleOpenEditDrawer = async (row: any) => {
+    setActiveClientMenu(null);
+    setEditingClientId(row.id);
+    setActiveFormTab('other');
+    try {
+      const res = await apiService.getClientById(row.id);
+      const c = res.client;
+
+      // Parse salutation / first / last from stored values
+      reset({
+        clientType: (c.customerType?.toLowerCase() || 'business') as 'business' | 'individual',
+        salutation: c.primaryContactTitle || 'Mr.',
+        firstName: c.primaryContactFirstName || '',
+        lastName: c.primaryContactLastName || '',
+        company: c.companyName || '',
+        displayName: c.displayName || '',
+        currency: c.currency || 'INR',
+        email: c.email || '',
+        workPhoneCode: c.workPhoneCode || '+91',
+        workPhone: c.workPhone || '',
+        mobileCode: c.mobilePhoneCode || '+91',
+        mobile: c.mobilePhone || '',
+        language: c.customerLanguage || 'English',
+        gstTreatment: c.gstTreatment || '',
+        gstNumber: c.gstNumber || '',
+        placeOfSupply: c.placeOfSupply || '',
+        taxPreference: c.taxPreference === 'TAX_EXEMPT' ? 'Tax Exempt' : 'Taxable',
+        pan: c.pan || '',
+        paymentTerms: c.paymentTerms || 'Due on Receipt',
+        enablePortal: c.allowPortalAccess || false,
+        website: c.websiteUrl || '',
+        department: c.department || '',
+        designation: c.designation || '',
+        billingAttention: c.billingAttention || '',
+        billingStreet1: c.billingStreet1 || '',
+        billingStreet2: c.billingStreet2 || '',
+        billingCountry: c.billingCountry || 'India',
+        billingState: c.billingState || 'West Bengal',
+        billingCity: c.billingCity || 'Kolkata',
+        billingZip: c.billingZipCode || '',
+        billingPhone: c.billingPhone || '',
+        billingFax: c.billingFax || '',
+        shippingAttention: c.shippingAttention || '',
+        shippingStreet1: c.shippingStreet1 || '',
+        shippingStreet2: c.shippingStreet2 || '',
+        shippingCountry: c.shippingCountry || 'India',
+        shippingState: c.shippingState || 'West Bengal',
+        shippingCity: c.shippingCity || 'Kolkata',
+        shippingZip: c.shippingZipCode || '',
+        shippingPhone: c.shippingPhone || '',
+        shippingFax: c.shippingFax || '',
+        remarks: c.internalRemarks || ''
+      });
+
+      // Pre-populate sub-array states
+      setContactPersons(
+        (c.contactPersons || []).map((cp: any) => ({
+          id: cp.id || `cp-${Date.now()}-${Math.random()}`,
+          salutation: cp.salutation || 'Mr.',
+          firstName: cp.firstName || '',
+          lastName: cp.lastName || '',
+          email: cp.email || '',
+          phone: cp.phone || ''
+        }))
+      );
+      setCustomFields(
+        (c.customFields || []).map((cf: any) => ({
+          id: cf.id || `cf-${Date.now()}-${Math.random()}`,
+          label: cf.key || '',
+          value: cf.value || ''
+        }))
+      );
+      setUploadedDocuments([]);
+      setDrawerOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to load client data for editing.');
+    }
+  };
+
+  // Auto-open edit drawer when navigated from ClientDetails with ?edit=<id>
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId && clients.length > 0) {
+      const row = clients.find((c: any) => c.id === editId);
+      if (row) {
+        handleOpenEditDrawer(row);
+        // Clean URL without causing a navigation loop
+        navigate('/dashboard/clients', { replace: true });
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, clients]);
+
+  // Form submission (create or update)
   const onSubmitClient = async (values: ClientFormValues) => {
     try {
       const fullName = `${values.salutation ? values.salutation + ' ' : ''}${values.firstName} ${values.lastName}`.trim();
@@ -384,8 +489,15 @@ export const ClientsList: React.FC = () => {
 
         // Advanced Custom details mapping
         displayName: values.displayName,
+        salutation: values.salutation,
+        firstName: values.firstName,
+        lastName: values.lastName,
         currency: values.currency,
         language: values.language,
+        workPhoneCode: values.workPhoneCode,
+        workPhone: values.workPhone,
+        mobileCode: values.mobileCode,
+        mobile: values.mobile,
         gstTreatment: values.gstTreatment,
         gstNumber: values.gstNumber,
         placeOfSupply: values.placeOfSupply,
@@ -396,6 +508,7 @@ export const ClientsList: React.FC = () => {
         website: values.website,
         department: values.department,
         designation: values.designation,
+        remarks: values.remarks,
 
         // Addresses
         billingAddress: {
@@ -425,11 +538,19 @@ export const ClientsList: React.FC = () => {
         documentsCount: uploadedDocuments.length
       };
 
-      await apiService.createClient(payload);
-      toast.success("Client profile added successfully!");
+      if (editingClientId) {
+        await apiService.updateClient(editingClientId, payload);
+        toast.success("Client profile updated successfully!");
+      } else {
+        await apiService.createClient(payload);
+        toast.success("Client profile added successfully!");
+      }
+
       setDrawerOpen(false);
+      setEditingClientId(null);
       reset();
       setContactPersons([]);
+      setCustomFields([{ id: 'cf-1', label: 'GSTIN', value: '' }, { id: 'cf-2', label: 'Industry', value: 'Technology' }]);
       setUploadedDocuments([]);
       loadClients();
     } catch (e) {
@@ -462,7 +583,7 @@ export const ClientsList: React.FC = () => {
               {row.clientType === 'individual' ? (
                 <>
                   <User className="w-3 h-3 text-slate-400 shrink-0" />
-                  Individual Client
+                  {row.displayName}
                 </>
               ) : (
                 <>
@@ -531,7 +652,7 @@ export const ClientsList: React.FC = () => {
                 onClick={() => setActiveClientMenu(null)}
                 className="fixed inset-0 z-40 select-none"
               />
-              <div className="absolute right-full -top-8 mr-2 w-44 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
+              <div className="absolute right-full -top-8 mr-2 w-48 bg-card border rounded-lg shadow-xl z-50 overflow-hidden divide-y text-xs font-semibold select-none">
                 <Link
                   to={`/dashboard/clients/${row.id}`}
                   onClick={() => setActiveClientMenu(null)}
@@ -540,6 +661,14 @@ export const ClientsList: React.FC = () => {
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   View Profile
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditDrawer(row)}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-950/20 text-slate-600 dark:text-slate-400 transition-colors text-left font-semibold cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  Edit Client
+                </button>
                 <Link
                   to="/dashboard/invoices/create"
                   state={{ preselectedClientId: row.id }}
@@ -618,12 +747,12 @@ export const ClientsList: React.FC = () => {
         loading={loading}
       />
 
-      {/* Advanced High-Fidelity Add Client Drawer */}
+      {/* Advanced High-Fidelity Add / Edit Client Drawer */}
       <Drawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title="Create Customer Profile"
-        size="xl" // Larger modal size to fit all premium details elegantly
+        onClose={() => { setDrawerOpen(false); setEditingClientId(null); }}
+        title={editingClientId ? "Edit Customer Profile" : "Create Customer Profile"}
+        size="xl"
       >
         <form onSubmit={handleSubmit(onSubmitClient)} className="flex flex-col h-[82vh] text-xs font-semibold select-none">
 
@@ -637,8 +766,13 @@ export const ClientsList: React.FC = () => {
                   <Layers className="w-3.5 h-3.5 shrink-0" />
                   1. Classification & Relationship
                 </span>
-                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-900/50">
-                  New Partner Setup
+                <span className={cn(
+                  "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                  editingClientId
+                    ? "text-amber-600 bg-amber-50 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/50"
+                    : "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/50"
+                )}>
+                  {editingClientId ? 'Editing Profile' : 'New Partner Setup'}
                 </span>
               </div>
 
@@ -1647,7 +1781,7 @@ export const ClientsList: React.FC = () => {
           <div className="flex items-center gap-3 justify-end pt-4 border-t mt-auto shrink-0 select-none bg-card">
             <button
               type="button"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => { setDrawerOpen(false); setEditingClientId(null); }}
               className="px-4 py-2 border rounded-lg hover:bg-muted text-foreground transition-all select-none active:scale-95 cursor-pointer font-bold text-xs"
             >
               Cancel
@@ -1660,10 +1794,10 @@ export const ClientsList: React.FC = () => {
               {isSubmitting ? (
                 <>
                   <span className="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin shrink-0" />
-                  Creating...
+                  {editingClientId ? 'Updating...' : 'Creating...'}
                 </>
               ) : (
-                "Create Client"
+                editingClientId ? 'Update Client' : 'Create Client'
               )}
             </button>
           </div>
