@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Plus, Search, Trash2, MoreHorizontal, X, Eye, 
   UserSquare2, Calendar, Settings, AlertCircle, Package
@@ -43,6 +44,7 @@ interface PoItemInput {
 }
 
 export const PurchaseOrderList: React.FC = () => {
+  const navigate = useNavigate();
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
@@ -240,7 +242,7 @@ export const PurchaseOrderList: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     setActiveMenu(null);
-                    window.location.href = `/dashboard/purchase-orders/${row.id}`;
+                    navigate(`/dashboard/purchase-orders/${row.id}`);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >

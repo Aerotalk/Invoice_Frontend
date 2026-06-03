@@ -103,6 +103,7 @@ export const PurchaseOrderDetails: React.FC = () => {
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 100);
                 toast.dismiss(toastId);
               } catch (err) {
                 console.error(err);
@@ -122,6 +123,7 @@ export const PurchaseOrderDetails: React.FC = () => {
                 const blob = await apiService.downloadPurchaseOrderPdf(id);
                 const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                 window.open(url, '_blank');
+                setTimeout(() => window.URL.revokeObjectURL(url), 1000);
                 toast.dismiss(toastId);
               } catch (err) {
                 console.error(err);

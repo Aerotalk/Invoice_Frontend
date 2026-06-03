@@ -146,6 +146,7 @@ export const ClientsList: React.FC = () => {
   const [activeClientMenu, setActiveClientMenu] = useState<string | null>(null);
   // Edit mode: holds the client id being edited (null = create mode)
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
+  const loadingEditIdRef = useRef<string | null>(null);
 
   // Interactive form tab control
   const [activeFormTab, setActiveFormTab] = useState<'other' | 'address' | 'contacts' | 'custom' | 'remarks'>('other');
@@ -380,9 +381,12 @@ export const ClientsList: React.FC = () => {
   const handleOpenEditDrawer = async (row: any) => {
     setActiveClientMenu(null);
     setEditingClientId(row.id);
+    loadingEditIdRef.current = row.id;
     setActiveFormTab('other');
     try {
       const res = await apiService.getClientById(row.id);
+      if (loadingEditIdRef.current !== row.id) return;
+      
       const c = res.client;
 
       // Parse salutation / first / last from stored values

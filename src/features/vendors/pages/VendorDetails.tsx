@@ -226,7 +226,7 @@ export const VendorDetails: React.FC = () => {
           { id: 'overview', label: 'Relationship Overview' },
           { id: 'expenses', label: `Expenses Mapped (${expenses.length})` },
           { id: 'details', label: 'Advanced Specifications' },
-          { id: 'documents', label: `Uploaded Documents (${vendor.documentsCount || 0})` }
+          { id: 'documents', label: `Uploaded Documents ${(vendor.documentsAttachment && !vendor.documentsAttachment.includes('unsplash')) ? '(1)' : '(0)'}` }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -496,7 +496,7 @@ export const VendorDetails: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <span className="block text-xs font-bold text-foreground truncate">Vendor Attachment</span>
                     <a
-                      href={vendor.documentsAttachment}
+                      href={vendor.documentsAttachment?.match(/^(https?:\/\/|\/)/i) ? vendor.documentsAttachment : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[10px] text-primary hover:underline truncate block mt-0.5"
