@@ -431,5 +431,27 @@ export const apiService = {
   updateSettings: async (settingsData: any) => {
     const res = await api.put('/settings', settingsData);
     return res.data.data;
+  },
+
+  // --- PURCHASE ORDERS ---
+  getPurchaseOrders: async () => {
+    const res = await api.get('/purchase-orders');
+    return res.data.data;
+  },
+  createPurchaseOrder: async (data: any) => {
+    const res = await api.post('/purchase-orders', data);
+    return res.data.data;
+  },
+  updatePurchaseOrder: async (id: string, data: any) => {
+    const res = await api.put(`/purchase-orders/${id}`, data);
+    return res.data.data;
+  },
+  deletePurchaseOrder: async (id: string) => {
+    const res = await api.delete(`/purchase-orders/${id}`);
+    return res.data;
+  },
+  downloadPurchaseOrderPdf: async (id: string) => {
+    const res = await api.get(`/purchase-orders/${id}/pdf`, { responseType: 'blob' });
+    return res.data;
   }
 };
