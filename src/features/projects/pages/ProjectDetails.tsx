@@ -483,7 +483,7 @@ export const ProjectDetails: React.FC = () => {
                                 try {
                                   let blob;
                                   if (inv.url.startsWith('api-call:quote:')) {
-                                    blob = await apiService.downloadQuotePdf(inv.id);
+                                    blob = await apiService.downloadQuotationPdf(inv.id);
                                   } else {
                                     blob = await apiService.downloadPurchaseOrderPdf(inv.id);
                                   }
