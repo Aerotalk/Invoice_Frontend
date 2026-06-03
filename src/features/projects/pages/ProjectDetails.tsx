@@ -487,8 +487,8 @@ export const ProjectDetails: React.FC = () => {
                                   } else {
                                     blob = await apiService.downloadPurchaseOrderPdf(inv.id);
                                   }
-                                  const url = window.URL.createObjectURL(blob);
-                                  window.open(url);
+                                  const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                                  window.open(url, '_blank');
                                 } catch (error) {
                                   toast.error('Failed to view PDF');
                                 }
