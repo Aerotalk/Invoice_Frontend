@@ -3,16 +3,32 @@ import api from '../lib/axios';
 export const apiService = {
   // --- DASHBOARD DATA ---
   getDashboardStats: async () => {
-    // For now, we return empty stats or we can build a dashboard endpoint on the backend.
-    // The user requested: "all the endpoints which have dropdowns to select client vendor or project all this should be properly integrated". 
-    // We will hook up the core models first.
-    return {
-      stats: { totalRevenue: 0, outstandingInvoices: 0, paidInvoicesCount: 0, overdueInvoicesCount: 0 },
-      monthlyEarnings: [],
-      statusPieData: [],
-      recentInvoices: [],
-      recentPayments: [],
-    };
+    try {
+      const res = await api.get('/dashboard');
+      return res.data.data;
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      return {
+        stats: { totalRevenue: 0, outstandingInvoices: 0, paidInvoicesCount: 0, overdueInvoicesCount: 0 },
+        monthlyEarnings: [],
+        statusPieData: [],
+        clientProfitabilityData: []
+      };
+    }
+  },
+
+  // --- REPORTS MODULE ---
+  downloadProjectExcel: async () => {
+    const response = await api.get('/export/excel/projects', {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Project_Profitability_${new Date().getTime()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
   },
 
   // --- CLIENTS MODULE ---

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../../../components/common/PageHeader';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
 import { formatCurrency } from '../../../lib/utils';
@@ -6,36 +6,49 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { FileSpreadsheet, Download, BarChart3, TrendingUp, DollarSign } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import toast from 'react-hot-toast';
+import { apiService } from '../../../services/api';
 
 export const ReportsOverview: React.FC = () => {
   const { currency } = usePreferencesStore();
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [reportTrendData, setReportTrendData] = useState<any[]>([]);
+  const [clientProfitabilityData, setClientProfitabilityData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Revenue vs Expense monthly trend data
-  const reportTrendData = [
-    { name: 'Dec', revenue: 14500, expenses: 3100, tax: 1450 },
-    { name: 'Jan', revenue: 18200, expenses: 4200, tax: 1820 },
-    { name: 'Feb', revenue: 16800, expenses: 2900, tax: 1680 },
-    { name: 'Mar', revenue: 21500, expenses: 5100, tax: 2150 },
-    { name: 'Apr', revenue: 24000, expenses: 3800, tax: 2400 },
-    { name: 'May', revenue: 32500, expenses: 4400, tax: 3250 }
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getDashboardStats();
+        if (data) {
+          setReportTrendData(data.monthlyEarnings || []);
+          setClientProfitabilityData(data.clientProfitabilityData || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
-  // Profitability mock database
-  const clientProfitabilityData = [
-    { client: "Sarah Jenkins", company: "Acme Corporation", billed: 42500, expenses: 3200, profit: 39300, margin: 92 },
-    { client: "Alex Rivera", company: "Vortex Labs", billed: 18200, expenses: 1400, profit: 16800, margin: 92 },
-    { client: "Emma Watson", company: "Apex Agency", billed: 24000, expenses: 2200, profit: 21800, margin: 90 },
-    { client: "David Chen", company: "Starlight Digital", billed: 8900, expenses: 500, profit: 8400, margin: 94 },
-    { client: "Marcus Vance", company: "Nova Retail", billed: 5000, expenses: 800, profit: 4200, margin: 84 }
-  ];
-
-  const handleExport = (type: string) => {
+  const handleExport = async (type: string) => {
     setDownloading(type);
-    setTimeout(() => {
-      toast.success(`Exporting ${type} document to downloads folder. Successful!`);
-      setDownloading(null);
-    }, 1000);
+    try {
+        if (type === 'Project_Wise_Excel') {
+            await apiService.downloadProjectExcel();
+            toast.success(`Project-wise Excel export successful!`);
+        } else {
+            // Mock other exports for now
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success(`Exporting ${type} document to downloads folder. Successful!`);
+        }
+    } catch (e) {
+        toast.error(`Failed to export ${type}`);
+    } finally {
+        setDownloading(null);
+    }
   };
 
   const columns: ColumnDef<any>[] = [
@@ -95,12 +108,12 @@ export const ReportsOverview: React.FC = () => {
               Tax CSV
             </button>
             <button
-              onClick={() => handleExport("Annual_Revenue_Report_PDF")}
+              onClick={() => handleExport("Project_Wise_Excel")}
               disabled={downloading !== null}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 select-none disabled:opacity-40"
             >
               <Download className="w-4 h-4 shrink-0" />
-              {downloading === 'Annual_Revenue_Report_PDF' ? "Exporting..." : "Revenue PDF"}
+              {downloading === 'Project_Wise_Excel' ? "Exporting..." : "Project-wise Excel"}
             </button>
           </div>
         }
