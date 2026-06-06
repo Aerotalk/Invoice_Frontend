@@ -6,6 +6,7 @@ import { AppRoutes } from './routes';
 import { useAuthStore } from './store/authStore';
 import { usePreferencesStore } from './store/preferencesStore';
 import { apiService } from './services/api';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import './App.css';
 
 // Initialise TanStack query client
@@ -37,12 +38,14 @@ function App() {
   }, [isAuthenticated, fetchMe, setCurrency, setDefaultTaxRate]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Toaster position="top-right" />
-        <AppRoutes />
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Toaster position="top-right" />
+          <AppRoutes />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

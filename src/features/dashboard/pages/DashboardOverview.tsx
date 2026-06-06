@@ -76,7 +76,7 @@ export const DashboardOverview: React.FC = () => {
     );
   }
 
-  const { stats, monthlyEarnings, statusPieData, recentInvoices, recentPayments } = data;
+  const { stats = {}, monthlyEarnings = [], statusPieData = [], recentInvoices = [], recentPayments = [] } = data || {};
 
   return (
     <div className="space-y-6 select-none animate-fade-in">
@@ -120,7 +120,7 @@ export const DashboardOverview: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
         <MetricCard
           title="Total Revenue"
-          value={stats.totalRevenue}
+          value={stats?.totalRevenue || 0}
           currencyCode={currency}
           icon={CreditCard}
           trend={{ value: 12.4, isPositive: true }}
@@ -128,7 +128,7 @@ export const DashboardOverview: React.FC = () => {
         />
         <MetricCard
           title="Outstanding Balance"
-          value={stats.outstandingInvoices}
+          value={stats?.outstandingInvoices || 0}
           currencyCode={currency}
           icon={DollarSign}
           trend={{ value: 4.2, isPositive: false }}
@@ -136,7 +136,7 @@ export const DashboardOverview: React.FC = () => {
         />
         <MetricCard
           title="Invoices Paid"
-          value={stats.paidInvoicesCount}
+          value={stats?.paidInvoicesCount || 0}
           isCurrency={false}
           icon={FileText}
           description="Fully settled transactions"
@@ -144,7 +144,7 @@ export const DashboardOverview: React.FC = () => {
         />
         <MetricCard
           title="Overdue Accounts"
-          value={stats.overdueInvoicesCount}
+          value={stats?.overdueInvoicesCount || 0}
           isCurrency={false}
           icon={AlertTriangle}
           description="Invoices past maturity"
@@ -240,13 +240,13 @@ export const DashboardOverview: React.FC = () => {
             
             {/* Center Summary */}
             <div className="absolute flex flex-col items-center select-none pointer-events-none">
-              <span className="text-2xl font-bold text-foreground">{recentInvoices.length + 1}</span>
+              <span className="text-2xl font-bold text-foreground">{(recentInvoices?.length || 0) + 1}</span>
               <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Count</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs font-semibold select-none border-t pt-4">
-            {statusPieData.map((d: any, idx: number) => (
+            {(statusPieData || []).map((d: any, idx: number) => (
               <div key={idx} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
                 <span className="text-muted-foreground">{d.name} ({d.value})</span>
@@ -276,24 +276,24 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           <div className="mt-4 flex-1 divide-y divide-border overflow-x-auto whitespace-nowrap">
-            {recentInvoices.map((inv: any) => (
-              <div key={inv.id} className="py-3 flex items-center justify-between gap-4 select-none hover:bg-slate-50/20 dark:hover:bg-slate-800/10 px-2 rounded-lg transition-colors">
+            {(recentInvoices || []).map((inv: any) => (
+              <div key={inv?.id || Math.random()} className="py-3 flex items-center justify-between gap-4 select-none hover:bg-slate-50/20 dark:hover:bg-slate-800/10 px-2 rounded-lg transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 shrink-0">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <Link to={`/dashboard/invoices/${inv.id}`} className="block text-xs font-bold text-foreground hover:text-primary hover:underline">
-                      {inv.invoiceNumber}
+                    <Link to={`/dashboard/invoices/${inv?.id}`} className="block text-xs font-bold text-foreground hover:text-primary hover:underline">
+                      {inv?.invoiceNumber || 'INV-XXX'}
                     </Link>
-                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">{inv.clientCompany}</span>
+                    <span className="text-[10px] text-muted-foreground font-semibold uppercase">{inv?.clientCompany || 'Unknown'}</span>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-6 shrink-0">
-                  <span className="text-xs font-bold text-foreground font-mono">{formatCurrency(inv.total, inv.currency)}</span>
-                  <StatusBadge status={inv.status} />
-                  <span className="text-[10px] text-muted-foreground font-semibold">{formatDate(inv.issueDate)}</span>
+                  <span className="text-xs font-bold text-foreground font-mono">{formatCurrency(inv?.total, inv?.currency)}</span>
+                  <StatusBadge status={inv?.status || 'draft'} />
+                  <span className="text-[10px] text-muted-foreground font-semibold">{formatDate(inv?.issueDate || '')}</span>
                 </div>
               </div>
             ))}
@@ -317,19 +317,19 @@ export const DashboardOverview: React.FC = () => {
           </div>
 
           <div className="mt-4 flex-1 divide-y divide-border">
-            {recentPayments.map((p: any) => (
-              <div key={p.id} className="py-3 flex items-center justify-between gap-4 select-none">
+            {(recentPayments || []).map((p: any) => (
+              <div key={p?.id || Math.random()} className="py-3 flex items-center justify-between gap-4 select-none">
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" />
                   <div>
-                    <span className="block text-xs font-bold text-foreground truncate max-w-[120px]">{p.clientName}</span>
-                    <span className="block text-[9px] text-slate-500 font-mono tracking-tight">{p.method.replace('_', ' ')}</span>
+                    <span className="block text-xs font-bold text-foreground truncate max-w-[120px]">{p?.clientName || 'Payment'}</span>
+                    <span className="block text-[9px] text-slate-500 font-mono tracking-tight">{p?.method?.replace('_', ' ') || 'Bank Transfer'}</span>
                   </div>
                 </div>
                 
                 <div className="text-right shrink-0">
-                  <span className="block text-xs font-extrabold text-emerald-500 font-mono">+{formatCurrency(p.amount, p.currency)}</span>
-                  <span className="block text-[9px] text-muted-foreground font-semibold">{formatDate(p.date)}</span>
+                  <span className="block text-xs font-extrabold text-emerald-500 font-mono">+{formatCurrency(p?.amount, p?.currency)}</span>
+                  <span className="block text-[9px] text-muted-foreground font-semibold">{formatDate(p?.date || '')}</span>
                 </div>
               </div>
             ))}
