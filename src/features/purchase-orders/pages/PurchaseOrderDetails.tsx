@@ -90,7 +90,7 @@ export const PurchaseOrderDetails: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={async () => {
               if (!id) return;
               try {
@@ -115,7 +115,7 @@ export const PurchaseOrderDetails: React.FC = () => {
           >
             <Download className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={async () => {
               if (!id) return;
               try {
@@ -158,7 +158,7 @@ export const PurchaseOrderDetails: React.FC = () => {
             </div>
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-xs font-semibold">
               <div>
-                <p className="text-muted-foreground mb-1">Order ID</p>
+                <p className="text-muted-foreground mb-1">PO/WO Number:</p>
                 <p className="text-foreground font-mono bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
               </div>
               <div>
@@ -204,49 +204,49 @@ export const PurchaseOrderDetails: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                    <tr className="border-b border-border/70 bg-muted/50 uppercase text-slate-500">
-                        <th className="px-4 py-3 text-left font-bold">Item Description</th>
-                        <th className="px-4 py-3 text-center font-bold">Quantity</th>
-                        <th className="px-4 py-3 text-center font-bold">Rate</th>
-                        <th className="px-4 py-3 text-right font-bold">Total</th>
-                    </tr>
+                  <tr className="border-b border-border/70 bg-muted/50 uppercase text-slate-500">
+                    <th className="px-4 py-3 text-left font-bold">Item Description</th>
+                    <th className="px-4 py-3 text-center font-bold">Quantity</th>
+                    <th className="px-4 py-3 text-center font-bold">Rate</th>
+                    <th className="px-4 py-3 text-right font-bold">Total</th>
+                  </tr>
                 </thead>
                 <tbody>
-                    {
-                        po.items?.length > 0 ? (
-                            po.items.map((item: any, idx: number) => (
-                                <tr key={idx} className="border-b border-border/70 hover:bg-muted/20">
-                                    <td className="px-4 py-3">
-                                        <div className="font-bold text-foreground">{item.name}</div>
-                                        <div className="text-slate-500 text-xs mt-1">HSN/SAC: {item.hsnSac || 'N/A'}</div>
-                                    </td>
-                                    <td className="px-4 py-3 text-center font-bold">{item.quantity} {item.unit || 'Nos'}</td>
-                                    <td className="px-4 py-3 text-center font-bold">{formatCurrency(item.price || item.rate, currency)}</td>
-                                    <td className="px-4 py-3 text-right font-bold">{formatCurrency(item.total, currency)}</td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={4} className="px-4 py-8 text-center text-slate-400 font-semibold">
-                                    No items found
-                                </td>
-                            </tr>
-                        )
-                    }
+                  {
+                    po.items?.length > 0 ? (
+                      po.items.map((item: any, idx: number) => (
+                        <tr key={idx} className="border-b border-border/70 hover:bg-muted/20">
+                          <td className="px-4 py-3">
+                            <div className="font-bold text-foreground">{item.name}</div>
+                            <div className="text-slate-500 text-xs mt-1">HSN/SAC: {item.hsnSac || 'N/A'}</div>
+                          </td>
+                          <td className="px-4 py-3 text-center font-bold">{item.quantity} {item.unit || 'Nos'}</td>
+                          <td className="px-4 py-3 text-center font-bold">{formatCurrency(item.price || item.rate, currency)}</td>
+                          <td className="px-4 py-3 text-right font-bold">{formatCurrency(item.total, currency)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-slate-400 font-semibold">
+                          No items found
+                        </td>
+                      </tr>
+                    )
+                  }
                 </tbody>
                 <tfoot className="border-t border-border/70 bg-muted/50">
-                    <tr>
-                        <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Subtotal:</td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.subtotal, currency)}</td>
-                    </tr>
-                    <tr>
-                        <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Total Tax (GST):</td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.taxAmount || po.gstAmount, currency)}</td>
-                    </tr>
-                    <tr>
-                        <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Total Amount:</td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.totalAmount, currency)}</td>
-                    </tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Subtotal:</td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.subtotal, currency)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Total Tax (GST):</td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.taxAmount || po.gstAmount, currency)}</td>
+                  </tr>
+                  <tr>
+                    <td colSpan={3} className="px-4 py-3 text-right font-bold text-foreground">Total Amount:</td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground">{formatCurrency(po.totalAmount, currency)}</td>
+                  </tr>
                 </tfoot>
               </table>
             </div>
@@ -260,7 +260,7 @@ export const PurchaseOrderDetails: React.FC = () => {
               <Package className="w-4 h-4 text-indigo-500" />
               Transportation
             </h3>
-            
+
             <div className="space-y-3">
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Transport Mode</p>
@@ -274,10 +274,10 @@ export const PurchaseOrderDetails: React.FC = () => {
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Place of Supply</p>
                 <p className="text-xs font-semibold text-foreground mt-0.5">{po.placeOfSupply || 'Not specified'}</p>
               </div>
-              <div>
+              {/* <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">EU PO/WO Number</p>
                 <p className="text-xs font-semibold text-foreground mt-0.5">{po.euPoWoNumber || 'Not specified'}</p>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -294,5 +294,5 @@ export const PurchaseOrderDetails: React.FC = () => {
 
       </div>
     </div>
-    );
+  );
 };

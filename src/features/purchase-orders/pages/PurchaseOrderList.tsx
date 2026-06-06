@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, Search, Trash2, MoreHorizontal, X, Eye, 
+import {
+  Plus, Search, Trash2, MoreHorizontal, X, Eye,
   UserSquare2, Calendar, Settings, AlertCircle, Package
 } from 'lucide-react';
 import { DataTable, ColumnDef } from '../../../components/common/DataTable';
@@ -88,7 +88,7 @@ export const PurchaseOrderList: React.FC = () => {
         apiService.getProjects().catch(() => []),
         apiService.getProducts().catch(() => [])
       ]);
-      
+
       setPurchaseOrders(poRes);
       setVendors(vendRes);
       setProjects(projRes);
@@ -185,7 +185,7 @@ export const PurchaseOrderList: React.FC = () => {
         await apiService.createPurchaseOrder(payload);
         toast.success("Purchase Order created successfully!");
       }
-      
+
       setDrawerOpen(false);
       setEditId(null);
       reset();
@@ -200,7 +200,7 @@ export const PurchaseOrderList: React.FC = () => {
   const openEditDrawer = (po: any) => {
     setEditId(po.id);
     setIsCustomPoCode(true);
-    
+
     // Reset form values
     reset({
       purchaseOrderId: po.purchaseOrderId || '',
@@ -233,12 +233,12 @@ export const PurchaseOrderList: React.FC = () => {
     } else {
       setItemRows([{ productId: "", name: "", hsnSac: "", quantity: 1, unit: "Nos", price: 0, taxableAmount: 0, gstRate: 18, gstAmount: 0, total: 0 }]);
     }
-    
+
     setDrawerOpen(true);
     setActiveMenu(null);
   };
 
-  const filteredPOs = purchaseOrders.filter(po => 
+  const filteredPOs = purchaseOrders.filter(po =>
     (po.purchaseOrderId || '').toLowerCase().includes(globalSearch.toLowerCase()) ||
     (po.vendor?.name || '').toLowerCase().includes(globalSearch.toLowerCase())
   );
@@ -284,7 +284,7 @@ export const PurchaseOrderList: React.FC = () => {
           >
             <MoreHorizontal className="w-4 h-4 shrink-0" />
           </button>
-          
+
           {activeMenu === row.id && (
             <>
               <div onClick={() => setActiveMenu(null)} className="fixed inset-0 z-40" />
@@ -335,7 +335,7 @@ export const PurchaseOrderList: React.FC = () => {
     }
   ];
 
-  const filteredProjects = selectedVendorId 
+  const filteredProjects = selectedVendorId
     ? projects.filter(p => (p.vendors || []).some((pv: any) => pv.vendorId === selectedVendorId || pv.vendor?.id === selectedVendorId || pv.id === selectedVendorId))
     : projects;
 
@@ -346,7 +346,7 @@ export const PurchaseOrderList: React.FC = () => {
           <h2 className="text-xl font-extrabold text-foreground tracking-tight">Purchase Orders</h2>
           <p className="text-xs text-muted-foreground mt-1">Manage purchase orders sent to vendors for goods and services.</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -396,7 +396,7 @@ export const PurchaseOrderList: React.FC = () => {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-[82vh] text-xs font-semibold relative">
           <div className="flex-1 overflow-y-auto pr-2 pb-6 space-y-6 scrollbar-thin">
-            
+
             {/* 1. Vendor & Project */}
             <div className="bg-slate-50/50 dark:bg-slate-900/35 p-4 rounded-xl border space-y-4">
               <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider flex items-center gap-1 border-b pb-2">
@@ -417,7 +417,7 @@ export const PurchaseOrderList: React.FC = () => {
                   </select>
                   {errors.vendorId && <span className="text-[9px] text-rose-500">{errors.vendorId.message}</span>}
                 </div>
-                
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Ordered For (Project)</label>
                   <select
@@ -442,7 +442,7 @@ export const PurchaseOrderList: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Order No. <span className="text-rose-500">*</span></label>
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">PO/WO Number: <span className="text-rose-500">*</span></label>
                   <div className="flex rounded-lg overflow-hidden border">
                     <input
                       type="text"
@@ -464,7 +464,7 @@ export const PurchaseOrderList: React.FC = () => {
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Date <span className="text-rose-500">*</span></label>
                   <input type="date" {...register("date")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
                 </div>
-                
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Due Date</label>
                   <input type="date" {...register("dueDate")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
@@ -485,10 +485,10 @@ export const PurchaseOrderList: React.FC = () => {
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Delivery Location</label>
                   <input type="text" placeholder="e.g. Kolkata" {...register("deliveryLocation")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                {/* <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">EU PO/WO Number</label>
                   <input type="text" placeholder="e.g. WO-0909" {...register("euPoWoNumber")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
-                </div>
+                </div> */}
               </div>
             </div>
 
