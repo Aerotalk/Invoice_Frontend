@@ -686,7 +686,7 @@ export const ProjectDetails: React.FC = () => {
                   <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Value</th>
                   <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Action</th>
                 </tr>
-              </thead>
+              </thead>  
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {displayExpenses.length > 0 ? (
                   displayExpenses.map((exp: any) => (
