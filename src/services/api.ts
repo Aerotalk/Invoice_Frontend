@@ -12,7 +12,9 @@ export const apiService = {
         stats: { totalRevenue: 0, outstandingInvoices: 0, paidInvoicesCount: 0, overdueInvoicesCount: 0 },
         monthlyEarnings: [],
         statusPieData: [],
-        clientProfitabilityData: []
+        clientProfitabilityData: [],
+        recentInvoices: [],
+        recentPayments: []
       };
     }
   },
