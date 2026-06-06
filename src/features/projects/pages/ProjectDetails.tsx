@@ -310,27 +310,34 @@ export const ProjectDetails: React.FC = () => {
     vendorTag: q.clientName,
   }));
 
-  const mappedPOs = (project?.purchaseOrders || []).map((po: any) => ({
+  const validInvoices: ProjectInvoice[] = [...manualInvoices, ...mappedQuotations].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const mappedPOExpenses = (project?.purchaseOrders || [])
+    .filter((po: any) => !expenses.some((e: any) => e.notes === `PO_ID:${po.id}` || e.receiptUrl === `api-call:po:${po.id}`))
+    .map((po: any) => ({
     id: po.id,
-    invoiceId: po.purchaseOrderId,
-    description: '[Purchase Order]',
+    description: po.purchaseOrderId,
+    notes: '[Purchase Order]',
+    vendorName: po.vendorName || '—',
+    category: 'Purchase Order',
+    amount: po.totalAmount,
+    currency: po.currency || currency,
     date: po.date,
     url: `api-call:po:${po.id}`,
-    amount: po.totalAmount,
-    status: 'sent', // Or po.status if available
-    vendorTag: po.vendorName,
   }));
 
-  const validInvoices: ProjectInvoice[] = [...manualInvoices, ...mappedQuotations, ...mappedPOs].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  const displayExpenses = [...expenses, ...mappedPOExpenses].sort(
+    (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
   );
 
   const projectVendors: any[] = (project?.vendors || []).map((pv: any) => pv.vendor || pv).filter(Boolean);
 
   // ─── Summary financials for close modal ──────────────────────────────────
   const totalInvoiced = validInvoices.reduce((s, inv) => s + (inv.amount || 0), 0);
-  const poExpenses = expenses.filter((e: any) => e.category === 'Purchase Order');
-  const otherExpenses = expenses.filter((e: any) => e.category !== 'Purchase Order');
+  const poExpenses = displayExpenses.filter((e: any) => e.category === 'Purchase Order');
+  const otherExpenses = displayExpenses.filter((e: any) => e.category !== 'Purchase Order');
   const totalPOs = poExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0);
   const totalOtherExpenses = otherExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0);
   const totalOutflow = totalPOs + totalOtherExpenses;
@@ -677,11 +684,12 @@ export const ProjectDetails: React.FC = () => {
                   <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">People</th>
                   <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
                   <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Value</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {expenses.length > 0 ? (
-                  expenses.map((exp: any) => (
+                {displayExpenses.length > 0 ? (
+                  displayExpenses.map((exp: any) => (
                     <tr key={exp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="py-2.5 px-3 text-xs font-semibold text-foreground max-w-[130px] truncate">
                         {exp.description || '—'}
@@ -700,11 +708,49 @@ export const ProjectDetails: React.FC = () => {
                       <td className="py-2.5 px-3 text-xs font-bold text-foreground font-mono text-right whitespace-nowrap">
                         {formatCurrency(exp.amount, exp.currency || currency)}
                       </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {exp.url ? (
+                          exp.url.startsWith('api-call:') ? (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  let blob;
+                                  if (exp.url.startsWith('api-call:po:')) {
+                                    blob = await apiService.downloadPurchaseOrderPdf(exp.id);
+                                  }
+                                  if (blob) {
+                                    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                                    window.open(url, '_blank');
+                                  }
+                                } catch (error) {
+                                  toast.error('Failed to view PDF');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </button>
+                          ) : (
+                            <a
+                              href={exp.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View
+                            </a>
+                          )
+                        ) : (
+                          <span className="text-[10px] text-slate-400">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-xs text-muted-foreground">
+                    <td colSpan={6} className="py-10 text-center text-xs text-muted-foreground">
                       No expenses linked to this project yet.
                     </td>
                   </tr>

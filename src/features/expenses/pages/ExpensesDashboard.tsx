@@ -119,10 +119,12 @@ export const ExpensesDashboard: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const expenseRes = await apiService.getExpenses();
-      const clientRes = await apiService.getClients();
-      const projectsRes = await apiService.getProjects();
-      const vendorsRes = await apiService.getVendors();
+      const [expenseRes, clientRes, projectsRes, vendorsRes] = await Promise.all([
+        apiService.getExpenses().catch(() => []),
+        apiService.getClients().catch(() => []),
+        apiService.getProjects().catch(() => []),
+        apiService.getVendors().catch(() => [])
+      ]);
 
       setExpenses(expenseRes);
       setClients(clientRes);

@@ -82,10 +82,12 @@ export const PurchaseOrderList: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const poRes = await apiService.getPurchaseOrders().catch(() => []);
-      const vendRes = await apiService.getVendors().catch(() => []);
-      const projRes = await apiService.getProjects().catch(() => []);
-      const prodRes = await apiService.getProducts().catch(() => []);
+      const [poRes, vendRes, projRes, prodRes] = await Promise.all([
+        apiService.getPurchaseOrders().catch(() => []),
+        apiService.getVendors().catch(() => []),
+        apiService.getProjects().catch(() => []),
+        apiService.getProducts().catch(() => [])
+      ]);
       
       setPurchaseOrders(poRes);
       setVendors(vendRes);

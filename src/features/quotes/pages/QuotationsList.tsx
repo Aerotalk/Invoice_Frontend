@@ -131,13 +131,13 @@ export const QuotationsList: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const quotesRes = await apiService.getQuotes();
-      const clientsRes = await apiService.getClients();
-      const productsRes = await apiService.getProducts();
-      const salespersonsRes = await apiService.getSalespersons();
-      
-      // We'll also fetch projects from DB directly
-      const projectsRes = await apiService.getProjects();
+      const [quotesRes, clientsRes, productsRes, salespersonsRes, projectsRes] = await Promise.all([
+        apiService.getQuotes().catch(() => []),
+        apiService.getClients().catch(() => []),
+        apiService.getProducts().catch(() => []),
+        apiService.getSalespersons().catch(() => []),
+        apiService.getProjects().catch(() => [])
+      ]);
 
       setQuotes(quotesRes);
       setClients(clientsRes);

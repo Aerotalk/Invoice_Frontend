@@ -92,8 +92,10 @@ export const ProductsList: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const prodRes = await apiService.getProducts();
-      const unitRes = await apiService.getProductUnits();
+      const [prodRes, unitRes] = await Promise.all([
+        apiService.getProducts().catch(() => []),
+        apiService.getProductUnits().catch(() => [])
+      ]);
       setProducts(prodRes);
       setUnits(unitRes);
     } catch (e) {

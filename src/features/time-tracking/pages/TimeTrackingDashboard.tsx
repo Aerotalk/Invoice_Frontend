@@ -45,10 +45,11 @@ export const TimeTrackingDashboard: React.FC = () => {
   const loadTimeData = async () => {
     setLoading(true);
     try {
-      const entryList = await apiService.getTimeEntries();
+      const [entryList, projList] = await Promise.all([
+        apiService.getTimeEntries().catch(() => []),
+        apiService.getProjects().catch(() => [])
+      ]);
       setEntries(entryList);
-      
-      const projList = await apiService.getProjects();
       setProjects(projList);
       if (projList.length > 0) {
         setManualProjId(projList[0].id);

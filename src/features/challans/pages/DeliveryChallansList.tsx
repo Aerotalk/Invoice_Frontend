@@ -119,9 +119,11 @@ export const DeliveryChallansList: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const challanRes = await apiService.getChallans();
-      const clientsRes = await apiService.getClients();
-      const productsRes = await apiService.getProducts();
+      const [challanRes, clientsRes, productsRes] = await Promise.all([
+        apiService.getChallans().catch(() => []),
+        apiService.getClients().catch(() => []),
+        apiService.getProducts().catch(() => [])
+      ]);
 
       setChallans(challanRes);
       setClients(clientsRes);
