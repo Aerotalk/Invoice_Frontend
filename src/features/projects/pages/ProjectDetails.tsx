@@ -709,42 +709,53 @@ export const ProjectDetails: React.FC = () => {
                         {formatCurrency(exp.amount, exp.currency || currency)}
                       </td>
                       <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                        {exp.url ? (
-                          exp.url.startsWith('api-call:') ? (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  let blob;
-                                  if (exp.url.startsWith('api-call:po:')) {
-                                    blob = await apiService.downloadPurchaseOrderPdf(exp.id);
-                                  }
-                                  if (blob) {
-                                    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-                                    window.open(url, '_blank');
-                                  }
-                                } catch (error) {
-                                  toast.error('Failed to view PDF');
-                                }
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
-                            >
-                              <Eye className="w-3 h-3" />
-                              View
-                            </button>
-                          ) : (
-                            <a
-                              href={exp.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
-                            >
-                              <Eye className="w-3 h-3" />
-                              View
-                            </a>
-                          )
-                        ) : (
-                          <span className="text-[10px] text-slate-400">—</span>
-                        )}
+                        {(() => {
+                          const targetUrl = exp.url || exp.receiptUrl || '';
+                          const isPO = targetUrl.startsWith('api-call:po:') || exp.notes?.startsWith('PO_ID:');
+                          
+                          if (targetUrl || isPO) {
+                            if (isPO || targetUrl.startsWith('api-call:')) {
+                              return (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      let blob;
+                                      if (isPO) {
+                                        const poId = targetUrl.startsWith('api-call:po:') 
+                                          ? targetUrl.split('api-call:po:')[1] 
+                                          : exp.notes?.split('PO_ID:')[1];
+                                        blob = await apiService.downloadPurchaseOrderPdf(poId || exp.id);
+                                      }
+                                      if (blob) {
+                                        const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                                        window.open(url, '_blank');
+                                      }
+                                    } catch (error) {
+                                      toast.error('Failed to view PDF');
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  View
+                                </button>
+                              );
+                            } else {
+                              return (
+                                <a
+                                  href={targetUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border bg-card text-primary text-[10px] font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors active:scale-95"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  View
+                                </a>
+                              );
+                            }
+                          }
+                          return <span className="text-[10px] text-slate-400">—</span>;
+                        })()}
                       </td>
                     </tr>
                   ))
