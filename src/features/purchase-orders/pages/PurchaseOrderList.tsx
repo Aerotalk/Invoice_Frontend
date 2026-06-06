@@ -14,6 +14,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import toast from 'react-hot-toast';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { PurchaseOrderPdfTemplate } from '../components/PurchaseOrderPdfTemplate';
 
 const poSchema = zod.object({
   purchaseOrderId: zod.string().min(2, "PO number is required"),
@@ -52,6 +55,7 @@ export const PurchaseOrderList: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const [selectedPoForPdf, setSelectedPoForPdf] = useState<any | null>(null);
 
   const [isCustomPoCode, setIsCustomPoCode] = useState(false);
   const [itemRows, setItemRows] = useState<PoItemInput[]>([
@@ -290,12 +294,58 @@ export const PurchaseOrderList: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     setActiveMenu(null);
-                    navigate(`/dashboard/purchase-orders/${row.id}`);
+                    try {
+                      const toastId = toast.loading("Fetching PO details...");
+                      const poData = await apiService.getPurchaseOrderById(row.id);
+                      if (!poData) {
+                        toast.error("Failed to fetch Purchase Order details");
+                        toast.dismiss(toastId);
+                        return;
+                      }
+                      
+                      setSelectedPoForPdf(poData);
+                      toast.loading("Generating PDF...", { id: toastId });
+                      
+                      setTimeout(async () => {
+                        try {
+                          const element = document.getElementById('po-pdf-content');
+                          if (!element) {
+                            toast.error("Template element not found in DOM");
+                            toast.dismiss(toastId);
+                            return;
+                          }
+                          
+                          const opt = {
+                            margin:       [10, 10, 10, 10] as [number, number, number, number],
+                            filename:     `${poData.purchaseOrderId || 'PurchaseOrder'}.pdf`,
+                            image:        { type: 'jpeg' as const, quality: 0.98 },
+                            html2canvas:  { scale: 2, useCORS: true, logging: false },
+                            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+                          };
+                          
+                          const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+                          const url = window.URL.createObjectURL(blob);
+                          window.open(url, '_blank');
+                          setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+                          
+                          toast.dismiss(toastId);
+                          setSelectedPoForPdf(null);
+                        } catch (err) {
+                          console.error(err);
+                          toast.error("Failed to generate PDF");
+                          toast.dismiss(toastId);
+                          setSelectedPoForPdf(null);
+                        }
+                      }, 400);
+                    } catch (e) {
+                      console.error(e);
+                      toast.error("Failed to fetch Purchase Order");
+                    }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  View Details & PDF
+                  View PDF
                 </button>
                 <button
                   type="button"
@@ -660,6 +710,13 @@ export const PurchaseOrderList: React.FC = () => {
           </div>
         </form>
       </Drawer>
+
+      {/* Offscreen hidden template for PDF generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        {selectedPoForPdf && (
+          <PurchaseOrderPdfTemplate po={selectedPoForPdf} currency={currency} />
+        )}
+      </div>
     </div>
   );
 };
