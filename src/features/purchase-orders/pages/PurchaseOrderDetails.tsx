@@ -21,6 +21,9 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { StatusBadge } from '../../../components/common/StatusBadge';
 import { formatCurrency, formatDate, cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
+import { PurchaseOrderPdfTemplate } from '../components/PurchaseOrderPdfTemplate';
 
 export const PurchaseOrderDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,23 +97,29 @@ export const PurchaseOrderDetails: React.FC = () => {
             onClick={async () => {
               if (!id) return;
               try {
-                const toastId = toast.loading("Downloading PDF...");
-                const blob = await apiService.downloadPurchaseOrderPdf(id);
-                const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+                const toastId = toast.loading("Generating PDF...");
+                const element = document.getElementById('po-pdf-content');
+                if (!element) {
+                  toast.error("Template element not found");
+                  toast.dismiss(toastId);
+                  return;
+                }
+                const opt = {
+                  margin:       [10, 10, 10, 10] as [number, number, number, number],
+                  filename:     `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`,
+                  image:        { type: 'jpeg' as const, quality: 0.98 },
+                  html2canvas:  { scale: 2, useCORS: true, logging: false },
+                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+                };
+                await html2pdf().set(opt).from(element).save();
                 toast.dismiss(toastId);
+                toast.success("PDF downloaded successfully!");
               } catch (err) {
                 console.error(err);
                 toast.error("Failed to download PDF");
               }
             }}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95 cursor-pointer"
             title="Download PDF"
           >
             <Download className="w-4 h-4" />
@@ -120,8 +129,21 @@ export const PurchaseOrderDetails: React.FC = () => {
               if (!id) return;
               try {
                 const toastId = toast.loading("Opening PDF...");
-                const blob = await apiService.downloadPurchaseOrderPdf(id);
-                const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                const element = document.getElementById('po-pdf-content');
+                if (!element) {
+                  toast.error("Template element not found");
+                  toast.dismiss(toastId);
+                  return;
+                }
+                const opt = {
+                  margin:       [10, 10, 10, 10] as [number, number, number, number],
+                  filename:     `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`,
+                  image:        { type: 'jpeg' as const, quality: 0.98 },
+                  html2canvas:  { scale: 2, useCORS: true, logging: false },
+                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
+                };
+                const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
+                const url = window.URL.createObjectURL(blob);
                 window.open(url, '_blank');
                 setTimeout(() => window.URL.revokeObjectURL(url), 60000);
                 toast.dismiss(toastId);
@@ -130,13 +152,13 @@ export const PurchaseOrderDetails: React.FC = () => {
                 toast.error("Failed to load PDF");
               }
             }}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95 cursor-pointer"
             title="View PDF"
           >
             <FileText className="w-4 h-4" />
           </button>
           {po.status !== 'completed' && (
-            <button className="p-2 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all active:scale-95">
+            <button className="p-2 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all active:scale-95 cursor-pointer">
               <XCircle className="w-4 h-4" />
             </button>
           )}
@@ -292,6 +314,11 @@ export const PurchaseOrderDetails: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* Offscreen hidden template for PDF generation */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <PurchaseOrderPdfTemplate po={po} currency={currency} />
       </div>
     </div>
     );
