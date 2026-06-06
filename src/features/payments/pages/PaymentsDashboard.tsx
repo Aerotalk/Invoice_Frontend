@@ -76,7 +76,7 @@ export const PaymentsDashboard: React.FC = () => {
     {
       header: "Receipt ID",
       accessorKey: "id",
-      cell: (row) => <span className="font-mono text-slate-400 select-none">{row.id}</span>
+      cell: (row) => <span className="text-slate-400 select-none">{row.id}</span>
     },
     {
       header: "Client & Company",
@@ -103,7 +103,7 @@ export const PaymentsDashboard: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <span className={cn(
-          "font-bold font-mono",
+          "font-bold",
           row.status === 'refunded' ? "text-slate-400 line-through" : "text-emerald-500"
         )}>
           {formatCurrency(row.amount, row.currency)}
@@ -150,17 +150,17 @@ export const PaymentsDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b pb-6 select-none">
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Gross Volume</span>
-          <span className="block text-2xl font-extrabold text-foreground font-mono mt-2">{formatCurrency(stats.gross, currency)}</span>
+          <span className="block text-2xl font-extrabold text-foreground mt-2">{formatCurrency(stats.gross, currency)}</span>
           <DollarSign className="absolute top-4 right-4 w-4 h-4 text-emerald-500" />
         </div>
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Refund Rate Pool</span>
-          <span className="block text-2xl font-extrabold text-rose-500 font-mono mt-2">-{formatCurrency(stats.refunded, currency)}</span>
+          <span className="block text-2xl font-extrabold text-rose-500 mt-2">-{formatCurrency(stats.refunded, currency)}</span>
           <RotateCcw className="absolute top-4 right-4 w-4 h-4 text-rose-500" />
         </div>
         <div className="p-5 border rounded-xl bg-card shadow-premium relative">
           <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Succeeded Tickets</span>
-          <span className="block text-2xl font-extrabold text-foreground font-mono mt-2">{stats.succeeded} Transfers</span>
+          <span className="block text-2xl font-extrabold text-foreground mt-2">{stats.succeeded} Transfers</span>
           <CheckCircle2 className="absolute top-4 right-4 w-4 h-4 text-indigo-500" />
         </div>
       </div>

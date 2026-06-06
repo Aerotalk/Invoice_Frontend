@@ -563,7 +563,7 @@ export const ClientsList: React.FC = () => {
     }
   };
 
-  // Modern clean columns inheriting Inter sans-serif (removes AI-looking font-mono)
+  // Modern clean columns inheriting Inter sans-serif (removes AI-looking)
   const columns: ColumnDef<any>[] = [
     {
       header: "Client & Company",

@@ -124,7 +124,7 @@ export const TeamDashboard: React.FC = () => {
                   />
                   <div>
                     <span className="block text-xs font-bold text-foreground">{member.name}</span>
-                    <span className="block text-[10px] text-muted-foreground font-mono mt-0.5 truncate max-w-[140px]">{member.email}</span>
+                    <span className="block text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{member.email}</span>
                     <div className="mt-2.5 shrink-0">
                       {getRoleBadge(member.role)}
                     </div>

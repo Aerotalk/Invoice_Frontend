@@ -69,7 +69,7 @@ export const PurchaseOrderDetails: React.FC = () => {
           <div>
             <h2 className="text-xl font-extrabold text-foreground leading-tight">{po.purchaseOrderId}</h2>
             <div className="flex items-center gap-2.5 mt-1 text-xs text-muted-foreground font-semibold uppercase">
-              <span className="bg-muted px-2 py-0.5 rounded border font-mono">{po.vendor?.vendorId?.substring(0, 8)}...</span>
+              <span className="bg-muted px-2 py-0.5 rounded border">{po.vendor?.vendorId?.substring(0, 8)}...</span>
               <span>|</span>
               <span>Ordered for:</span>
               <span className="text-foreground">{po.forProject?.name || 'Direct Purchase'}</span>
@@ -159,7 +159,7 @@ export const PurchaseOrderDetails: React.FC = () => {
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-xs font-semibold">
               <div>
                 <p className="text-muted-foreground mb-1">EU PO/WO No.</p>
-                <p className="text-foreground font-mono bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
+                <p className="text-foreground bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-1">Purchase Date</p>

@@ -538,7 +538,7 @@ export const PurchaseOrderList: React.FC = () => {
                             min="1"
                             value={row.quantity}
                             onChange={(e) => handleRowChange(index, "quantity", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
                           />
                         </td>
                         <td className="p-2">
@@ -555,20 +555,20 @@ export const PurchaseOrderList: React.FC = () => {
                             min="0"
                             value={row.price}
                             onChange={(e) => handleRowChange(index, "price", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
                           />
                         </td>
-                        <td className="p-2 text-xs font-bold font-mono">{formatCurrency(row.taxableAmount, currency)}</td>
+                        <td className="p-2 text-xs font-bold">{formatCurrency(row.taxableAmount, currency)}</td>
                         <td className="p-2">
                           <input
                             type="number"
                             min="0"
                             value={row.gstRate}
                             onChange={(e) => handleRowChange(index, "gstRate", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
                           />
                         </td>
-                        <td className="p-2 text-xs font-bold font-mono text-primary">{formatCurrency(row.total, currency)}</td>
+                        <td className="p-2 text-xs font-bold text-primary">{formatCurrency(row.total, currency)}</td>
                         <td className="p-2 text-center">
                           <button
                             type="button"
@@ -616,19 +616,19 @@ export const PurchaseOrderList: React.FC = () => {
                   <div className="space-y-3 text-xs font-semibold text-foreground/80">
                     <div className="flex justify-between items-center">
                       <span>Sub Total</span>
-                      <span className="font-bold font-mono">{formatCurrency(subtotal, currency)}</span>
+                      <span className="font-bold">{formatCurrency(subtotal, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center text-amber-600 dark:text-amber-500">
                       <span>Total GST</span>
-                      <span className="font-bold font-mono">+{formatCurrency(taxAmount, currency)}</span>
+                      <span className="font-bold">+{formatCurrency(taxAmount, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-3 mt-3">
                       <span>Round Off</span>
-                      <span className="font-bold font-mono">{formatCurrency(roundOff, currency)}</span>
+                      <span className="font-bold">{formatCurrency(roundOff, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-extrabold text-foreground pt-1">
                       <span>Total Amount</span>
-                      <span className="font-mono">{formatCurrency(finalTotal, currency)}</span>
+                      <span className="">{formatCurrency(finalTotal, currency)}</span>
                     </div>
                   </div>
                 </div>

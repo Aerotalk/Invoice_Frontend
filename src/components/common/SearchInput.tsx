@@ -55,7 +55,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border bg-muted text-[10px] text-muted-foreground font-semibold font-mono tracking-wide shadow-[0_1px_1px_rgba(0,0,0,0.01)]">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border bg-muted text-[10px] text-muted-foreground font-semibold tracking-wide shadow-[0_1px_1px_rgba(0,0,0,0.01)]">
             <span className="text-[9px]">⌘</span>K
           </kbd>
         )}
