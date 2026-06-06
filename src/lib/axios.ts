@@ -1,7 +1,7 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-const rawBaseUrl = import.meta.env.VITE_API_URL || 'https://invoicebackend-production-0236.up.railway.app/api';
+const rawBaseUrl = import.meta.env.VITE_API_URL || '/api';
 const cleanUrl = rawBaseUrl.replace(/\/+$/, '');
 const baseURL = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 
