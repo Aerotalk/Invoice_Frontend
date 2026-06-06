@@ -235,7 +235,7 @@ export const UserProfilePage: React.FC = () => {
                   type="text"
                   disabled
                   value={role.toUpperCase()}
-                  className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-slate-800/10 font-mono outline-none text-xs font-bold"
+                  className="px-3 py-2 border rounded-lg bg-slate-50/50 dark:bg-slate-800/10 outline-none text-xs font-bold"
                 />
               </div>
             </div>

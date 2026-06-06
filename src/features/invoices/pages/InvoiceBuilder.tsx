@@ -574,7 +574,7 @@ export const InvoiceBuilder: React.FC = () => {
                       <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
                         <Zap className="w-3.5 h-3.5 text-white fill-white/10" />
                       </div>
-                      <span className="text-sm font-extrabold tracking-tight text-slate-900 font-mono">GrivetyGlobal</span>
+                      <span className="text-sm font-extrabold tracking-tight text-slate-900">GrivetyGlobal</span>
                     </>
                   )}
                 </div>
@@ -593,7 +593,7 @@ export const InvoiceBuilder: React.FC = () => {
               </div>
               <div className="text-right">
                 <h2 className="text-xl font-bold tracking-tight text-slate-950 uppercase select-none">INVOICE</h2>
-                <span className="text-[10px] font-bold text-slate-700 block mt-1 font-mono">{invoiceNumber || "INV-SEED"}</span>
+                <span className="text-[10px] font-bold text-slate-700 block mt-1">{invoiceNumber || "INV-SEED"}</span>
               </div>
             </div>
 
@@ -603,7 +603,7 @@ export const InvoiceBuilder: React.FC = () => {
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Billed To:</span>
                 <span className="font-bold text-slate-800 block mt-1">{selectedClient?.name || "Client Name"}</span>
                 <span className="text-slate-500 block mt-0.5 font-semibold">{selectedClient?.company || "Company Name"}</span>
-                <span className="text-[10px] text-slate-400 font-mono block mt-0.5">{selectedClient?.email || "billing@client.com"}</span>
+                <span className="text-[10px] text-slate-400 block mt-0.5">{selectedClient?.email || "billing@client.com"}</span>
               </div>
               
               <div className="text-right">
@@ -635,9 +635,9 @@ export const InvoiceBuilder: React.FC = () => {
                   {items.map((item, idx) => (
                     <tr key={idx}>
                       <td className="py-2.5 font-medium max-w-[200px] truncate">{item.description || "Description Placeholder"}</td>
-                      <td className="py-2.5 text-center font-semibold font-mono">{item.quantity}</td>
-                      <td className="py-2.5 text-right font-semibold font-mono">{formatCurrency(item.rate, currency)}</td>
-                      <td className="py-2.5 text-right font-bold font-mono text-slate-950">{formatCurrency(item.quantity * item.rate, currency)}</td>
+                      <td className="py-2.5 text-center font-semibold">{item.quantity}</td>
+                      <td className="py-2.5 text-right font-semibold">{formatCurrency(item.rate, currency)}</td>
+                      <td className="py-2.5 text-right font-bold text-slate-950">{formatCurrency(item.quantity * item.rate, currency)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -648,23 +648,23 @@ export const InvoiceBuilder: React.FC = () => {
             <div className="mt-8 border-t pt-4 select-none shrink-0 flex flex-col gap-1.5 items-end text-xs font-semibold text-slate-500">
               <div className="flex justify-between w-48 font-semibold">
                 <span>Subtotal:</span>
-                <span className="text-slate-800 font-mono">{formatCurrency(subtotal, currency)}</span>
+                <span className="text-slate-800">{formatCurrency(subtotal, currency)}</span>
               </div>
               {discountRate > 0 && (
                 <div className="flex justify-between w-48 text-rose-500 font-semibold">
                   <span>Discount ({discountRate}%):</span>
-                  <span className="font-mono">-{formatCurrency(discountAmount, currency)}</span>
+                  <span className="">-{formatCurrency(discountAmount, currency)}</span>
                 </div>
               )}
               {taxRate > 0 && (
                 <div className="flex justify-between w-48 font-semibold">
                   <span>GST / Tax ({taxRate}%):</span>
-                  <span className="text-slate-800 font-mono">+{formatCurrency(taxAmount, currency)}</span>
+                  <span className="text-slate-800">+{formatCurrency(taxAmount, currency)}</span>
                 </div>
               )}
               <div className="flex justify-between w-48 text-sm font-bold text-slate-950 border-t pt-2 mt-1 select-none">
                 <span>Total Due ({currency}):</span>
-                <span className="font-mono text-primary-600">{formatCurrency(finalTotal, currency)}</span>
+                <span className="text-primary-600">{formatCurrency(finalTotal, currency)}</span>
               </div>
             </div>
 

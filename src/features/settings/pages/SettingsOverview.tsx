@@ -451,7 +451,7 @@ export const SettingsOverview: React.FC = () => {
                   type="number"
                   value={defaultTaxRate}
                   onChange={e => setDefaultTaxRate(parseFloat(e.target.value) || 0)}
-                  className={cn(inputCls, 'font-mono')}
+                  className={cn(inputCls, '')}
                 />
               </div>
             </div>
@@ -580,7 +580,7 @@ export const SettingsOverview: React.FC = () => {
                   value={companyIdValue}
                   onChange={e => setCompanyIdValue(e.target.value)}
                   placeholder=""
-                  className={cn(inputCls, 'flex-1 font-mono')}
+                  className={cn(inputCls, 'flex-1')}
                 />
               </div>
             </div>

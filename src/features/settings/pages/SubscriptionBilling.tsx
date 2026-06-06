@@ -35,7 +35,7 @@ export const SubscriptionBilling: React.FC = () => {
     {
       header: "Invoice Reference",
       accessorKey: "id",
-      cell: (row) => <span className="font-mono text-slate-400 select-none">{row.id}</span>
+      cell: (row) => <span className="text-slate-400 select-none">{row.id}</span>
     },
     {
       header: "Billing Period",
@@ -50,7 +50,7 @@ export const SubscriptionBilling: React.FC = () => {
     {
       header: "Amount",
       accessorKey: "amount",
-      cell: (row) => <span className="font-bold font-mono">{formatCurrency(row.amount, currency)}</span>
+      cell: (row) => <span className="font-bold">{formatCurrency(row.amount, currency)}</span>
     },
     {
       header: "Status",
@@ -99,7 +99,7 @@ export const SubscriptionBilling: React.FC = () => {
             </div>
 
             <div className="flex items-baseline gap-1 bg-slate-50/50 dark:bg-slate-800/20 p-3 rounded-lg border shrink-0">
-              <span className="text-xl font-bold text-foreground font-mono">{formatCurrency(89, currency)}</span>
+              <span className="text-xl font-bold text-foreground">{formatCurrency(89, currency)}</span>
               <span className="text-[10px] text-muted-foreground font-semibold uppercase">/month</span>
             </div>
           </div>
@@ -159,7 +159,7 @@ export const SubscriptionBilling: React.FC = () => {
                 
                 <div className="flex items-baseline justify-between select-none">
                   <span className="block text-xs font-bold text-foreground">{p.name}</span>
-                  <div className="flex items-baseline gap-0.5 select-none font-mono">
+                  <div className="flex items-baseline gap-0.5 select-none">
                     <span className="text-sm font-bold text-foreground">{formatCurrency(p.price, currency)}</span>
                     <span className="text-[9px] text-muted-foreground font-semibold">/mo</span>
                   </div>

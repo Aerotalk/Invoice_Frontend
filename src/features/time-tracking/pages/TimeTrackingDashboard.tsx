@@ -155,7 +155,7 @@ export const TimeTrackingDashboard: React.FC = () => {
     {
       header: "Tracked Hours",
       accessorKey: "hours",
-      cell: (row) => <span className="font-bold font-mono">{row.hours} Hours</span>
+      cell: (row) => <span className="font-bold">{row.hours} Hours</span>
     },
     {
       header: "Billable Scope",
@@ -174,7 +174,7 @@ export const TimeTrackingDashboard: React.FC = () => {
     {
       header: "Subtotal Value",
       cell: (row) => (
-        <span className="font-bold font-mono text-foreground select-none">
+        <span className="font-bold text-foreground select-none">
           {formatCurrency(row.hours * row.billingRate, currency)}
         </span>
       )
@@ -257,7 +257,7 @@ export const TimeTrackingDashboard: React.FC = () => {
             {/* Clock display */}
             <div className="flex items-center gap-2">
               <Clock className={cn("w-5 h-5 shrink-0", isRunning ? "text-rose-500 animate-spin-slow" : "text-slate-400")} />
-              <span className="font-mono text-xl font-bold tracking-wider text-foreground">{formatTime(seconds)}</span>
+              <span className="text-xl font-bold tracking-wider text-foreground">{formatTime(seconds)}</span>
             </div>
 
             {/* Actions */}
@@ -405,7 +405,7 @@ export const TimeTrackingDashboard: React.FC = () => {
                 value={manualHours}
                 onChange={(e) => setManualHours(e.target.value)}
                 placeholder="e.g. 4.5"
-                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70 text-center font-mono"
+                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70 text-center"
               />
             </div>
             
@@ -418,7 +418,7 @@ export const TimeTrackingDashboard: React.FC = () => {
                 value={manualRate}
                 onChange={(e) => setManualRate(e.target.value)}
                 placeholder="100"
-                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70 text-center font-mono"
+                className="px-3 py-2 border rounded-lg bg-card outline-none text-xs font-medium focus:border-indigo-500/70 text-center"
               />
             </div>
           </div>

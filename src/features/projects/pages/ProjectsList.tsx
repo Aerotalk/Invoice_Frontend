@@ -200,7 +200,7 @@ export const ProjectsList: React.FC = () => {
             <div className="flex items-center justify-between select-none">
               <div>
                 <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Project Scope</span>
-                <span className="block text-xs font-bold text-foreground font-mono mt-0.5">
+                <span className="block text-xs font-bold text-foreground mt-0.5">
                   {formatCurrency(proj.budget, proj.currency || currency)}
                 </span>
               </div>

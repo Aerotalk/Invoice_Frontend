@@ -349,7 +349,7 @@ export const ExpensesDashboard: React.FC = () => {
             <div className="flex items-center gap-2.5 mt-0.5 select-none">
               <span className="text-[9px] text-indigo-500 uppercase font-bold tracking-wider">{row.category}</span>
               {row.invoiceNumber && (
-                <span className="text-[9px] text-muted-foreground font-mono font-bold select-none border-l pl-2"># {row.invoiceNumber}</span>
+                <span className="text-[9px] text-muted-foreground font-bold select-none border-l pl-2"># {row.invoiceNumber}</span>
               )}
             </div>
           </div>
@@ -416,7 +416,7 @@ export const ExpensesDashboard: React.FC = () => {
       accessorKey: "amount",
       sortable: true,
       cell: (row) => (
-        <span className="font-bold font-mono text-foreground text-xs">
+        <span className="font-bold text-foreground text-xs">
           {formatCurrency(row.amount, row.currency || currency)}
         </span>
       )
@@ -475,12 +475,12 @@ export const ExpensesDashboard: React.FC = () => {
         <div className="flex flex-col gap-4 select-none">
           <div className="p-5 border rounded-xl bg-card shadow-premium relative">
             <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Expenses Outflow</span>
-            <span className="block text-2xl font-extrabold text-foreground font-mono mt-2">{formatCurrency(stats.total, currency)}</span>
+            <span className="block text-2xl font-extrabold text-foreground mt-2">{formatCurrency(stats.total, currency)}</span>
             <TrendingDown className="absolute top-4 right-4 w-4 h-4 text-rose-500 shrink-0" />
           </div>
           <div className="p-5 border rounded-xl bg-card shadow-premium relative">
             <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tax-Deductible Value</span>
-            <span className="block text-2xl font-extrabold text-emerald-500 font-mono mt-2">{formatCurrency(stats.deductible, currency)}</span>
+            <span className="block text-2xl font-extrabold text-emerald-500 mt-2">{formatCurrency(stats.deductible, currency)}</span>
             <Info className="absolute top-4 right-4 w-4 h-4 text-emerald-500 shrink-0" />
           </div>
         </div>
@@ -743,7 +743,7 @@ export const ExpensesDashboard: React.FC = () => {
                             type="text"
                             placeholder="e.g. 22AAAAA0000A1Z5"
                             {...register("gstNumber")}
-                            className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary font-mono tracking-wider uppercase placeholder:normal-case placeholder:tracking-normal placeholder:font-sans"
+                            className="w-full px-3 py-2 border rounded border-slate-300 dark:border-slate-700 bg-card outline-none text-xs focus:border-primary tracking-wider uppercase placeholder:normal-case placeholder:tracking-normal placeholder:font-sans"
                           />
                         </div>
                       </div>
@@ -1067,7 +1067,7 @@ export const ExpensesDashboard: React.FC = () => {
                                   placeholder="0"
                                   value={row.amount || ""}
                                   onChange={(e) => handleBulkRowChange(index, 'amount', e.target.value)}
-                                  className="w-full px-2 py-1 bg-card outline-none text-right font-semibold font-mono"
+                                  className="w-full px-2 py-1 bg-card outline-none text-right font-semibold"
                                 />
                               </div>
                             </td>

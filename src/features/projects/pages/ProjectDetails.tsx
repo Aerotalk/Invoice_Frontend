@@ -402,7 +402,7 @@ export const ProjectDetails: React.FC = () => {
         <div className="flex items-center gap-3 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6 select-none border-border shrink-0">
           <div>
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Project Estimation</span>
-            <span className="block text-base font-extrabold text-foreground font-mono mt-0.5">
+            <span className="block text-base font-extrabold text-foreground mt-0.5">
               {formatCurrency(project.budget, project.currency || currency)}
             </span>
             <span className="block text-[9px] text-muted-foreground font-semibold mt-1">
@@ -471,10 +471,10 @@ export const ProjectDetails: React.FC = () => {
                         <td className="py-2.5 px-3 text-xs text-muted-foreground whitespace-nowrap">
                           {formatDate(inv.date)}
                         </td>
-                        <td className="py-2.5 px-3 text-xs font-bold text-foreground font-mono text-right whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                           {inv.amount != null ? formatCurrency(inv.amount, project.currency || currency) : '—'}
                         </td>
-                        <td className="py-2.5 px-3">
+                        <td className="py-2.5 px-3 whitespace-nowrap">
                           <span className={cn(
                             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold',
                             stConf.className
@@ -483,7 +483,7 @@ export const ProjectDetails: React.FC = () => {
                             {stConf.label}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-right">
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
                           {inv.url.startsWith('api-call:') ? (
                             <button
                               onClick={async () => {
@@ -555,22 +555,22 @@ export const ProjectDetails: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tag</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Remarks</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tag</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Remarks</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {/* Auto-seed from project vendors */}
                 {projectVendors.map((v: any) => (
                   <tr key={`v-${v.id}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{v.name || v.displayName}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground whitespace-nowrap">{v.name || v.displayName}</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span className="inline-flex px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 text-[10px] font-bold">Vendor</span>
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-muted-foreground">—</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground whitespace-nowrap">—</td>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <span className="text-[10px] text-slate-400">System</span>
                     </td>
                   </tr>
@@ -579,12 +579,12 @@ export const ProjectDetails: React.FC = () => {
                 {/* User-added entities */}
                 {(project.entities || []).map((en: ProjectEntity) => (
                   <tr key={en.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{en.name}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground whitespace-nowrap">{en.name}</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span className="inline-flex px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 text-[10px] font-bold">{en.tag}</span>
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[160px] truncate">{en.remarks || '—'}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[160px] truncate whitespace-nowrap">{en.remarks || '—'}</td>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => handleDeleteEntity(en.id)}
                         className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all"
@@ -679,36 +679,36 @@ export const ProjectDetails: React.FC = () => {
             <table className="w-full text-left border-collapse min-w-[480px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Desc.</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">People</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Value</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Desc.</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">People</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Value</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Action</th>
                 </tr>
-              </thead>
+              </thead>  
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {displayExpenses.length > 0 ? (
                   displayExpenses.map((exp: any) => (
                     <tr key={exp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="py-2.5 px-3 text-xs font-semibold text-foreground max-w-[130px] truncate">
+                      <td className="py-2.5 px-3 text-xs font-semibold text-foreground max-w-[130px] truncate whitespace-nowrap">
                         {exp.description || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[120px] truncate">
+                      <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[120px] truncate whitespace-nowrap">
                         {exp.notes || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-xs text-foreground font-medium">
+                      <td className="py-2.5 px-3 text-xs text-foreground font-medium whitespace-nowrap">
                         {exp.vendorName || exp.clientName || '—'}
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                           {exp.category}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-xs font-bold text-foreground font-mono text-right whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                         {formatCurrency(exp.amount, exp.currency || currency)}
                       </td>
-                      <td className="py-2.5 px-3 text-right">
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         {exp.url ? (
                           exp.url.startsWith('api-call:') ? (
                             <button
@@ -832,7 +832,7 @@ export const ProjectDetails: React.FC = () => {
                             inv.status === 'sent' ? 'bg-blue-500/10 text-blue-500' :
                             'bg-amber-500/10 text-amber-600'
                           )}>{inv.status}</span>
-                          <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
                             {inv.amount != null ? formatCurrency(inv.amount, currency) : '—'}
                           </span>
                         </div>
@@ -845,7 +845,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                    <span className="block text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
                   </div>
                 </div>
 
@@ -860,7 +860,7 @@ export const ProjectDetails: React.FC = () => {
                       <div key={exp.id} className="p-3 rounded-xl border bg-violet-500/5 border-violet-500/10 flex flex-col gap-0.5">
                         <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
                         <span className="text-[10px] text-muted-foreground">{exp.vendorName || '—'}</span>
-                        <span className="text-xs font-bold font-mono text-violet-600 dark:text-violet-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                        <span className="text-xs font-bold text-violet-600 dark:text-violet-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
                       </div>
                     )) : (
                       <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
@@ -870,7 +870,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-violet-600 dark:text-violet-400">{formatCurrency(totalPOs, currency)}</span>
+                    <span className="block text-sm font-extrabold text-violet-600 dark:text-violet-400">{formatCurrency(totalPOs, currency)}</span>
                   </div>
                 </div>
 
@@ -885,7 +885,7 @@ export const ProjectDetails: React.FC = () => {
                       <div key={exp.id} className="p-3 rounded-xl border bg-rose-500/5 border-rose-500/10 flex flex-col gap-0.5">
                         <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
                         <span className="text-[10px] text-muted-foreground">{exp.category}</span>
-                        <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
                       </div>
                     )) : (
                       <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
@@ -895,7 +895,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-rose-500">{formatCurrency(totalOtherExpenses, currency)}</span>
+                    <span className="block text-sm font-extrabold text-rose-500">{formatCurrency(totalOtherExpenses, currency)}</span>
                   </div>
                 </div>
               </div>
@@ -906,19 +906,19 @@ export const ProjectDetails: React.FC = () => {
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Total Invoiced (In)</span>
-                    <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Purchase Orders</span>
-                    <span className="font-bold font-mono text-violet-600 dark:text-violet-400">−{formatCurrency(totalPOs, currency)}</span>
+                    <span className="font-bold text-violet-600 dark:text-violet-400">−{formatCurrency(totalPOs, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Other Expenses</span>
-                    <span className="font-bold font-mono text-rose-500">−{formatCurrency(totalOtherExpenses, currency)}</span>
+                    <span className="font-bold text-rose-500">−{formatCurrency(totalOtherExpenses, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Total Outflow</span>
-                    <span className="font-bold font-mono text-foreground">−{formatCurrency(totalOutflow, currency)}</span>
+                    <span className="font-bold text-foreground">−{formatCurrency(totalOutflow, currency)}</span>
                   </div>
                 </div>
                 <div className="pt-3 border-t flex items-center justify-between">
@@ -932,7 +932,7 @@ export const ProjectDetails: React.FC = () => {
                     </span>
                   </div>
                   <span className={cn(
-                    'text-lg font-extrabold font-mono',
+                    'text-lg font-extrabold',
                     netProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'
                   )}>
                     {netProfit >= 0 ? '+' : ''}{formatCurrency(netProfit, currency)}
