@@ -21,9 +21,6 @@ import { usePreferencesStore } from '../../../store/preferencesStore';
 import { StatusBadge } from '../../../components/common/StatusBadge';
 import { formatCurrency, formatDate, cn } from '../../../lib/utils';
 import toast from 'react-hot-toast';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
-import { PurchaseOrderPdfTemplate } from '../components/PurchaseOrderPdfTemplate';
 
 export const PurchaseOrderDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -72,7 +69,7 @@ export const PurchaseOrderDetails: React.FC = () => {
           <div>
             <h2 className="text-xl font-extrabold text-foreground leading-tight">{po.purchaseOrderId}</h2>
             <div className="flex items-center gap-2.5 mt-1 text-xs text-muted-foreground font-semibold uppercase">
-              <span className="bg-muted px-2 py-0.5 rounded border">{po.vendor?.vendorId?.substring(0, 8)}...</span>
+              <span className="bg-muted px-2 py-0.5 rounded border font-mono">{po.vendor?.vendorId?.substring(0, 8)}...</span>
               <span>|</span>
               <span>Ordered for:</span>
               <span className="text-foreground">{po.forProject?.name || 'Direct Purchase'}</span>
@@ -97,29 +94,23 @@ export const PurchaseOrderDetails: React.FC = () => {
             onClick={async () => {
               if (!id) return;
               try {
-                const toastId = toast.loading("Generating PDF...");
-                const element = document.getElementById('po-pdf-content');
-                if (!element) {
-                  toast.error("Template element not found");
-                  toast.dismiss(toastId);
-                  return;
-                }
-                const opt = {
-                  margin:       [10, 10, 10, 10] as [number, number, number, number],
-                  filename:     `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`,
-                  image:        { type: 'jpeg' as const, quality: 0.98 },
-                  html2canvas:  { scale: 2, useCORS: true, logging: false },
-                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-                };
-                await html2pdf().set(opt).from(element).save();
+                const toastId = toast.loading("Downloading PDF...");
+                const blob = await apiService.downloadPurchaseOrderPdf(id);
+                const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => window.URL.revokeObjectURL(url), 60000);
                 toast.dismiss(toastId);
-                toast.success("PDF downloaded successfully!");
               } catch (err) {
                 console.error(err);
                 toast.error("Failed to download PDF");
               }
             }}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
             title="Download PDF"
           >
             <Download className="w-4 h-4" />
@@ -129,21 +120,8 @@ export const PurchaseOrderDetails: React.FC = () => {
               if (!id) return;
               try {
                 const toastId = toast.loading("Opening PDF...");
-                const element = document.getElementById('po-pdf-content');
-                if (!element) {
-                  toast.error("Template element not found");
-                  toast.dismiss(toastId);
-                  return;
-                }
-                const opt = {
-                  margin:       [10, 10, 10, 10] as [number, number, number, number],
-                  filename:     `${po.purchaseOrderId || 'PurchaseOrder'}.pdf`,
-                  image:        { type: 'jpeg' as const, quality: 0.98 },
-                  html2canvas:  { scale: 2, useCORS: true, logging: false },
-                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-                };
-                const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
-                const url = window.URL.createObjectURL(blob);
+                const blob = await apiService.downloadPurchaseOrderPdf(id);
+                const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
                 window.open(url, '_blank');
                 setTimeout(() => window.URL.revokeObjectURL(url), 60000);
                 toast.dismiss(toastId);
@@ -152,13 +130,13 @@ export const PurchaseOrderDetails: React.FC = () => {
                 toast.error("Failed to load PDF");
               }
             }}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95 cursor-pointer"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-muted-foreground hover:text-foreground hover:bg-muted transition-all active:scale-95"
             title="View PDF"
           >
             <FileText className="w-4 h-4" />
           </button>
           {po.status !== 'completed' && (
-            <button className="p-2 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all active:scale-95 cursor-pointer">
+            <button className="p-2 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/20 text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all active:scale-95">
               <XCircle className="w-4 h-4" />
             </button>
           )}
@@ -180,8 +158,8 @@ export const PurchaseOrderDetails: React.FC = () => {
             </div>
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-xs font-semibold">
               <div>
-                <p className="text-muted-foreground mb-1">EU PO/WO No.</p>
-                <p className="text-foreground bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
+                <p className="text-muted-foreground mb-1">Order ID</p>
+                <p className="text-foreground font-mono bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
               </div>
               <div>
                 <p className="text-muted-foreground mb-1">Purchase Date</p>
@@ -296,6 +274,10 @@ export const PurchaseOrderDetails: React.FC = () => {
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Place of Supply</p>
                 <p className="text-xs font-semibold text-foreground mt-0.5">{po.placeOfSupply || 'Not specified'}</p>
               </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">EU PO/WO Number</p>
+                <p className="text-xs font-semibold text-foreground mt-0.5">{po.euPoWoNumber || 'Not specified'}</p>
+              </div>
             </div>
           </div>
 
@@ -310,11 +292,6 @@ export const PurchaseOrderDetails: React.FC = () => {
           </div>
         </div>
 
-      </div>
-
-      {/* Offscreen hidden template for PDF generation */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        <PurchaseOrderPdfTemplate po={po} currency={currency} />
       </div>
     </div>
     );

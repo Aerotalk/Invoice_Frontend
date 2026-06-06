@@ -14,9 +14,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import toast from 'react-hot-toast';
-// @ts-ignore
-import html2pdf from 'html2pdf.js';
-import { PurchaseOrderPdfTemplate } from '../components/PurchaseOrderPdfTemplate';
 
 const poSchema = zod.object({
   purchaseOrderId: zod.string().min(2, "PO number is required"),
@@ -26,6 +23,7 @@ const poSchema = zod.object({
   placeOfSupply: zod.string(),
   transportMode: zod.string(),
   deliveryLocation: zod.string(),
+  euPoWoNumber: zod.string(),
   projectId: zod.string().optional(),
   termsAndConditions: zod.string(),
 });
@@ -55,7 +53,6 @@ export const PurchaseOrderList: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [selectedPoForPdf, setSelectedPoForPdf] = useState<any | null>(null);
 
   const [isCustomPoCode, setIsCustomPoCode] = useState(false);
   const [itemRows, setItemRows] = useState<PoItemInput[]>([
@@ -74,6 +71,7 @@ export const PurchaseOrderList: React.FC = () => {
       placeOfSupply: '19-West Bengal',
       transportMode: '',
       deliveryLocation: '',
+      euPoWoNumber: '',
       projectId: '',
       termsAndConditions: 'GST: 18% as mentioned above.\nPayment Terms: 45 Days credit.\nDelivery Time: Urgent.',
     }
@@ -212,6 +210,7 @@ export const PurchaseOrderList: React.FC = () => {
       placeOfSupply: po.placeOfSupply || '',
       transportMode: po.transportMode || '',
       deliveryLocation: po.deliveryLocation || '',
+      euPoWoNumber: po.euPoWoNumber || '',
       projectId: po.projectId || po.project?.id || '',
       termsAndConditions: po.termsAndConditions || '',
     });
@@ -294,58 +293,12 @@ export const PurchaseOrderList: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     setActiveMenu(null);
-                    try {
-                      const toastId = toast.loading("Fetching PO details...");
-                      const poData = await apiService.getPurchaseOrderById(row.id);
-                      if (!poData) {
-                        toast.error("Failed to fetch Purchase Order details");
-                        toast.dismiss(toastId);
-                        return;
-                      }
-                      
-                      setSelectedPoForPdf(poData);
-                      toast.loading("Generating PDF...", { id: toastId });
-                      
-                      setTimeout(async () => {
-                        try {
-                          const element = document.getElementById('po-pdf-content');
-                          if (!element) {
-                            toast.error("Template element not found in DOM");
-                            toast.dismiss(toastId);
-                            return;
-                          }
-                          
-                          const opt = {
-                            margin:       [10, 10, 10, 10] as [number, number, number, number],
-                            filename:     `${poData.purchaseOrderId || 'PurchaseOrder'}.pdf`,
-                            image:        { type: 'jpeg' as const, quality: 0.98 },
-                            html2canvas:  { scale: 2, useCORS: true, logging: false },
-                            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-                          };
-                          
-                          const blob = await html2pdf().set(opt).from(element).outputPdf('blob');
-                          const url = window.URL.createObjectURL(blob);
-                          window.open(url, '_blank');
-                          setTimeout(() => window.URL.revokeObjectURL(url), 60000);
-                          
-                          toast.dismiss(toastId);
-                          setSelectedPoForPdf(null);
-                        } catch (err) {
-                          console.error(err);
-                          toast.error("Failed to generate PDF");
-                          toast.dismiss(toastId);
-                          setSelectedPoForPdf(null);
-                        }
-                      }, 400);
-                    } catch (e) {
-                      console.error(e);
-                      toast.error("Failed to fetch Purchase Order");
-                    }
+                    navigate(`/dashboard/purchase-orders/${row.id}`);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted text-foreground/80 transition-colors text-left"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  View PDF
+                  View Details & PDF
                 </button>
                 <button
                   type="button"
@@ -489,7 +442,7 @@ export const PurchaseOrderList: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">EU PO/WO No.<span className="text-rose-500">*</span></label>
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Order No. <span className="text-rose-500">*</span></label>
                   <div className="flex rounded-lg overflow-hidden border">
                     <input
                       type="text"
@@ -531,6 +484,10 @@ export const PurchaseOrderList: React.FC = () => {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Delivery Location</label>
                   <input type="text" placeholder="e.g. Kolkata" {...register("deliveryLocation")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">EU PO/WO Number</label>
+                  <input type="text" placeholder="e.g. WO-0909" {...register("euPoWoNumber")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
                 </div>
               </div>
             </div>
@@ -588,7 +545,7 @@ export const PurchaseOrderList: React.FC = () => {
                             min="1"
                             value={row.quantity}
                             onChange={(e) => handleRowChange(index, "quantity", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
                           />
                         </td>
                         <td className="p-2">
@@ -605,20 +562,20 @@ export const PurchaseOrderList: React.FC = () => {
                             min="0"
                             value={row.price}
                             onChange={(e) => handleRowChange(index, "price", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
                           />
                         </td>
-                        <td className="p-2 text-xs font-bold">{formatCurrency(row.taxableAmount, currency)}</td>
+                        <td className="p-2 text-xs font-bold font-mono">{formatCurrency(row.taxableAmount, currency)}</td>
                         <td className="p-2">
                           <input
                             type="number"
                             min="0"
                             value={row.gstRate}
                             onChange={(e) => handleRowChange(index, "gstRate", e.target.value)}
-                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold"
+                            className="w-full px-2 py-1.5 border border-transparent rounded bg-transparent outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-primary text-xs font-bold font-mono"
                           />
                         </td>
-                        <td className="p-2 text-xs font-bold text-primary">{formatCurrency(row.total, currency)}</td>
+                        <td className="p-2 text-xs font-bold font-mono text-primary">{formatCurrency(row.total, currency)}</td>
                         <td className="p-2 text-center">
                           <button
                             type="button"
@@ -666,19 +623,19 @@ export const PurchaseOrderList: React.FC = () => {
                   <div className="space-y-3 text-xs font-semibold text-foreground/80">
                     <div className="flex justify-between items-center">
                       <span>Sub Total</span>
-                      <span className="font-bold">{formatCurrency(subtotal, currency)}</span>
+                      <span className="font-bold font-mono">{formatCurrency(subtotal, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center text-amber-600 dark:text-amber-500">
                       <span>Total GST</span>
-                      <span className="font-bold">+{formatCurrency(taxAmount, currency)}</span>
+                      <span className="font-bold font-mono">+{formatCurrency(taxAmount, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-3 mt-3">
                       <span>Round Off</span>
-                      <span className="font-bold">{formatCurrency(roundOff, currency)}</span>
+                      <span className="font-bold font-mono">{formatCurrency(roundOff, currency)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-extrabold text-foreground pt-1">
                       <span>Total Amount</span>
-                      <span className="">{formatCurrency(finalTotal, currency)}</span>
+                      <span className="font-mono">{formatCurrency(finalTotal, currency)}</span>
                     </div>
                   </div>
                 </div>
@@ -710,13 +667,6 @@ export const PurchaseOrderList: React.FC = () => {
           </div>
         </form>
       </Drawer>
-
-      {/* Offscreen hidden template for PDF generation */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        {selectedPoForPdf && (
-          <PurchaseOrderPdfTemplate po={selectedPoForPdf} currency={currency} />
-        )}
-      </div>
     </div>
   );
 };
