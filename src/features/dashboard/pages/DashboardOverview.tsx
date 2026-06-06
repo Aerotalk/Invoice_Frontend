@@ -291,7 +291,7 @@ export const DashboardOverview: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-6 shrink-0">
-                  <span className="text-xs font-bold text-foreground font-mono">{formatCurrency(inv?.total, inv?.currency)}</span>
+                  <span className="text-xs font-bold text-foreground">{formatCurrency(inv?.total, inv?.currency)}</span>
                   <StatusBadge status={inv?.status || 'draft'} />
                   <span className="text-[10px] text-muted-foreground font-semibold">{formatDate(inv?.issueDate || '')}</span>
                 </div>
@@ -323,12 +323,12 @@ export const DashboardOverview: React.FC = () => {
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0" />
                   <div>
                     <span className="block text-xs font-bold text-foreground truncate max-w-[120px]">{p?.clientName || 'Payment'}</span>
-                    <span className="block text-[9px] text-slate-500 font-mono tracking-tight">{p?.method?.replace('_', ' ') || 'Bank Transfer'}</span>
+                    <span className="block text-[9px] text-slate-500 tracking-tight">{p?.method?.replace('_', ' ') || 'Bank Transfer'}</span>
                   </div>
                 </div>
                 
                 <div className="text-right shrink-0">
-                  <span className="block text-xs font-extrabold text-emerald-500 font-mono">+{formatCurrency(p?.amount, p?.currency)}</span>
+                  <span className="block text-xs font-extrabold text-emerald-500">+{formatCurrency(p?.amount, p?.currency)}</span>
                   <span className="block text-[9px] text-muted-foreground font-semibold">{formatDate(p?.date || '')}</span>
                 </div>
               </div>

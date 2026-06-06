@@ -66,19 +66,19 @@ export const ReportsOverview: React.FC = () => {
       header: "Gross Billed Contracts",
       accessorKey: "billed",
       sortable: true,
-      cell: (row) => <span className="font-bold font-mono">{formatCurrency(row.billed, currency)}</span>
+      cell: (row) => <span className="font-bold">{formatCurrency(row.billed, currency)}</span>
     },
     {
       header: "Outflow Expenses",
       accessorKey: "expenses",
       sortable: true,
-      cell: (row) => <span className="font-bold text-rose-500 font-mono">-{formatCurrency(row.expenses, currency)}</span>
+      cell: (row) => <span className="font-bold text-rose-500">-{formatCurrency(row.expenses, currency)}</span>
     },
     {
       header: "Net Profit Margin",
       accessorKey: "profit",
       sortable: true,
-      cell: (row) => <span className="font-bold text-emerald-500 font-mono">{formatCurrency(row.profit, currency)}</span>
+      cell: (row) => <span className="font-bold text-emerald-500">{formatCurrency(row.profit, currency)}</span>
     },
     {
       header: "Margin Index",

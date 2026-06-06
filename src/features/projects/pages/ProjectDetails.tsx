@@ -402,7 +402,7 @@ export const ProjectDetails: React.FC = () => {
         <div className="flex items-center gap-3 border-t lg:border-t-0 lg:border-l pt-4 lg:pt-0 lg:pl-6 select-none border-border shrink-0">
           <div>
             <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Project Estimation</span>
-            <span className="block text-base font-extrabold text-foreground font-mono mt-0.5">
+            <span className="block text-base font-extrabold text-foreground mt-0.5">
               {formatCurrency(project.budget, project.currency || currency)}
             </span>
             <span className="block text-[9px] text-muted-foreground font-semibold mt-1">
@@ -471,7 +471,7 @@ export const ProjectDetails: React.FC = () => {
                         <td className="py-2.5 px-3 text-xs text-muted-foreground whitespace-nowrap">
                           {formatDate(inv.date)}
                         </td>
-                        <td className="py-2.5 px-3 text-xs font-bold text-foreground font-mono text-right whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                           {inv.amount != null ? formatCurrency(inv.amount, project.currency || currency) : '—'}
                         </td>
                         <td className="py-2.5 px-3">
@@ -705,7 +705,7 @@ export const ProjectDetails: React.FC = () => {
                           {exp.category}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-xs font-bold text-foreground font-mono text-right whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                         {formatCurrency(exp.amount, exp.currency || currency)}
                       </td>
                       <td className="py-2.5 px-3 text-right">
@@ -832,7 +832,7 @@ export const ProjectDetails: React.FC = () => {
                             inv.status === 'sent' ? 'bg-blue-500/10 text-blue-500' :
                             'bg-amber-500/10 text-amber-600'
                           )}>{inv.status}</span>
-                          <span className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
+                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
                             {inv.amount != null ? formatCurrency(inv.amount, currency) : '—'}
                           </span>
                         </div>
@@ -845,7 +845,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                    <span className="block text-sm font-extrabold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
                   </div>
                 </div>
 
@@ -860,7 +860,7 @@ export const ProjectDetails: React.FC = () => {
                       <div key={exp.id} className="p-3 rounded-xl border bg-violet-500/5 border-violet-500/10 flex flex-col gap-0.5">
                         <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
                         <span className="text-[10px] text-muted-foreground">{exp.vendorName || '—'}</span>
-                        <span className="text-xs font-bold font-mono text-violet-600 dark:text-violet-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                        <span className="text-xs font-bold text-violet-600 dark:text-violet-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
                       </div>
                     )) : (
                       <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
@@ -870,7 +870,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-violet-600 dark:text-violet-400">{formatCurrency(totalPOs, currency)}</span>
+                    <span className="block text-sm font-extrabold text-violet-600 dark:text-violet-400">{formatCurrency(totalPOs, currency)}</span>
                   </div>
                 </div>
 
@@ -885,7 +885,7 @@ export const ProjectDetails: React.FC = () => {
                       <div key={exp.id} className="p-3 rounded-xl border bg-rose-500/5 border-rose-500/10 flex flex-col gap-0.5">
                         <span className="text-xs font-bold text-foreground truncate">{exp.description}</span>
                         <span className="text-[10px] text-muted-foreground">{exp.category}</span>
-                        <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
+                        <span className="text-xs font-bold text-rose-600 dark:text-rose-400 mt-1">{formatCurrency(exp.amount, currency)}</span>
                       </div>
                     )) : (
                       <div className="flex items-center justify-center h-[80px] text-xs text-muted-foreground border border-dashed rounded-xl">
@@ -895,7 +895,7 @@ export const ProjectDetails: React.FC = () => {
                   </div>
                   <div className="pt-2 border-t">
                     <span className="text-[10px] text-muted-foreground font-semibold">Total</span>
-                    <span className="block text-sm font-extrabold font-mono text-rose-500">{formatCurrency(totalOtherExpenses, currency)}</span>
+                    <span className="block text-sm font-extrabold text-rose-500">{formatCurrency(totalOtherExpenses, currency)}</span>
                   </div>
                 </div>
               </div>
@@ -906,19 +906,19 @@ export const ProjectDetails: React.FC = () => {
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Total Invoiced (In)</span>
-                    <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalInvoiced, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Purchase Orders</span>
-                    <span className="font-bold font-mono text-violet-600 dark:text-violet-400">−{formatCurrency(totalPOs, currency)}</span>
+                    <span className="font-bold text-violet-600 dark:text-violet-400">−{formatCurrency(totalPOs, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Other Expenses</span>
-                    <span className="font-bold font-mono text-rose-500">−{formatCurrency(totalOtherExpenses, currency)}</span>
+                    <span className="font-bold text-rose-500">−{formatCurrency(totalOtherExpenses, currency)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground font-semibold">Total Outflow</span>
-                    <span className="font-bold font-mono text-foreground">−{formatCurrency(totalOutflow, currency)}</span>
+                    <span className="font-bold text-foreground">−{formatCurrency(totalOutflow, currency)}</span>
                   </div>
                 </div>
                 <div className="pt-3 border-t flex items-center justify-between">
@@ -932,7 +932,7 @@ export const ProjectDetails: React.FC = () => {
                     </span>
                   </div>
                   <span className={cn(
-                    'text-lg font-extrabold font-mono',
+                    'text-lg font-extrabold',
                     netProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'
                   )}>
                     {netProfit >= 0 ? '+' : ''}{formatCurrency(netProfit, currency)}

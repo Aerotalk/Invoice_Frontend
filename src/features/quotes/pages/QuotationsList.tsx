@@ -873,7 +873,7 @@ export const QuotationsList: React.FC = () => {
                           placeholder="HSN"
                           value={row.hsn}
                           onChange={(e) => handleRowChange(index, "hsn", e.target.value)}
-                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-[10px] font-mono font-semibold text-center focus:border-primary"
+                          className="w-full px-2 py-1.5 border rounded-lg bg-card outline-none text-[10px] font-semibold text-center focus:border-primary"
                         />
                       </div>
 

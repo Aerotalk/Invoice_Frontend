@@ -252,7 +252,7 @@ export const GlobalCommandPalette: React.FC = () => {
                                   <kbd 
                                     key={kIdx} 
                                     className={cn(
-                                      "px-1 py-0.5 rounded border text-[9px] font-mono tracking-wider shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+                                      "px-1 py-0.5 rounded border text-[9px] tracking-wider shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
                                       isSelected ? "bg-primary-700/50 border-primary-500/20 text-white" : "bg-muted text-muted-foreground"
                                     )}
                                   >

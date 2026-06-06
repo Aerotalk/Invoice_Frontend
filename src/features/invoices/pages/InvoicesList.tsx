@@ -112,7 +112,7 @@ export const InvoicesList: React.FC = () => {
       accessorKey: "total",
       sortable: true,
       cell: (row) => (
-        <span className="font-bold text-foreground font-mono">
+        <span className="font-bold text-foreground">
           {formatCurrency(row.total, row.currency)}
         </span>
       )
@@ -123,7 +123,7 @@ export const InvoicesList: React.FC = () => {
       sortable: true,
       cell: (row) => (
         <span className={cn(
-          "font-bold font-mono",
+          "font-bold",
           row.amountDue > 0 ? "text-amber-500" : "text-slate-400"
         )}>
           {formatCurrency(row.amountDue, row.currency)}
@@ -224,19 +224,19 @@ export const InvoicesList: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 select-none border-b pb-6">
         <div className="p-4 rounded-xl border bg-slate-50/50 dark:bg-[#0b101c]/10">
           <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Paid Total</span>
-          <span className="block text-base font-bold text-emerald-500 font-mono mt-1">{formatCurrency(metrics.paidSum, currency)}</span>
+          <span className="block text-base font-bold text-emerald-500 mt-1">{formatCurrency(metrics.paidSum, currency)}</span>
         </div>
         <div className="p-4 rounded-xl border bg-slate-50/50 dark:bg-[#0b101c]/10">
           <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Unpaid Outstanding</span>
-          <span className="block text-base font-bold text-amber-500 font-mono mt-1">{formatCurrency(metrics.sentSum, currency)}</span>
+          <span className="block text-base font-bold text-amber-500 mt-1">{formatCurrency(metrics.sentSum, currency)}</span>
         </div>
         <div className="p-4 rounded-xl border bg-slate-50/50 dark:bg-[#0b101c]/10">
           <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Overdue Pools</span>
-          <span className="block text-base font-bold text-rose-500 font-mono mt-1">{formatCurrency(metrics.overdueSum, currency)}</span>
+          <span className="block text-base font-bold text-rose-500 mt-1">{formatCurrency(metrics.overdueSum, currency)}</span>
         </div>
         <div className="p-4 rounded-xl border bg-slate-50/50 dark:bg-[#0b101c]/10">
           <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Draft Value</span>
-          <span className="block text-base font-bold text-slate-400 font-mono mt-1">{formatCurrency(metrics.draftSum, currency)}</span>
+          <span className="block text-base font-bold text-slate-400 mt-1">{formatCurrency(metrics.draftSum, currency)}</span>
         </div>
       </div>
 
