@@ -474,7 +474,7 @@ export const ProjectDetails: React.FC = () => {
                         <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                           {inv.amount != null ? formatCurrency(inv.amount, project.currency || currency) : '—'}
                         </td>
-                        <td className="py-2.5 px-3">
+                        <td className="py-2.5 px-3 whitespace-nowrap">
                           <span className={cn(
                             'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold',
                             stConf.className
@@ -483,7 +483,7 @@ export const ProjectDetails: React.FC = () => {
                             {stConf.label}
                           </span>
                         </td>
-                        <td className="py-2.5 px-3 text-right">
+                        <td className="py-2.5 px-3 text-right whitespace-nowrap">
                           {inv.url.startsWith('api-call:') ? (
                             <button
                               onClick={async () => {
@@ -555,22 +555,22 @@ export const ProjectDetails: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tag</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Remarks</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Tag</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Remarks</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {/* Auto-seed from project vendors */}
                 {projectVendors.map((v: any) => (
                   <tr key={`v-${v.id}`} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{v.name || v.displayName}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground whitespace-nowrap">{v.name || v.displayName}</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span className="inline-flex px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-500 text-[10px] font-bold">Vendor</span>
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-muted-foreground">—</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground whitespace-nowrap">—</td>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <span className="text-[10px] text-slate-400">System</span>
                     </td>
                   </tr>
@@ -579,12 +579,12 @@ export const ProjectDetails: React.FC = () => {
                 {/* User-added entities */}
                 {(project.entities || []).map((en: ProjectEntity) => (
                   <tr key={en.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground">{en.name}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-xs font-semibold text-foreground whitespace-nowrap">{en.name}</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span className="inline-flex px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 text-[10px] font-bold">{en.tag}</span>
                     </td>
-                    <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[160px] truncate">{en.remarks || '—'}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[160px] truncate whitespace-nowrap">{en.remarks || '—'}</td>
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <button
                         onClick={() => handleDeleteEntity(en.id)}
                         className="p-1 rounded hover:bg-rose-500/10 text-rose-500 active:scale-90 transition-all"
@@ -679,28 +679,28 @@ export const ProjectDetails: React.FC = () => {
             <table className="w-full text-left border-collapse min-w-[480px]">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Desc.</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">People</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Value</th>
-                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Name</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Desc.</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">People</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Type</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Value</th>
+                  <th className="py-2.5 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {displayExpenses.length > 0 ? (
                   displayExpenses.map((exp: any) => (
                     <tr key={exp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="py-2.5 px-3 text-xs font-semibold text-foreground max-w-[130px] truncate">
+                      <td className="py-2.5 px-3 text-xs font-semibold text-foreground max-w-[130px] truncate whitespace-nowrap">
                         {exp.description || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[120px] truncate">
+                      <td className="py-2.5 px-3 text-xs text-muted-foreground max-w-[120px] truncate whitespace-nowrap">
                         {exp.notes || '—'}
                       </td>
-                      <td className="py-2.5 px-3 text-xs text-foreground font-medium">
+                      <td className="py-2.5 px-3 text-xs text-foreground font-medium whitespace-nowrap">
                         {exp.vendorName || exp.clientName || '—'}
                       </td>
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
                           {exp.category}
                         </span>
@@ -708,7 +708,7 @@ export const ProjectDetails: React.FC = () => {
                       <td className="py-2.5 px-3 text-xs font-bold text-foreground text-right whitespace-nowrap">
                         {formatCurrency(exp.amount, exp.currency || currency)}
                       </td>
-                      <td className="py-2.5 px-3 text-right">
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         {exp.url ? (
                           exp.url.startsWith('api-call:') ? (
                             <button
