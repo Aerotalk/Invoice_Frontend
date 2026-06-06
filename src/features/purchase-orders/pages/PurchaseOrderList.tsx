@@ -23,7 +23,6 @@ const poSchema = zod.object({
   placeOfSupply: zod.string(),
   transportMode: zod.string(),
   deliveryLocation: zod.string(),
-  euPoWoNumber: zod.string(),
   projectId: zod.string().optional(),
   termsAndConditions: zod.string(),
 });
@@ -71,7 +70,6 @@ export const PurchaseOrderList: React.FC = () => {
       placeOfSupply: '19-West Bengal',
       transportMode: '',
       deliveryLocation: '',
-      euPoWoNumber: '',
       projectId: '',
       termsAndConditions: 'GST: 18% as mentioned above.\nPayment Terms: 45 Days credit.\nDelivery Time: Urgent.',
     }
@@ -210,7 +208,6 @@ export const PurchaseOrderList: React.FC = () => {
       placeOfSupply: po.placeOfSupply || '',
       transportMode: po.transportMode || '',
       deliveryLocation: po.deliveryLocation || '',
-      euPoWoNumber: po.euPoWoNumber || '',
       projectId: po.projectId || po.project?.id || '',
       termsAndConditions: po.termsAndConditions || '',
     });
@@ -442,7 +439,7 @@ export const PurchaseOrderList: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Order No. <span className="text-rose-500">*</span></label>
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">EU PO/WO No.<span className="text-rose-500">*</span></label>
                   <div className="flex rounded-lg overflow-hidden border">
                     <input
                       type="text"
@@ -484,10 +481,6 @@ export const PurchaseOrderList: React.FC = () => {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Delivery Location</label>
                   <input type="text" placeholder="e.g. Kolkata" {...register("deliveryLocation")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">EU PO/WO Number</label>
-                  <input type="text" placeholder="e.g. WO-0909" {...register("euPoWoNumber")} className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs" />
                 </div>
               </div>
             </div>

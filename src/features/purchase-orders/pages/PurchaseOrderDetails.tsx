@@ -158,7 +158,7 @@ export const PurchaseOrderDetails: React.FC = () => {
             </div>
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-xs font-semibold">
               <div>
-                <p className="text-muted-foreground mb-1">Order ID</p>
+                <p className="text-muted-foreground mb-1">EU PO/WO No.</p>
                 <p className="text-foreground font-mono bg-muted px-2 py-1 rounded inline-block">{po.purchaseOrderId}</p>
               </div>
               <div>
@@ -273,10 +273,6 @@ export const PurchaseOrderDetails: React.FC = () => {
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Place of Supply</p>
                 <p className="text-xs font-semibold text-foreground mt-0.5">{po.placeOfSupply || 'Not specified'}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">EU PO/WO Number</p>
-                <p className="text-xs font-semibold text-foreground mt-0.5">{po.euPoWoNumber || 'Not specified'}</p>
               </div>
             </div>
           </div>
