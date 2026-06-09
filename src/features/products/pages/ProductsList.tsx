@@ -486,6 +486,18 @@ export const ProductsList: React.FC = () => {
                   {errors.name && <span className="text-[9px] text-rose-500 font-bold">{errors.name.message}</span>}
                 </div>
 
+                {/* Description */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
+                    Description
+                  </label>
+                  <textarea
+                    placeholder="Product description... (appears on quotations)"
+                    {...register("description")}
+                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-y min-h-[60px] leading-relaxed"
+                  />
+                </div>
+
                 {/* Goods vs Service Type Radio Block */}
                 <div className="flex flex-col gap-2">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
@@ -742,7 +754,7 @@ export const ProductsList: React.FC = () => {
                 Sales Information
               </span>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 
                 {/* Selling Price */}
                 <div className="flex flex-col gap-1.5">
@@ -765,18 +777,6 @@ export const ProductsList: React.FC = () => {
                     />
                   </div>
                   {errors.sellingPrice && <span className="text-[9px] text-rose-500 font-bold">{errors.sellingPrice.message}</span>}
-                </div>
-
-                {/* Description */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">
-                    Description
-                  </label>
-                  <textarea
-                    placeholder="Enter sales description..."
-                    {...register("description")}
-                    className="w-full px-3 py-2 border rounded-lg bg-card outline-none focus:border-primary text-xs font-medium resize-none h-[42px] leading-relaxed"
-                  />
                 </div>
 
               </div>
