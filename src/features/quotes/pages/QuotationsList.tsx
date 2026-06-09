@@ -26,6 +26,7 @@ import { StatusBadge } from '../../../components/common/StatusBadge';
 import { Drawer } from '../../../components/common/Drawer';
 import { apiService } from '../../../services/api';
 import { usePreferencesStore } from '../../../store/preferencesStore';
+import { useAuthStore } from '../../../store/authStore';
 import { formatCurrency, formatDate } from '../../../lib/utils';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -48,10 +49,10 @@ const quoteSchema = zod.object({
   discountRate: zod.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, {
     message: "Discount must be between 0% and 100%"
   }),
-  taxType: zod.enum(['tds', 'tcs']),
-  taxRate: zod.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-    message: "Tax rate must be positive"
-  }),
+  // taxType: zod.enum(['tds', 'tcs']),
+  // taxRate: zod.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
+  //   message: "Tax rate must be positive"
+  // }),
   adjustment: zod.string().refine((val) => !isNaN(Number(val)), {
     message: "Adjustment must be a number"
   })
@@ -62,6 +63,7 @@ type QuoteFormValues = zod.infer<typeof quoteSchema>;
 interface QuoteItemInput {
   productId: string;
   name: string;
+  description?: string;
   hsn: string;
   quantity: number;
   rate: number;
@@ -80,6 +82,8 @@ export const QuotationsList: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeQuoteMenu, setActiveQuoteMenu] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   // Dynamic input controls
   const [isCustomQuoteCode, setIsCustomQuoteCode] = useState(false);
@@ -93,13 +97,14 @@ export const QuotationsList: React.FC = () => {
 
   // Dynamic row builder states
   const [itemRows, setItemRows] = useState<QuoteItemInput[]>([
-    { productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }
+    { productId: "", name: "", description: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }
   ]);
 
   // Quick search filter input state
   const [globalSearch, setGlobalSearch] = useState("");
 
   const { currency } = usePreferencesStore();
+  const { user } = useAuthStore();
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema),
@@ -115,16 +120,12 @@ export const QuotationsList: React.FC = () => {
       customerNotes: 'Looking forward for your business.',
       terms: 'Payments must be settled within the defined quote validity period.',
       discountRate: '0',
-      taxType: 'tds',
-      taxRate: '10',
       adjustment: '0'
     }
   });
 
   const selectedClientId = watch("clientId");
   const discountRateVal = watch("discountRate");
-  const taxTypeVal = watch("taxType");
-  const taxRateVal = watch("taxRate");
   const adjustmentVal = watch("adjustment");
 
   // Load backend dependencies
@@ -193,12 +194,8 @@ export const QuotationsList: React.FC = () => {
     : 0;
   const totalSgst = totalCgst;
   const totalGst = isInterState ? totalIgst : totalCgst + totalSgst;
-  const taxAmount = taxableAmount * (Number(taxRateVal || 0) / 100);
   
-  // Tax subtraction for TDS, addition for TCS  
-  const total = taxTypeVal === 'tds' 
-    ? taxableAmount + totalGst - taxAmount + Number(adjustmentVal || 0) 
-    : taxableAmount + totalGst + taxAmount + Number(adjustmentVal || 0);
+  const total = taxableAmount + totalGst + Number(adjustmentVal || 0);
 
   // Dynamic row builder methods
   const handleAddRow = () => {
@@ -227,6 +224,7 @@ export const QuotationsList: React.FC = () => {
       if (prod) {
         row.productId = prod.id;
         row.name = prod.name;
+        row.description = prod.description || '';
         row.hsn = prod.hsnCode || prod.hsn || '';
         row.rate = prod.sellingPrice;
         
@@ -246,6 +244,7 @@ export const QuotationsList: React.FC = () => {
       } else {
         row.productId = "";
         row.name = "";
+        row.description = "";
         row.hsn = "";
         row.rate = 0;
         row.taxRate = 0;
@@ -267,6 +266,8 @@ export const QuotationsList: React.FC = () => {
       row.taxRate = Number(val);
     } else if (field === 'name') {
       row.name = val;
+    } else if (field === 'description') {
+      row.description = val;
     } else if (field === 'hsn') {
       row.hsn = val;
     }
@@ -363,15 +364,13 @@ export const QuotationsList: React.FC = () => {
           id: `qi-${Date.now()}-${index}`,
           productId: r.productId || "custom",
           name: r.name,
+          customDetails: r.description,
           quantity: r.quantity,
           rate: r.rate,
           total: r.total
         })),
         subtotal,
         discountRate: Number(values.discountRate),
-        taxType: values.taxType,
-        taxRate: Number(values.taxRate),
-        taxAmount,
         adjustment: Number(values.adjustment),
         total,
         status: "sent" as const, // Sent default on Save & Send
@@ -380,11 +379,16 @@ export const QuotationsList: React.FC = () => {
         signatureUrl: uploadedFiles.length > 0 ? uploadedFiles[0].url : undefined
       };
 
-      await apiService.createQuote(payload);
-      toast.success("Quotation registered successfully!");
+      if (isEditing && editId) {
+        await apiService.updateQuote(editId, payload);
+        toast.success("Quotation updated successfully!");
+      } else {
+        await apiService.createQuote(payload);
+        toast.success("Quotation registered successfully!");
+      }
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", description: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -423,15 +427,13 @@ export const QuotationsList: React.FC = () => {
           id: `qi-${Date.now()}-${index}`,
           productId: r.productId || "custom",
           name: r.name,
+          customDetails: r.description,
           quantity: r.quantity,
           rate: r.rate,
           total: r.total
         })),
         subtotal,
         discountRate: Number(discountRateVal),
-        taxType: taxTypeVal,
-        taxRate: Number(taxRateVal),
-        taxAmount,
         adjustment: Number(adjustmentVal),
         total,
         status: "draft" as const,
@@ -440,11 +442,16 @@ export const QuotationsList: React.FC = () => {
         signatureUrl: uploadedFiles.length > 0 ? uploadedFiles[0].url : undefined
       };
 
-      await apiService.createQuote(payload);
-      toast.success("Quotation saved as draft successfully!");
+      if (isEditing && editId) {
+        await apiService.updateQuote(editId, payload);
+        toast.success("Draft updated successfully!");
+      } else {
+        await apiService.createQuote(payload);
+        toast.success("Quotation saved as draft successfully!");
+      }
       setDrawerOpen(false);
       reset();
-      setItemRows([{ productId: "", name: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
+      setItemRows([{ productId: "", name: "", description: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
       setUploadedFiles([]);
       loadData();
     } catch (e) {
@@ -514,7 +521,32 @@ export const QuotationsList: React.FC = () => {
       header: "Status",
       accessorKey: "status",
       sortable: true,
-      cell: (row) => <StatusBadge status={row.status} />
+      cell: (row) => (
+        <select
+          value={row.status}
+          onChange={async (e) => {
+            try {
+              await apiService.updateQuote(row.id, { status: e.target.value });
+              toast.success("Status updated!");
+              loadData();
+            } catch (err) {
+              toast.error("Failed to update status");
+            }
+          }}
+          className={cn(
+            "text-[10px] font-extrabold uppercase px-2 py-1 rounded-full border outline-none cursor-pointer appearance-none",
+            row.status === 'accepted' ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+            row.status === 'rejected' ? "bg-rose-50 text-rose-600 border-rose-200" :
+            row.status === 'sent' ? "bg-blue-50 text-blue-600 border-blue-200" :
+            "bg-slate-50 text-slate-600 border-slate-200"
+          )}
+        >
+          <option value="draft">DRAFT</option>
+          <option value="sent">SENT</option>
+          <option value="accepted">ACCEPTED</option>
+          <option value="rejected">REJECTED</option>
+        </select>
+      )
     },
     {
       header: "Actions",
@@ -556,25 +588,49 @@ export const QuotationsList: React.FC = () => {
                   View PDF
                 </button>
 
-                {row.status === 'sent' && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setActiveQuoteMenu(null);
-                      try {
-                        await apiService.updateQuote(row.id, { status: "accepted" });
-                        toast.success("Quote marked as accepted!");
-                        loadData();
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 transition-colors text-left"
-                  >
-                    <FileCheck2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    Mark Accepted
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveQuoteMenu(null);
+                    setIsEditing(true);
+                    setEditId(row.id);
+                    reset({
+                      quoteNumber: row.quoteNumber,
+                      referenceNumber: row.referenceNumber || '',
+                      clientId: row.customerId || row.clientId || '',
+                      quoteDate: row.quoteDate ? row.quoteDate.split('T')[0] : new Date().toISOString().split('T')[0],
+                      expiryDate: row.expiryDate ? row.expiryDate.split('T')[0] : '',
+                      salesperson: row.salesperson || '',
+                      projectId: row.projectId || '',
+                      subject: row.subject || '',
+                      customerNotes: row.customerNotes || '',
+                      terms: row.termsConditions || row.terms || '',
+                      discountRate: (row.discountValue || 0).toString(),
+                      adjustment: (row.adjustment || 0).toString()
+                    });
+                    
+                    if (row.items && row.items.length > 0) {
+                      setItemRows(row.items.map((it: any) => ({
+                        productId: it.productId || "",
+                        name: it.productNameSnapshot || it.name || "",
+                        description: it.customDetails || "",
+                        hsn: it.hsnSac || "",
+                        quantity: it.quantity || 1,
+                        rate: it.rate || 0,
+                        discount: it.discount || 0,
+                        taxRate: it.taxRate || 0,
+                        total: it.amount || 0
+                      })));
+                    } else {
+                      setItemRows([{ productId: "", name: "", description: "", hsn: "", quantity: 1, rate: 0, discount: 0, taxRate: 0, total: 0 }]);
+                    }
+                    setDrawerOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 transition-colors text-left font-semibold"
+                >
+                  <FileText className="w-3.5 h-3.5 shrink-0" />
+                  Edit Quote
+                </button>
 
                 <button
                   type="button"
@@ -646,6 +702,9 @@ export const QuotationsList: React.FC = () => {
               }]);
               setUploadedFiles([]);
               setIsCustomQuoteCode(false);
+              setIsEditing(false);
+              setEditId(null);
+              setValue('salesperson', user?.name || '');
               setDrawerOpen(true);
             }}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-extrabold hover:bg-primary/95 transition-all shadow-md active:scale-95 select-none cursor-pointer"
@@ -669,7 +728,7 @@ export const QuotationsList: React.FC = () => {
       <Drawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="New Quote"
+        title={isEditing ? "Edit Quote" : "New Quote"}
         size="xl"
       >
         <form onSubmit={handleSubmit(onSubmitQuote)} className="flex flex-col h-[82vh] text-xs font-semibold select-none relative">
@@ -772,7 +831,7 @@ export const QuotationsList: React.FC = () => {
               </div>
 
               {/* Dynamic Project Mapping */}
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Project selector dynamically filtered by Client */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Project Name</label>
@@ -792,6 +851,17 @@ export const QuotationsList: React.FC = () => {
                       Select a customer to associate a project.
                     </span>
                   )}
+                </div>
+
+                {/* Salesperson locked field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-muted-foreground font-bold tracking-wide uppercase text-[10px]">Salesperson</label>
+                  <input
+                    type="text"
+                    {...register("salesperson")}
+                    disabled={true}
+                    className="w-full px-3 py-2 border rounded-lg bg-slate-100 dark:bg-slate-900/60 text-slate-500 outline-none text-xs font-semibold cursor-not-allowed"
+                  />
                 </div>
               </div>
 
@@ -858,10 +928,16 @@ export const QuotationsList: React.FC = () => {
                         </select>
                         <input
                           type="text"
-                          placeholder="Custom description..."
+                          placeholder="Item Name..."
                           value={row.name}
                           onChange={(e) => handleRowChange(index, "name", e.target.value)}
                           className="w-full px-2 py-1 border rounded bg-slate-50/50 dark:bg-slate-900/25 outline-none text-[11px] font-medium focus:border-primary"
+                        />
+                        <textarea
+                          placeholder="Description (optional)..."
+                          value={row.description || ''}
+                          onChange={(e) => handleRowChange(index, "description", e.target.value)}
+                          className="w-full px-2 py-1 border rounded bg-slate-50/50 dark:bg-slate-900/25 outline-none text-[11px] font-medium focus:border-primary resize-y min-h-[36px]"
                         />
                       </div>
 
@@ -929,15 +1005,11 @@ export const QuotationsList: React.FC = () => {
                           <option value={0}>No Tax</option>
                           {isInterState ? (
                             <>
-                              <option value={5}>IGST 5%</option>
-                              <option value={12}>IGST 12%</option>
                               <option value={18}>IGST 18%</option>
                               <option value={28}>IGST 28%</option>
                             </>
                           ) : (
                             <>
-                              <option value={5}>CGST 2.5% + SGST 2.5%</option>
-                              <option value={12}>CGST 6% + SGST 6%</option>
                               <option value={18}>CGST 9% + SGST 9%</option>
                               <option value={28}>CGST 14% + SGST 14%</option>
                             </>
@@ -1132,52 +1204,6 @@ export const QuotationsList: React.FC = () => {
                     )}
                   </div>
                 )}
-
-                {/* TDS / TCS selector */}
-                <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-1.5 cursor-pointer font-bold uppercase text-[10px] text-slate-500 select-none">
-                      <input
-                        type="radio"
-                        value="tds"
-                        checked={taxTypeVal === 'tds'}
-                        onChange={() => setValue("taxType", "tds")}
-                        className="w-3.5 h-3.5 accent-primary"
-                      />
-                      <span>TDS</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer font-bold uppercase text-[10px] text-slate-500 select-none">
-                      <input
-                        type="radio"
-                        value="tcs"
-                        checked={taxTypeVal === 'tcs'}
-                        onChange={() => setValue("taxType", "tcs")}
-                        className="w-3.5 h-3.5 accent-primary"
-                      />
-                      <span>TCS</span>
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <select
-                      {...register("taxRate")}
-                      className="px-2 py-1 border rounded bg-card outline-none text-xs font-semibold focus:border-primary appearance-none cursor-pointer"
-                    >
-                      <option value="0">Select a Tax</option>
-                      <option value="5">Standard (5%)</option>
-                      <option value="10">GST (10%)</option>
-                      <option value="15">Surcharge (15%)</option>
-                      <option value="18">GST (18%)</option>
-                    </select>
-                    <span className="font-bold text-slate-400 shrink-0">Rate</span>
-                    <span className={cn(
-                      "font-bold ml-2",
-                      taxTypeVal === 'tds' ? "text-rose-500" : "text-emerald-500"
-                    )}>
-                      {taxTypeVal === 'tds' ? "-" : "+"}{formatCurrency(taxAmount, currency)}
-                    </span>
-                  </div>
-                </div>
 
                 {/* Adjustment Input */}
                 <div className="flex justify-between items-center gap-4 text-xs border-t pt-3">
